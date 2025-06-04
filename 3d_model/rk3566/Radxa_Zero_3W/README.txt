@@ -1,0 +1,4 @@
+Radxa Zero 3W Snap-Fit Case (No Screws, No Glue) by Stilbon_UA on Thingiverse: https://www.thingiverse.com/thing:6959371
+
+Summary:
+This is a custom-designed case for the Radxa Zero 3W, featuring a tool-free snap-fit design for easy assembly and a secure hold without screws or glue.Features:✅ Two-part design – bottom and top snap together securely✅ No supports required – optimized for easy 3D printing✅ Perfect fit – precise cutouts for all ports, GPIO pins, microSD card, and camera ribbon cable✅ Cooling support – includes a vent and mounting space for a 5V 2510 cooling fan✅ Compact &amp; durable – designed for strength while keeping a minimal footprintPrinting Recommendations:No supports neededMaterial: PLA, PETG, or ABSLayer height: 0.2mm recommendedInfill: 15-20% for durabilityIf you find this design useful, feel free to share your makes and leave feedback! 😊
