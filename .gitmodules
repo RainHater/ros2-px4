@@ -1,3 +1,12 @@
-[submodule "Firmware"]
-	path = Firmware
+[submodule "px4/MicoAir743v2"]
+	path = px4/MicoAir743v2
 	url = https://github.com/micoair/MicoAir743v2.git
+[submodule "px4/PX4-Autopilot"]
+	path = px4/PX4-Autopilot
+	url = https://github.com/PX4/PX4-Autopilot.git
+[submodule "ros2_ws/src/px4_msgs"]
+	path = ros2_ws/src/px4_msgs
+	url = https://github.com/PX4/px4_msgs.git
+[submodule "ros2_ws/src/px4_ros_com"]
+	path = ros2_ws/src/px4_ros_com
+	url = https://github.com/PX4/px4_ros_com.git
