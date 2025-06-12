@@ -32,6 +32,10 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+include_directories(
+  ${PROJECT_SOURCE_DIR}/include 
+)
+
 add_executable(trajectory_follower_node src/trajectory_follower_node.cpp)
 ament_target_dependencies(trajectory_follower_node 
   rclcpp 
