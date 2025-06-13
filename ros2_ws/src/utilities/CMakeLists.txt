@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(px4_control_follower)
+project(utilities)
 
 if(NOT CMAKE_CXX_STANDARD) 
   set(CMAKE_CXX_STANDARD 20)
@@ -14,7 +14,6 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -31,24 +30,49 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-include_directories(
-  ${PROJECT_SOURCE_DIR}/include 
+# 1) 建立一个静态库或共享库
+add_library(vehicle_command_helper
+  src/vehicle_command_helper.cpp
 )
 
-add_executable(trajectory_follower_node src/trajectory_follower_node.cpp)
-ament_target_dependencies(trajectory_follower_node 
-  rclcpp 
-  px4_msgs 
-  geometry_msgs
+# 2) 指定头文件搜索路径
+target_include_directories(vehicle_command_helper PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
 
-install(TARGETS
-  trajectory_follower_node
-  DESTINATION lib/${PROJECT_NAME})
+# 3) 添加库依赖（如果需要）
+# target_link_libraries(vehicle_command_helper PUBLIC
+#   rclcpp::rclcpp
+#   px4_msgs::px4_msgs
+# )
+
+# 4) ament 导出依赖
+ament_target_dependencies(vehicle_command_helper
+  # 如果 link 了 rclcpp 或 px4_msgs，就放在这里：
+  # rclcpp
+  # px4_msgs
+)
+
+# 5) 安装规则：把库和头文件都安装到 ROS2 标准路径
+install(
+  TARGETS vehicle_command_helper
+  EXPORT export_utilities
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
 
 install(
-  DIRECTORY launch
-  DESTINATION share/${PROJECT_NAME}
+  DIRECTORY include/
+  DESTINATION include
+)
+
+# 6) 导出 cmake config 给其他包 find_package 调用
+ament_export_targets(export_utilities HAS_LIBRARY_TARGET)
+ament_export_dependencies(
+  # rclcpp
+  # px4_msgs
 )
 
 ament_package()

@@ -1,136 +1,78 @@
-# 设计说明文档（Design Notes）
+# Design Notes: 使用 DDS 实现 ROS 2 ↔ PX4 通信
 
-本文件用于记录 PX4 + ROS 2 无人机平台的系统设计方案、模块分工、技术选型、接口规范和开发注意事项，便于团队成员理解项目架构与协作。
+## 1. 目标
 
-## 1. 项目目标
+通过 Data Distribution Service (DDS) 在 ROS 2 与 PX4 之间建立高性能、可配置的通信通道，替代传统的 RTPS/SITL-Bridge 方式，使多节点、多地面站环境下的数据交换更灵活可靠。
 
-构建一个基于 RK3566 计算平台与 MicoAir743v2 飞控的模块化无人机系统，支持：
+## 2. 通信需求
 
-- PX4 飞控功能（姿态控制、飞行模式管理等）
-- ROS 2 功能扩展（图像识别、路径规划、地面站通信）
-- 仿真验证（Gazebo Classic + SDF）
-- 板载自主飞行任务部署
+- **命令控制**  
+  ROS 2 发布 OffboardControlMode、TrajectorySetpoint、VehicleCommand 到 PX4  
+- **状态反馈**  
+  PX4 发布 VehicleStatus、ActuatorOutput、SensorData 到 ROS 2  
+- **带宽与实时**  
+  对高频控制和状态数据应用低延迟、高可靠性 QoS  
+- **多订阅者**  
+  支持多地面站或监控节点同时订阅同一 PX4 话题
 
----
+## 3. DDS 中间件选型
 
-## 2. 系统总体架构
+| 中间件      | 特性                  | 推荐理由                             |
+|-------------|-----------------------|--------------------------------------|
+| Fast DDS    | ROS 2 默认、生态成熟  | 与 ROS 2 Humble 集成，无需额外依赖    |
+| Cyclone DDS | 资源占用低、嵌入式友好| 内存与线程可定制，适合资源受限板端    |
+| RTI Connext | 企业级、工具链完善    | 提供专业监控、支持 DDS 安全扩展       |
 
-```lua
-               +----------------------+
-               |      上位机 (PC)     |
-               | Gazebo / RViz / ROS  |
-               +----------+-----------+
-                          |
-                          | DDS / ROS 2
-                          |
-               +----------v-----------+
-               |   RK3566 (ROS 2)     |
-               |  my_robot_nodes/     |
-               |  图像识别 / 控制逻辑 |
-               +----------+-----------+
-                          | MAVLink (串口)
-                          |
-               +----------v-----------+
-               |  MicoAir743v2 (PX4)  |
-               | 姿态控制 / 飞行控制  |
-               +----------------------+
+**初期选型：Fast DDS**，保持与 ROS 2 默认中间件一致，简化部署与调试。
 
-```
+## 4. QoS 策略设计
 
+- **OffboardControlMode / TrajectorySetpoint**  
+  - Reliability：RELIABLE  
+  - History：KEEP_LAST(1)  
+  - Deadline：50 ms  
+- **VehicleCommand (Arm/Disarm)**  
+  - Reliability：RELIABLE  
+  - History：KEEP_LAST(5)  
+  - Lifespan：500 ms  
+- **VehicleStatus / ActuatorOutput**  
+  - Reliability：BEST_EFFORT  
+  - History：KEEP_LAST(10)  
+  - Deadline：100 ms  
 
----
+## 5. 系统集成方案
 
-## 3. 飞控模块设计（PX4）
+1. **Flight Control 节点**  
+   - 使用 rclcpp::QoS 构造发布器/订阅器  
+   - 在 launch 文件中可选择不同中间件插件  
+2. **PX4 端 uORB ↔ DDS**  
+   - 在 Board（或边缘机）部署 Micro‑XRCE‑DDS Agent  
+   - Agent 将 uORB 消息转换并发布到 DDS 网络  
+   - 配置 XML 映射文件，定义 Topic 名称与 QoS  
+3. **多机通信**  
+   - 在同一 DDS Domain 下，ROS 2 节点与 Micro‑XRCE‑Agent 自动发现  
 
-路径：`px4/`
+## 6. 话题映射示例
 
-### 自定义模块（custom_modules/）
+| ROS 2 话题                         | DDS Topic       | 消息类型                              |
+|------------------------------------|-----------------|---------------------------------------|
+| `/fmu/in/offboard_control_mode`    | `OffboardCMD`   | px4_msgs::msg::OffboardControlMode    |
+| `/fmu/in/trajectory_setpoint`      | `TrajSetpoint`  | px4_msgs::msg::TrajectorySetpoint     |
+| `/fmu/in/vehicle_command`          | `VehicleCmd`    | px4_msgs::msg::VehicleCommand         |
+| `/fmu/out/vehicle_status`          | `VehicleStatus` | px4_msgs::msg::VehicleStatus          |
+| `/fmu/out/actuator_outputs`        | `ActuatorOut`   | px4_msgs::msg::ActuatorMotors         |
 
-- `offboard_control.cpp`：板载自主任务接口（订阅 ROS2 topic，控制无人机轨迹）
-- `object_follow.cpp`：目标跟踪控制器，结合图像识别结果
-- `px4_gps_bridge.cpp`：板载 GPS 数据重定向至 ROS 2
+## 7. 验证与测试
 
-### 配置文件（cmake-configs/）
+- **延迟测试**：使用 `ros2 topic hz` 对比 DDS 与传统桥接的端到端延迟  
+- **丢包率评估**：在不同网络条件下统计消息丢失  
+- **多订阅测试**：验证多地面站并发订阅性能与稳定性  
 
-- `boards/micoair743v2/`：针对 MicoAir743v2 的 board 配置
-- `cmake/configs/`：自定义构建模板
+## 8. 后续扩展
 
----
+- DDS 安全插件：身份认证、加密、访问控制  
+- 跨域部署：不同子网／跨 WAN 场景  
+- 可视化监控：Fast DDS Monitor 或 RTI Monitor  
 
-## 4. ROS 2 模块设计（ros2_ws/src/）
-
-### `my_robot_nodes/`
-
-- `object_tracker_node.cpp`：订阅摄像头图像，推理目标位置，发布 `/target_pose`
-- `offboard_commander_node.cpp`：接收导航目标，生成轨迹，转为 MAVROS 命令
-- `telemetry_logger.cpp`：订阅 `/vehicle_odometry` 和 `/sensor_combined`，记录飞行数据
-
-### `my_robot_interfaces/`
-
-- `msg/TargetPose.msg`
-- `srv/SetMissionMode.srv`
-
-### `my_robot_bringup/`
-
-- 启动多个 ROS 2 节点的组合文件，支持模拟或真实飞控启动流程
-
----
-
-## 5. 仿真系统设计（simulation/）
-
-- `sdf_models/`：包含 RK3566 + 飞控 + 多传感器模型（URDF/SDF）
-- `launch/simulation.launch.py`：自动启动 Gazebo + ROS 2 节点
-- `world/`：自定义仿真环境（起飞平台 / 室外场景）
-
----
-
-## 6. 数据流说明
-
-### 图像目标跟踪路径
-
-1. `V4L2 摄像头` → `/camera/image_raw`
-2. `object_tracker_node` → `/target_pose`
-3. `offboard_commander_node` → `/trajectory_setpoint`
-4. MAVLink → PX4 `uORB` → 姿态控制器
-
----
-
-## 7. 硬件设计（hardware/）
-
-- `pcb/`：主板使用 STM32 外围扩展 RK3566 传感器数据
-- `enclosure/`：便于散热与防震设计
-- `BOM/`：含主要器件选型说明，匹配 PX4 推荐器件库
-
----
-
-## 8. 通信协议说明
-
-- PX4 ←→ ROS 2：通过 MAVLink 串口（可扩展为 microDDS）
-- ROS 2 节点间：基于 DDS（FastRTPS）
-- 外部设备（如地面站）：通过 MAVROS、UART 或 UDP
-
----
-
-## 9. 开发约定
-
-- ROS 2 使用 Humble 版本，节点支持参数化启动
-- 所有自定义消息需在 `my_robot_interfaces` 中声明
-- ROS 与 PX4 的 ID 配置保持一致
-- 所有路径使用 `ament_index_python` 获取，避免硬编码
-
----
-
-## 10. 未来扩展计划
-
-- 增加板载视觉 SLAM 模块（如 ORB-SLAM3）
-- 增加多机通信协议支持（Swarm 编队）
-- 接入边缘 AI 模块（如 RKNN 推理加速）
-
----
-
-## 附录
-
-- PX4 固件版本：v1.14+
-- ROS 2 版本：Humble Hawksbill
-- 飞控型号：MicoAir743v2（STM32H7 系列）
-- 板载平台：Firefly RK3566 Ubuntu 22.04
+> _日期：2025-06-13_  
+> _作者：xuguocai_  

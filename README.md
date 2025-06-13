@@ -1,94 +1,110 @@
-# PX4 ROS 2 Drone Project — MicoAir743v2 + RK3566
+# PX4 ROS 2 Drone Project — MicoAir743v2 + 板载计算平台 (型号待定)
 
-本项目是基于 PX4 和 ROS 2 的无人机平台，支持 RK3566 边缘计算平台与 MicoAir743v2 飞控，集成了自定义 ROS 2 功能包、SDF 仿真模型与硬件设计文件。
+本项目基于 PX4 与 ROS 2 构建，支持 MicoAir743v2 飞控与待定型号的边缘计算平台，集成了以下内容：
 
-## 🚀 项目结构概览
+- 自定义 ROS 2 功能包（视觉流水线、任务规划、飞控控制等）
+- PX4 固件扩展模块
+- 仿真模型与 Gazebo 支持
+- 硬件设计文件
+
+---
+
+## 项目总体目录
 
 ```bash
-rk3566-px4/
-├── docs/           # 项目文档与资料
-├── hardware/       # 电路板设计与外壳结构
-├── px4/            # PX4 固件与自定义模块
-├── ros2_ws/        # ROS 2 工作区
-├── scripts/        # 常用脚本
-├── simulation/     # 仿真模型与世界
+rk3566-px4/         #项目根（名称可根据实际板载平台调整）
+├── docs/           #项目文档与资料
+├── hardware/       #电路板与外壳设计
+│ ├── pcb/          #原理图（.sch）、布局（.pcb）、Gerber
+│ └── enclosure/    #3D 外壳（.step/.stl）
+├── px4/            #PX4 固件源码与自定义模块
+├── ros2_px4_ws/    #ROS 2 工作区
+├── simulation/     #仿真模型与世界文件
+└── scripts/        #启动/部署等脚本
+```
+
+---
+
+## 硬件平台说明
+
+| 模块     | 描述                                   |
+|----------|----------------------------------------|
+| 飞控     | MicoAir743v2，基于 STM32H7，支持 PX4   |
+| 计算平台 | 型号待定，运行 Ubuntu 22.04 + ROS 2 Humble |
+| 传感器接口 | 支持 UART / SPI / CAN / I2C           |
+
+---
+
+## 软件子模块（ROS 2 工作区：`ros2_px4_ws/`）
+
+```bash
+ros2_px4_ws/ # ROS 2 工作区根
+├── src/ # 所有功能包源码
+│ ├── common_msgs/ # 自定义消息/服务/动作定义
+│ ├── vision_pipeline/ # 视觉处理流水线
+│ ├── flight_control/ # PX4 Offboard 控制
+│ ├── mission_planner/ # 高层任务规划与编排
+│ ├── rviz_configs/ # RViz 可视化配置
+│ └── utilities/ # 通用工具与脚本
+├── build/ # 构建产物
+├── install/ # 安装结果
+└── log/ # 构建/运行日志
+```
+
+### 各包职责
+
+- **common_msgs**：集中定义项目内所有自研 msg/srv/action。
+- **vision_pipeline**：相机驱动、图像预处理、目标检测与跟踪节点。
+- **flight_control**：Arm/Disarm、Offboard 控制、状态监控节点。
+- **mission_planner**：接收高层指令，管控视觉与飞控节点，实现任务流。
+- **rviz_configs**：存放 rviz 配置及启动文件，支持可视化调试。
+- **utilities**：参数加载、日志封装、启动脚本等公共代码。
+
+---
+
+## 开发与运行
+
+1. 初始化：
+
+```bash
+git clone https://github.com/3519610554/ros2-px4.git
+cd ros2-px4
+git submodule update --init --recursive
+```
+2. 构建 PX4：进入 px4/ 目录，按照官方流程编译固件。
+
+3. 构建 ROS 2：
+```bash
+cd ros2_px4_ws
+colcon build --symlink-install
 ```
 
 
-## 🧠 系统架构
+4. 运行：
+- 仿真：
+  ```
+  ros2 launch simulation sim.launch.py
+  ```
+- 视觉流水线：
+  ```
+  ros2 launch vision_pipeline pipeline.launch.py
+  ```
+- 飞控控制：
+  ```
+  ros2 launch flight_control offboard.launch.py
+  ```
+- 任务管理：
+  ```
+  ros2 launch mission_planner mission.launch.py
+  ```
 
-- 板载计算机：RK3566（Cortex-A55，运行 Ubuntu + ROS 2）
-- 飞控单元：MicoAir743v2（PX4 固件）
-- 通信方式：MAVLink / uORB / DDS（FastRTPS）
-- 支持仿真：Gazebo Classic + SDF 模型
+---
 
-## 📦 硬件平台说明
+## 仿真与扩展
 
-| 模块         | 描述                                       |
-|--------------|--------------------------------------------|
-| 飞控         | MicoAir743v2，基于 STM32H7，支持 PX4       |
-| 计算平台     | RK3566，运行 Ubuntu 22.04 和 ROS 2 Humble  |
-| PCB 设计     | 位于 `hardware/pcb/`，包含原理图和布局文件 |
-| 外壳设计     | 位于 `hardware/enclosure/`，包含 STEP/STL  |
-| 传感器接口   | 支持 UART / SPI / CAN / I2C                |
+- 仿真模型：simulation/sdf_models/ 与 simulation/world/。
+- Gazebo Classic：支持 SITL + PX4 插件。
+- 日志回放：集成 rosbag2。
+- UI Dashboard：可搭建 rqt 或自定义前端。
 
-## 📂 子模块说明
-
-### PX4 固件（`px4/`）
-
-- `PX4-Autopilot/`：PX4 源码（子模块或 fork）
-- `custom_modules/`：自定义 PX4 模块（如任务扩展、控制算法）
-- `cmake-configs/`：编译配置、板卡定义等
-
-### ROS 2 工作区（`ros2_ws/`）
-
-- `my_robot_nodes/`：功能节点（如图像处理、路径规划）
-- `my_robot_description/`：机器人模型（URDF / SDF）
-- `my_robot_bringup/`：启动文件集合
-- `my_robot_interfaces/`：ROS 自定义接口（`msg/`, `srv/`）
-
-### simulation/
-
-- `sdf_models/`：Gazebo SDF 模型
-- `launch/`：仿真启动文件
-- `world/`：自定义仿真环境世界文件
-
-## 🛠️ 开发与部署指南
-
-请参考文档：[docs/setup_guide.md](docs/setup_guide.md)
-
-主要步骤：
-
-1. 克隆仓库并初始化子模块；
-2. 构建 PX4 固件；
-3. 构建 ROS 2 工作区；
-4. 启动仿真环境或部署到 RK3566 实机；
-5. 使用 `scripts/launch_all.sh` 启动系统。
-
-## 🧩 文件与规范说明
-
-- `hardware/`：原理图（`.sch`）、布局图（`.pcb`）、Gerber（`outputs/`）、3D 结构（`.step`, `.stl`）；
-- `docs/`：datasheets、设计笔记、环境配置说明；
-- `images/`：照片、渲染图、结果图；
-- `.gitignore`：已忽略中间编译目录。
-
-## 📄 License
-
-本项目遵循 [MIT License](LICENSE)。
-
-
-## 🛠️ 快速开始
-
-### 环境准备
-
-1. 安装 ROS 2 Humble（Ubuntu 22.04）
-2. 安装 PX4 构建依赖（参考 PX4 官方文档）
-3. 安装 Gazebo Classic 模拟器
-
-### 项目初始化
-
-```bash
-# 克隆主项目并初始化子模块
-git clone https://github.com/yourname/rk3566-px4.git
-cd rk3566-px4
-git submodule update --init --recursive
+---

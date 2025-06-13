@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.8)
-project(px4_control_follower)
+project(flight_control)
 
 if(NOT CMAKE_CXX_STANDARD) 
   set(CMAKE_CXX_STANDARD 20)
 endif() 
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -14,10 +15,9 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(utilities REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -31,24 +31,15 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-include_directories(
-  ${PROJECT_SOURCE_DIR}/include 
-)
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 
-add_executable(trajectory_follower_node src/trajectory_follower_node.cpp)
-ament_target_dependencies(trajectory_follower_node 
-  rclcpp 
-  px4_msgs 
-  geometry_msgs
-)
+add_executable(arm_control_node src/arm_control_node.cpp)
+ament_target_dependencies(arm_control_node rclcpp px4_msgs std_srvs)
+install(TARGETS arm_control_node DESTINATION lib/${PROJECT_NAME})
+target_link_libraries(arm_control_node utilities::vehicle_command_helper)
 
-install(TARGETS
-  trajectory_follower_node
-  DESTINATION lib/${PROJECT_NAME})
-
-install(
-  DIRECTORY launch
-  DESTINATION share/${PROJECT_NAME}
-)
+add_executable(offboard_control_node src/offboard_control_node.cpp)
+ament_target_dependencies(offboard_control_node rclcpp px4_msgs geometry_msgs)
+install(TARGETS offboard_control_node DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
