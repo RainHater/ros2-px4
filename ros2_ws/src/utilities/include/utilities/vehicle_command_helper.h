@@ -3,7 +3,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "px4_msgs/msg/vehicle_command.hpp"
 
-namespace flight_control {
+namespace utilities {
 class VehicleCommandHelper
 {
 public:

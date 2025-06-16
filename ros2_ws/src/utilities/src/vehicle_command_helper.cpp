@@ -1,6 +1,6 @@
 #include "utilities/vehicle_command_helper.h"
 
-namespace flight_control {
+namespace utilities {
 VehicleCommandHelper::VehicleCommandHelper(rclcpp::Node *node)
 : m_node(node) {
     m_publisher = m_node->create_publisher<px4_msgs::msg::VehicleCommand>(

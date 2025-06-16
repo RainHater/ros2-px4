@@ -13,7 +13,7 @@ class ArmControlNode : public rclcpp::Node
 {
 public:
   ArmControlNode()
-  : Node("arm_control_node")
+  : Node("arm_control_node"), m_cmd_helper(this)
   {
     // Publisher: VehicleCommand
     m_cmd_pub = this->create_publisher<px4_msgs::msg::VehicleCommand>(
@@ -51,7 +51,7 @@ private:
 
   rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr m_cmd_pub;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr m_srv;
-  flight_control::VehicleCommandHelper m_cmd_helper;
+  utilities::VehicleCommandHelper m_cmd_helper;
 };
 
 int main(int argc, char * argv[])

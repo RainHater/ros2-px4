@@ -1,10 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 project(flight_control)
 
-if(NOT CMAKE_CXX_STANDARD) 
-  set(CMAKE_CXX_STANDARD 20)
-endif() 
-
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -34,9 +31,8 @@ endif()
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 
 add_executable(arm_control_node src/arm_control_node.cpp)
-ament_target_dependencies(arm_control_node rclcpp px4_msgs std_srvs)
+ament_target_dependencies(arm_control_node rclcpp px4_msgs std_srvs utilities)
 install(TARGETS arm_control_node DESTINATION lib/${PROJECT_NAME})
-target_link_libraries(arm_control_node utilities::vehicle_command_helper)
 
 add_executable(offboard_control_node src/offboard_control_node.cpp)
 ament_target_dependencies(offboard_control_node rclcpp px4_msgs geometry_msgs)
