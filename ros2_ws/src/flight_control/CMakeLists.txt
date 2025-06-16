@@ -12,9 +12,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
-find_package(std_srvs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(utilities REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -30,12 +28,20 @@ endif()
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 
-add_executable(arm_control_node src/arm_control_node.cpp)
-ament_target_dependencies(arm_control_node rclcpp px4_msgs std_srvs utilities)
-install(TARGETS arm_control_node DESTINATION lib/${PROJECT_NAME})
+include_directories(
+  ${PROJECT_SOURCE_DIR}/include 
+)
 
-add_executable(offboard_control_node src/offboard_control_node.cpp)
-ament_target_dependencies(offboard_control_node rclcpp px4_msgs geometry_msgs)
-install(TARGETS offboard_control_node DESTINATION lib/${PROJECT_NAME})
+add_executable(arming_offboard_node src/arming_offboard_node.cpp)
+
+ament_target_dependencies(arming_offboard_node 
+  rclcpp 
+  px4_msgs 
+  geometry_msgs
+)
+
+install(TARGETS
+  arming_offboard_node
+  DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
