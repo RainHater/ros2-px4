@@ -40,15 +40,15 @@ rk3566-px4/         #项目根（名称可根据实际板载平台调整）
 ```bash
 ros2_px4_ws/ # ROS 2 工作区根
 ├── src/ # 所有功能包源码
-│ ├── common_msgs/ # 自定义消息/服务/动作定义
-│ ├── vision_pipeline/ # 视觉处理流水线
-│ ├── flight_control/ # PX4 Offboard 控制
-│ ├── mission_planner/ # 高层任务规划与编排
-│ ├── rviz_configs/ # RViz 可视化配置
-│ └── utilities/ # 通用工具与脚本
-├── build/ # 构建产物
-├── install/ # 安装结果
-└── log/ # 构建/运行日志
+│ ├── common_msgs/      # 自定义消息/服务/动作定义
+│ ├── vision_pipeline/  # 视觉处理流水线
+│ ├── flight_control/   # PX4 Offboard 控制
+│ ├── mission_planner/  # 高层任务规划与编排
+│ ├── rviz_configs/     # RViz 可视化配置
+│ └── utilities/        # 通用工具与脚本
+├── build/              # 构建产物
+├── install/            # 安装结果
+└── log/                # 构建/运行日志
 ```
 
 ### 各包职责

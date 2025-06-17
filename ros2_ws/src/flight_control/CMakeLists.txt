@@ -46,6 +46,7 @@ ament_target_dependencies(position_setpoint_node
   rclcpp 
   px4_msgs 
   geometry_msgs
+  common_msgs
 )
 install(TARGETS position_setpoint_node DESTINATION lib/${PROJECT_NAME})
 
@@ -53,6 +54,7 @@ add_executable(gps_navigation_node src/gps_navigation_node.cpp)
 ament_target_dependencies(gps_navigation_node 
   rclcpp 
   px4_msgs 
+  geometry_msgs
   common_msgs
 )
 install(TARGETS gps_navigation_node DESTINATION lib/${PROJECT_NAME})
