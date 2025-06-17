@@ -12,6 +12,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
+find_package(common_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 if(BUILD_TESTING)
@@ -52,6 +53,7 @@ add_executable(gps_navigation_node src/gps_navigation_node.cpp)
 ament_target_dependencies(gps_navigation_node 
   rclcpp 
   px4_msgs 
+  common_msgs
 )
 install(TARGETS gps_navigation_node DESTINATION lib/${PROJECT_NAME})
 
