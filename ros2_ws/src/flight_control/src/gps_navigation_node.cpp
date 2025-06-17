@@ -18,8 +18,7 @@ void GpsNavigationNode::global_position_callback(const px4_msgs::msg::VehicleGlo
     RCLCPP_INFO(this->get_logger(), "Latitude: %.7f, Longitude: %.7f", latitude, longitude);    
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     std::cout << "Starting GpsNavigationNode follower node..." << std::endl;
     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
     rclcpp::init(argc, argv);

@@ -40,8 +40,7 @@ void ArmingOffboardNode::publish_vehicle_command(uint16_t command, float param1,
     m_vehicle_command_publisher->publish(msg);
 }
 
-void ArmingOffboardNode::publish_offboard_control_mode()
-{
+void ArmingOffboardNode::publish_offboard_control_mode() {
     px4_msgs::msg::OffboardControlMode msg{};
     msg.position = true;
     msg.velocity = false;
@@ -52,20 +51,17 @@ void ArmingOffboardNode::publish_offboard_control_mode()
     m_offboard_control_mode_publisher->publish(msg);
 }
 
-void ArmingOffboardNode::arm()
-{
+void ArmingOffboardNode::arm() {
     publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
     RCLCPP_INFO(this->get_logger(), "Arm command send");
 }
 
-void ArmingOffboardNode::disarm()
-{
+void ArmingOffboardNode::disarm() {
     publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
     RCLCPP_INFO(this->get_logger(), "Disarm command send");
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     std::cout << "Starting ArmingOffboardNode follower node..." << std::endl;
     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
     rclcpp::init(argc, argv);
