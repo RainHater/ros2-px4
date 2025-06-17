@@ -16,7 +16,15 @@ def generate_launch_description():
         output='screen',
     )
 
+    gps_navigation_node = Node(
+        package='flight_control',
+        executable='gps_navigation_node',
+        name='gps_navigation_node',
+        output='screen',
+    )
+
     return LaunchDescription([
         arm_offboard_node,
         position_setpoint_node,
+        gps_navigation_node,
     ])

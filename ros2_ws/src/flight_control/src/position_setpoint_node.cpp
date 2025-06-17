@@ -16,9 +16,9 @@ PositionSetpointNode::PositionSetpointNode() : Node("position_setpoint_node") {
 
 void PositionSetpointNode::goal_pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
     m_goal_pose = *msg;
-    RCLCPP_INFO(this->get_logger(), "take over pose information!");
-    RCLCPP_INFO(this->get_logger(), "Received goal pose: [x: %.2f, y: %.2f, z: %.2f]",
-                m_goal_pose.pose.position.x, m_goal_pose.pose.position.y, m_goal_pose.pose.position.z);
+    // RCLCPP_INFO(this->get_logger(), "take over pose information!");
+    // RCLCPP_INFO(this->get_logger(), "Received goal pose: [x: %.2f, y: %.2f, z: %.2f]",
+    //             m_goal_pose.pose.position.x, m_goal_pose.pose.position.y, m_goal_pose.pose.position.z);
 }
 
 void PositionSetpointNode::publish_trajectory_setpoint() {
