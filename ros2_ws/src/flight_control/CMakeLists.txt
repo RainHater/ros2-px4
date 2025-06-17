@@ -33,15 +33,19 @@ include_directories(
 )
 
 add_executable(arming_offboard_node src/arming_offboard_node.cpp)
-
 ament_target_dependencies(arming_offboard_node 
   rclcpp 
   px4_msgs 
   geometry_msgs
 )
+install(TARGETS arming_offboard_node DESTINATION lib/${PROJECT_NAME})
 
-install(TARGETS
-  arming_offboard_node
-  DESTINATION lib/${PROJECT_NAME})
+add_executable(position_setpoint_node src/position_setpoint_node.cpp)
+ament_target_dependencies(position_setpoint_node 
+  rclcpp 
+  px4_msgs 
+  geometry_msgs
+)
+install(TARGETS position_setpoint_node DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
