@@ -11,12 +11,14 @@ class PositionSetpointNode : public rclcpp::Node {
 public:
     PositionSetpointNode();
 protected:
-    // 目标位置回调函数
-    void target_position_callback(const common_msgs::msg::PositionSetpoint msg);
     //发布 trajectory setpoint 消息
     void publish_trajectory_setpoint();
+    //定时器回调
+    void timer_callback();
+    // 目标位置回调函数
+    void target_position_callback(const common_msgs::msg::PositionSetpoint msg);
     //当前位置回调函数
-    void local_position_callback(const px4_msgs::msg::VehicleOdometry::SharedPtr msg);
+    void current_position_callback(const px4_msgs::msg::VehicleOdometry::SharedPtr msg);
 private:
     //定时器
     rclcpp::TimerBase::SharedPtr m_timer;
@@ -30,6 +32,8 @@ private:
     common_msgs::msg::PositionSetpoint m_target_position;
     //当前位置
     common_msgs::msg::PositionSetpoint m_current_position;
+    //最后一次yaw角度
+    float m_last_yaw;
 };
 
 #endif
