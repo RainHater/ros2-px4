@@ -7,6 +7,7 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED) 
 find_package(common_msgs REQUIRED)
 # find_package(sensor_msgs REQUIRED)
 # find_package(cv_bridge REQUIRED)
@@ -23,5 +24,12 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+ament_python_install_package(${PROJECT_NAME})
+
+install(PROGRAMS
+  ${PROJECT_NAME}/rect_detect_node.py
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 ament_package()
