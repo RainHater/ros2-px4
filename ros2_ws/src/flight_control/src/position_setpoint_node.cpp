@@ -3,6 +3,8 @@
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
 
+using std::placeholders::_1;
+
 PositionSetpointNode::PositionSetpointNode() : Node("position_setpoint_node") {
     RCLCPP_INFO(get_logger(), "Starting position_setpoint_node follower node...");
     
@@ -13,10 +15,10 @@ PositionSetpointNode::PositionSetpointNode() : Node("position_setpoint_node") {
         "/fmu/in/trajectory_setpoint", 10);
     m_target_position_sub = create_subscription<common_msgs::msg::PositionSetpoint>(
         "/target_position", 10,
-        std::bind(&PositionSetpointNode::target_position_callback, this, std::placeholders::_1));
+        std::bind(&PositionSetpointNode::target_position_callback, this, _1));
     m_current_position_sub = create_subscription<px4_msgs::msg::VehicleOdometry>(
         "/fmu/out/vehicle_odometry", qos,
-        std::bind(&PositionSetpointNode::current_position_callback, this, std::placeholders::_1));
+        std::bind(&PositionSetpointNode::current_position_callback, this, _1));
     m_timer = this->create_wall_timer(
         std::chrono::milliseconds(100), 
         std::bind(&PositionSetpointNode::timer_callback, this));
