@@ -2,7 +2,8 @@
 #include <common_msgs/msg/detail/control_mode__struct.hpp>
 #include <functional>
 
-ArmingOffboardNode::ArmingOffboardNode() : Node("arming_offboard_node"){
+ArmingOffboardNode::ArmingOffboardNode() 
+    : Node("arming_offboard_node", "arming_offboard_node"){
     RCLCPP_INFO(this->get_logger(), "Starting arming_offboard_node follower node...");
     
     m_offboard_setpoint_counter = 0;
