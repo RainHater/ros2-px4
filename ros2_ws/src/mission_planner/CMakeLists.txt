@@ -22,4 +22,10 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+
+include_directories(
+  ${PROJECT_SOURCE_DIR}/include 
+)
+
 ament_package()

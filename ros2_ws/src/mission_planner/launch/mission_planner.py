@@ -23,8 +23,16 @@ def generate_launch_description():
         output='screen',
     )
 
+    rect_detect_node = Node(
+        package='vision_pipeline',
+        executable='rect_detect_node.py',
+        name='rect_detect_node',
+        output='screen',
+    )
+
     return LaunchDescription([
         arm_offboard_node,
         position_setpoint_node,
         gps_navigation_node,
+        rect_detect_node,
     ])
