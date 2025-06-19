@@ -25,6 +25,7 @@ endif()
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/TargetGps.msg"
   "msg/PositionSetpoint.msg"
+  "msg/ControlMode.msg"
   DEPENDENCIES std_msgs
 )
 

@@ -1,28 +1,20 @@
 #include "arm_offboard/arming_offboard_node.h"
+#include <common_msgs/msg/detail/control_mode__struct.hpp>
+#include <functional>
 
 ArmingOffboardNode::ArmingOffboardNode() : Node("arming_offboard_node"){
-
-    m_offboard_control_mode_publisher = this->create_publisher<px4_msgs::msg::OffboardControlMode>("/fmu/in/offboard_control_mode", 10);
-    m_vehicle_command_publisher = this->create_publisher<px4_msgs::msg::VehicleCommand>("/fmu/in/vehicle_command", 10);
+    RCLCPP_INFO(this->get_logger(), "Starting arming_offboard_node follower node...");
+    
     m_offboard_setpoint_counter = 0;
+    m_current_mode.mode = common_msgs::msg::ControlMode::POSITION;
 
-    auto timer_callback = [this]() -> void {
-        if (m_offboard_setpoint_counter == 10) {
-            // Change to Offboard mode after 10 setpoints
-            this->publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, 6);
-            // Arm the vehicle
-            this->arm();
-        }
-
-        publish_offboard_control_mode();
-
-        // stop the counter after reaching 11
-        if (m_offboard_setpoint_counter < 11) {
-            m_offboard_setpoint_counter++;
-        }
-    };
-
-    m_timer = this->create_wall_timer(std::chrono::milliseconds(100), timer_callback);
+    m_offboard_control_mode_publisher = this->create_publisher<px4_msgs::msg::OffboardControlMode>(
+        "/fmu/in/offboard_control_mode", 10);
+    m_vehicle_command_publisher = this->create_publisher<px4_msgs::msg::VehicleCommand>(
+        "/fmu/in/vehicle_command", 10);
+    m_timer = this->create_wall_timer(
+        std::chrono::milliseconds(100), 
+        std::bind(&ArmingOffboardNode::timer_callback, this));
 }
 
 void ArmingOffboardNode::publish_vehicle_command(uint16_t command, float param1, float param2){
@@ -42,10 +34,10 @@ void ArmingOffboardNode::publish_vehicle_command(uint16_t command, float param1,
 
 void ArmingOffboardNode::publish_offboard_control_mode() {
     px4_msgs::msg::OffboardControlMode msg{};
-    msg.position = true;
-    msg.velocity = false;
+    msg.position = (m_current_mode.mode == common_msgs::msg::ControlMode::POSITION);
+    msg.velocity = (m_current_mode.mode == common_msgs::msg::ControlMode::VELOCITY);
     msg.acceleration = false;
-    msg.attitude = false;
+    msg.attitude = (m_current_mode.mode == common_msgs::msg::ControlMode::ATTITUDE);
     msg.body_rate = false;
     msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
     m_offboard_control_mode_publisher->publish(msg);
@@ -61,8 +53,24 @@ void ArmingOffboardNode::disarm() {
     RCLCPP_INFO(this->get_logger(), "Disarm command send");
 }
 
+void ArmingOffboardNode::timer_callback(){
+
+    if (m_offboard_setpoint_counter == 10) {
+        // Change to Offboard mode after 10 setpoints
+        this->publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_OFFBOARD);
+        // Arm the vehicle
+        this->arm();
+    }
+
+    publish_offboard_control_mode();
+
+    // stop the counter after reaching 11
+    if (m_offboard_setpoint_counter < 11) {
+        m_offboard_setpoint_counter++;
+    }
+}
+
 int main(int argc, char *argv[]) {
-    std::cout << "Starting ArmingOffboardNode follower node..." << std::endl;
     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
     rclcpp::init(argc, argv);
     rclcpp::spin(std::make_shared<ArmingOffboardNode>());

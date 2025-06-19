@@ -1,22 +1,21 @@
 #include "flight_control/gps_navigation_node.h"
-#include <rclcpp/logging.hpp>
-
 using std::placeholders::_1;
 
-GpsNavigationNode::GpsNavigationNode() : rclcpp::Node("gps_navigation_node") {
+GpsNavigationNode::GpsNavigationNode() 
+    : rclcpp::Node("gps_navigation_node", "/gps_navigation_node") {
     RCLCPP_INFO(get_logger(), "Starting gps_navigation_node follower node...");
 
     rclcpp::QoS qos(rclcpp::KeepLast(10));
     qos.best_effort();
-
+    
+    m_target_position_pub = create_publisher<common_msgs::msg::PositionSetpoint>(
+        "/position_setpoint_node/target_position", 10);
     m_target_gps_sub = create_subscription<common_msgs::msg::TargetGps>(
-        "/target_gps", 10, 
+        "target_gps", 10, 
         std::bind(&GpsNavigationNode::target_gps_callback, this, _1));
     m_global_position_sub = create_subscription<px4_msgs::msg::VehicleGlobalPosition>(
         "/fmu/out/vehicle_global_position", qos,
-        std::bind(&GpsNavigationNode::current_gps_callback, this, _1));
-    m_target_position_pub = create_publisher<common_msgs::msg::PositionSetpoint>(
-        "/target_position", 10);
+        std::bind(&GpsNavigationNode::current_gps_callback, this, _1)); 
     m_timer = this->create_wall_timer(
         std::chrono::milliseconds(100), 
         std::bind(&GpsNavigationNode::timer_callback, this));

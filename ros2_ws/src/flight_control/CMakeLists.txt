@@ -36,6 +36,7 @@ ament_target_dependencies(arming_offboard_node
   rclcpp 
   px4_msgs 
   geometry_msgs
+  common_msgs
 )
 install(TARGETS arming_offboard_node DESTINATION lib/${PROJECT_NAME})
 

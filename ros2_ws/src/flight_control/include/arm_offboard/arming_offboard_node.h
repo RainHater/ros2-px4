@@ -1,17 +1,21 @@
 #ifndef _ARMING_OFFBOARD_NODE_H
 #define _ARMING_OFFBOARD_NODE_H
 
+#include <common_msgs/msg/detail/control_mode__struct.hpp>
 #include <px4_msgs/msg/offboard_control_mode.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_command.hpp>
 #include <px4_msgs/msg/vehicle_control_mode.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <common_msgs/msg/control_mode.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <stdint.h>
 
 #include <chrono>
 #include <iostream>
+
+#define PX4_CUSTOM_MAIN_MODE_OFFBOARD 6
 
 class ArmingOffboardNode : public rclcpp::Node {
 public:
@@ -25,6 +29,8 @@ protected:
     void arm();    
     //发送 Disarm(上锁)指令, 关闭电机
     void disarm();    
+    //定时器回调函数
+    void timer_callback();
 private:
     //定时器，用于周期性发布消息
     rclcpp::TimerBase::SharedPtr m_timer;
@@ -32,6 +38,8 @@ private:
     rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr m_vehicle_command_publisher;
     //发布器：发布 offboard_control_mode 消息
     rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr m_offboard_control_mode_publisher;
+    //当前offboard模式
+    common_msgs::msg::ControlMode m_current_mode;
     //offboard setpoint 消息的计数器
     uint64_t m_offboard_setpoint_counter;
 };
