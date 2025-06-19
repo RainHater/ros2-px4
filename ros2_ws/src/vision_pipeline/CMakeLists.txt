@@ -8,9 +8,11 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED) 
-find_package(common_msgs REQUIRED)
-# find_package(sensor_msgs REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(px4_msgs REQUIRED)
+# find_package(common_msgs REQUIRED)
 # find_package(cv_bridge REQUIRED)
+# find_package(sensor_msgs REQUIRED)
 # find_package(image_transport REQUIRED)
 
 if(BUILD_TESTING)
