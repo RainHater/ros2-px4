@@ -1,4 +1,4 @@
-#include "flight_control/position_setpoint_node.h"
+#include "flight_control/position_ctrl_node.h"
 #include <cmath>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
@@ -6,8 +6,8 @@
 using std::placeholders::_1;
 
 PositionSetpointNode::PositionSetpointNode() 
-    : Node("position_setpoint_node", "position_setpoint_node") {
-    RCLCPP_INFO(get_logger(), "Starting position_setpoint_node follower node...");
+    : Node("position_ctrl_node", "position_ctrl_node") {
+    RCLCPP_INFO(get_logger(), "Starting position_ctrl_node follower node...");
     
     rclcpp::QoS qos(rclcpp::KeepLast(10));
     qos.best_effort();
@@ -33,7 +33,6 @@ void PositionSetpointNode::publish_trajectory_setpoint() {
         msg.position[0] = m_target_position.x;
         msg.position[1] = m_target_position.y;
         msg.position[2] = m_target_position.z;
-
         float dx = m_target_position.x - m_current_position.x;
         float dy = m_target_position.y - m_current_position.y;
         double dist = std::hypot(dx, dy);

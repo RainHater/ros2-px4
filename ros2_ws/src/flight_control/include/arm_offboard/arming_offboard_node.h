@@ -25,6 +25,8 @@ protected:
     void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0);
     //向 PX4 发布当前的 Offboard 控制模式(如位置控制、速度控制等)
     void publish_offboard_control_mode();
+    //设置offboard模式回调函数
+    void set_offboard_mode_callback(const common_msgs::msg::ControlMode msg);
     //发送 Arm(解锁)指令, 启动电机
     void arm();    
     //发送 Disarm(上锁)指令, 关闭电机
@@ -35,9 +37,11 @@ private:
     //定时器，用于周期性发布消息
     rclcpp::TimerBase::SharedPtr m_timer;
     //发布器：发布 vehicle_command 消息
-    rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr m_vehicle_command_publisher;
+    rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr m_vehicle_command_pub;
     //发布器：发布 offboard_control_mode 消息
-    rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr m_offboard_control_mode_publisher;
+    rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr m_offboard_control_mode_pub;
+    //订阅设置offboard 
+    rclcpp::Subscription<common_msgs::msg::ControlMode>::SharedPtr m_set_offboard_mode_sub;
     //当前offboard模式
     common_msgs::msg::ControlMode m_current_mode;
     //offboard setpoint 消息的计数器

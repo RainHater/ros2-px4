@@ -9,10 +9,10 @@ def generate_launch_description():
         output='screen',
     )
 
-    position_setpoint_node = Node(
+    position_ctrl_node = Node(
         package='flight_control',
-        executable='position_setpoint_node',
-        name='position_setpoint_node',
+        executable='position_ctrl_node',
+        name='position_ctrl_node',
         output='screen',
     )
 
@@ -32,7 +32,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         arm_offboard_node,
-        position_setpoint_node,
+        position_ctrl_node,
         gps_navigation_node,
         rect_detect_node,
     ])

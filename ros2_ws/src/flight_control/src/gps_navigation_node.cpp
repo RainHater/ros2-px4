@@ -9,7 +9,7 @@ GpsNavigationNode::GpsNavigationNode()
     qos.best_effort();
     
     m_target_position_pub = create_publisher<common_msgs::msg::PositionSetpoint>(
-        "/position_setpoint_node/target_position", 10);
+        "/position_ctrl_node/target_position", 10);
     m_target_gps_sub = create_subscription<common_msgs::msg::TargetGps>(
         "target_gps", 10, 
         std::bind(&GpsNavigationNode::target_gps_callback, this, _1));

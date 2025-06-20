@@ -1,6 +1,6 @@
 #include "arm_offboard/arming_offboard_node.h"
-#include <common_msgs/msg/detail/control_mode__struct.hpp>
-#include <functional>
+
+using std::placeholders::_1;
 
 ArmingOffboardNode::ArmingOffboardNode() 
     : Node("arming_offboard_node", "arming_offboard_node"){
@@ -9,10 +9,13 @@ ArmingOffboardNode::ArmingOffboardNode()
     m_offboard_setpoint_counter = 0;
     m_current_mode.mode = common_msgs::msg::ControlMode::POSITION;
 
-    m_offboard_control_mode_publisher = this->create_publisher<px4_msgs::msg::OffboardControlMode>(
+    m_offboard_control_mode_pub = create_publisher<px4_msgs::msg::OffboardControlMode>(
         "/fmu/in/offboard_control_mode", 10);
-    m_vehicle_command_publisher = this->create_publisher<px4_msgs::msg::VehicleCommand>(
+    m_vehicle_command_pub = create_publisher<px4_msgs::msg::VehicleCommand>(
         "/fmu/in/vehicle_command", 10);
+    m_set_offboard_mode_sub = create_subscription<common_msgs::msg::ControlMode>(
+        "set_offboard_mode", 10, 
+        std::bind(&ArmingOffboardNode::set_offboard_mode_callback, this, _1));
     m_timer = this->create_wall_timer(
         std::chrono::milliseconds(100), 
         std::bind(&ArmingOffboardNode::timer_callback, this));
@@ -30,18 +33,24 @@ void ArmingOffboardNode::publish_vehicle_command(uint16_t command, float param1,
     msg.source_component = 1;
     msg.from_external = true;
     msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
-    m_vehicle_command_publisher->publish(msg);
+    m_vehicle_command_pub->publish(msg);
 }
 
 void ArmingOffboardNode::publish_offboard_control_mode() {
     px4_msgs::msg::OffboardControlMode msg{};
     msg.position = (m_current_mode.mode == common_msgs::msg::ControlMode::POSITION);
     msg.velocity = (m_current_mode.mode == common_msgs::msg::ControlMode::VELOCITY);
-    msg.acceleration = false;
     msg.attitude = (m_current_mode.mode == common_msgs::msg::ControlMode::ATTITUDE);
+    msg.acceleration = false;
     msg.body_rate = false;
     msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
-    m_offboard_control_mode_publisher->publish(msg);
+    m_offboard_control_mode_pub->publish(msg);
+}
+
+void ArmingOffboardNode::set_offboard_mode_callback(const common_msgs::msg::ControlMode msg){
+
+    m_current_mode.mode = msg.mode;
+    RCLCPP_INFO(get_logger(), "current offboard mode: %d", m_current_mode.mode);
 }
 
 void ArmingOffboardNode::arm() {

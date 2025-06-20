@@ -1,5 +1,5 @@
-#ifndef _POSITION_SETPOINT_NODE_H
-#define _POSITION_SETPOINT_NODE_H
+#ifndef _POSITION_CTRL_NODE_H
+#define _POSITION_CTRL_NODE_H
 
 #include <rclcpp/rclcpp.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>

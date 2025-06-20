@@ -40,14 +40,14 @@ ament_target_dependencies(arming_offboard_node
 )
 install(TARGETS arming_offboard_node DESTINATION lib/${PROJECT_NAME})
 
-add_executable(position_setpoint_node src/position_setpoint_node.cpp)
-ament_target_dependencies(position_setpoint_node 
+add_executable(position_ctrl_node src/position_ctrl_node.cpp)
+ament_target_dependencies(position_ctrl_node 
   rclcpp 
   px4_msgs 
   geometry_msgs
   common_msgs
 )
-install(TARGETS position_setpoint_node DESTINATION lib/${PROJECT_NAME})
+install(TARGETS position_ctrl_node DESTINATION lib/${PROJECT_NAME})
 
 add_executable(gps_navigation_node src/gps_navigation_node.cpp)
 ament_target_dependencies(gps_navigation_node 
@@ -57,5 +57,14 @@ ament_target_dependencies(gps_navigation_node
   common_msgs
 )
 install(TARGETS gps_navigation_node DESTINATION lib/${PROJECT_NAME})
+
+add_executable(velocity_ctrl_node src/velocity_ctrl_node.cpp)
+ament_target_dependencies(velocity_ctrl_node 
+  rclcpp 
+  px4_msgs 
+  geometry_msgs
+  common_msgs
+)
+install(TARGETS velocity_ctrl_node DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
