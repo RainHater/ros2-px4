@@ -1,5 +1,5 @@
-#ifndef _POSITION_CTRL_NODE_H
-#define _POSITION_CTRL_NODE_H
+#ifndef _OFFBOARD_CTRL_NODE_H
+#define _OFFBOARD_CTRL_NODE_H
 
 #include <rclcpp/rclcpp.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
@@ -7,9 +7,9 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <common_msgs/msg/position_setpoint.hpp>
 
-class PositionSetpointNode : public rclcpp::Node {
+class OffboardCtrlNode : public rclcpp::Node {
 public:
-    PositionSetpointNode();
+    OffboardCtrlNode();
 protected:
     //发布 trajectory setpoint 消息
     void publish_trajectory_setpoint();

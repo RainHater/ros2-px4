@@ -1,10 +1,10 @@
-#include "arm_offboard/arming_offboard_node.h"
+#include "flight_control/flight_mode_manager_node.h"
 
 using std::placeholders::_1;
 
-ArmingOffboardNode::ArmingOffboardNode() 
-    : Node("arming_offboard_node", "arming_offboard_node"){
-    RCLCPP_INFO(this->get_logger(), "Starting arming_offboard_node follower node...");
+FlightModeManagerNode::FlightModeManagerNode() 
+    : Node("flight_mode_manager_node", "flight_mode_manager_node"){
+    RCLCPP_INFO(this->get_logger(), "Starting flight_mode_manager_node follower node...");
     
     m_offboard_setpoint_counter = 0;
     m_current_mode.mode = common_msgs::msg::ControlMode::POSITION;
@@ -13,15 +13,35 @@ ArmingOffboardNode::ArmingOffboardNode()
         "/fmu/in/offboard_control_mode", 10);
     m_vehicle_command_pub = create_publisher<px4_msgs::msg::VehicleCommand>(
         "/fmu/in/vehicle_command", 10);
+    m_current_mode_pub = create_publisher<common_msgs::msg::ControlMode>(
+        "/current_offboard_mode", 10);
     m_set_offboard_mode_sub = create_subscription<common_msgs::msg::ControlMode>(
-        "set_offboard_mode", 10, 
-        std::bind(&ArmingOffboardNode::set_offboard_mode_callback, this, _1));
+        "/set_offboard_mode", 10, 
+        std::bind(&FlightModeManagerNode::set_offboard_mode_callback, this, _1));
     m_timer = this->create_wall_timer(
         std::chrono::milliseconds(100), 
-        std::bind(&ArmingOffboardNode::timer_callback, this));
+        std::bind(&FlightModeManagerNode::timer_callback, this));
 }
 
-void ArmingOffboardNode::publish_vehicle_command(uint16_t command, float param1, float param2){
+void FlightModeManagerNode::timer_callback(){
+
+    if (m_offboard_setpoint_counter == 10) {
+        // Change to Offboard mode after 10 setpoints
+        this->publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_OFFBOARD);
+        // Arm the vehicle
+        this->arm();
+    }
+
+    publish_px4_offboard_mode();
+    publish_current_offboard_mode();
+
+    // stop the counter after reaching 11
+    if (m_offboard_setpoint_counter < 11) {
+        m_offboard_setpoint_counter++;
+    }
+}
+
+void FlightModeManagerNode::publish_vehicle_command(uint16_t command, float param1, float param2){
 
     px4_msgs::msg::VehicleCommand msg{};
     msg.param1 = param1;
@@ -36,7 +56,7 @@ void ArmingOffboardNode::publish_vehicle_command(uint16_t command, float param1,
     m_vehicle_command_pub->publish(msg);
 }
 
-void ArmingOffboardNode::publish_offboard_control_mode() {
+void FlightModeManagerNode::publish_px4_offboard_mode() {
     px4_msgs::msg::OffboardControlMode msg{};
     msg.position = (m_current_mode.mode == common_msgs::msg::ControlMode::POSITION);
     msg.velocity = (m_current_mode.mode == common_msgs::msg::ControlMode::VELOCITY);
@@ -47,43 +67,30 @@ void ArmingOffboardNode::publish_offboard_control_mode() {
     m_offboard_control_mode_pub->publish(msg);
 }
 
-void ArmingOffboardNode::set_offboard_mode_callback(const common_msgs::msg::ControlMode msg){
+void FlightModeManagerNode::publish_current_offboard_mode(){
+    m_current_mode_pub->publish(m_current_mode);
+}
+
+void FlightModeManagerNode::set_offboard_mode_callback(const common_msgs::msg::ControlMode msg){
 
     m_current_mode.mode = msg.mode;
     RCLCPP_INFO(get_logger(), "current offboard mode: %d", m_current_mode.mode);
 }
 
-void ArmingOffboardNode::arm() {
+void FlightModeManagerNode::arm() {
     publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
     RCLCPP_INFO(this->get_logger(), "Arm command send");
 }
 
-void ArmingOffboardNode::disarm() {
+void FlightModeManagerNode::disarm() {
     publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
     RCLCPP_INFO(this->get_logger(), "Disarm command send");
-}
-
-void ArmingOffboardNode::timer_callback(){
-
-    if (m_offboard_setpoint_counter == 10) {
-        // Change to Offboard mode after 10 setpoints
-        this->publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_OFFBOARD);
-        // Arm the vehicle
-        this->arm();
-    }
-
-    publish_offboard_control_mode();
-
-    // stop the counter after reaching 11
-    if (m_offboard_setpoint_counter < 11) {
-        m_offboard_setpoint_counter++;
-    }
 }
 
 int main(int argc, char *argv[]) {
     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<ArmingOffboardNode>());
+    rclcpp::spin(std::make_shared<FlightModeManagerNode>());
 
     rclcpp::shutdown();
     return 0;

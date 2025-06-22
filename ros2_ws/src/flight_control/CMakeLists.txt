@@ -31,23 +31,26 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include 
 )
 
-add_executable(arming_offboard_node src/arming_offboard_node.cpp)
-ament_target_dependencies(arming_offboard_node 
-  rclcpp 
-  px4_msgs 
-  geometry_msgs
-  common_msgs
-)
-install(TARGETS arming_offboard_node DESTINATION lib/${PROJECT_NAME})
+#启动文件
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 
-add_executable(position_ctrl_node src/position_ctrl_node.cpp)
-ament_target_dependencies(position_ctrl_node 
+add_executable(flight_mode_manager_node src/flight_mode_manager_node.cpp)
+ament_target_dependencies(flight_mode_manager_node 
   rclcpp 
   px4_msgs 
   geometry_msgs
   common_msgs
 )
-install(TARGETS position_ctrl_node DESTINATION lib/${PROJECT_NAME})
+install(TARGETS flight_mode_manager_node DESTINATION lib/${PROJECT_NAME})
+
+add_executable(offboard_ctrl_node src/offboard_ctrl_node.cpp)
+ament_target_dependencies(offboard_ctrl_node 
+  rclcpp 
+  px4_msgs 
+  geometry_msgs
+  common_msgs
+)
+install(TARGETS offboard_ctrl_node DESTINATION lib/${PROJECT_NAME})
 
 add_executable(gps_navigation_node src/gps_navigation_node.cpp)
 ament_target_dependencies(gps_navigation_node 
@@ -57,14 +60,5 @@ ament_target_dependencies(gps_navigation_node
   common_msgs
 )
 install(TARGETS gps_navigation_node DESTINATION lib/${PROJECT_NAME})
-
-add_executable(velocity_ctrl_node src/velocity_ctrl_node.cpp)
-ament_target_dependencies(velocity_ctrl_node 
-  rclcpp 
-  px4_msgs 
-  geometry_msgs
-  common_msgs
-)
-install(TARGETS velocity_ctrl_node DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
