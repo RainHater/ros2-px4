@@ -2,23 +2,24 @@
 #define _GPS_NAVIGATION_NODE_H
 
 #include <common_msgs/msg/detail/position_setpoint__struct.hpp>
+#include <common_msgs/msg/detail/trajectory_set_point__struct.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_global_position.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <common_msgs/msg/target_gps.hpp>
-#include <common_msgs/msg/position_setpoint.hpp>
+#include <common_msgs/msg/trajectory_set_point.hpp>
 
 class GpsNavigationNode : public rclcpp::Node {
 public:
     GpsNavigationNode();
 protected:
+    //定时器回调函数
+    void timer_callback();
     //自身经纬度回调函数
     void current_gps_callback(const px4_msgs::msg::VehicleGlobalPosition::SharedPtr msg);
     //目标经纬度回调函数
     void target_gps_callback(const common_msgs::msg::TargetGps::SharedPtr msg);
-    //定时器回调函数
-    void timer_callback();
     //经纬度转换
     void convert_gps_to_position();
     //发布位置
@@ -31,7 +32,7 @@ private:
     //目标经纬度订阅
     rclcpp::Subscription<common_msgs::msg::TargetGps>::SharedPtr m_target_gps_sub;
     //发布位置
-    rclcpp::Publisher<common_msgs::msg::PositionSetpoint>::SharedPtr m_target_position_pub;
+    rclcpp::Publisher<common_msgs::msg::TrajectorySetPoint>::SharedPtr m_target_position_pub;
     //目标经纬度消息
     common_msgs::msg::TargetGps m_target_gps;
     //当前经纬度消息

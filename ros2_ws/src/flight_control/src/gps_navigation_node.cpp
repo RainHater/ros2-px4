@@ -1,17 +1,18 @@
 #include "flight_control/gps_navigation_node.h"
+
 using std::placeholders::_1;
 
 GpsNavigationNode::GpsNavigationNode() 
-    : rclcpp::Node("gps_navigation_node", "/gps_navigation_node") {
+    : rclcpp::Node("gps_navigation_node") {
     RCLCPP_INFO(get_logger(), "Starting gps_navigation_node follower node...");
 
     rclcpp::QoS qos(rclcpp::KeepLast(10));
     qos.best_effort();
     
-    m_target_position_pub = create_publisher<common_msgs::msg::PositionSetpoint>(
-        "/position_ctrl_node/target_position", 10);
+    m_target_position_pub = create_publisher<common_msgs::msg::TrajectorySetPoint>(
+        "/robot_state", 10);
     m_target_gps_sub = create_subscription<common_msgs::msg::TargetGps>(
-        "target_gps", 10, 
+        "/target_gps", 10, 
         std::bind(&GpsNavigationNode::target_gps_callback, this, _1));
     m_global_position_sub = create_subscription<px4_msgs::msg::VehicleGlobalPosition>(
         "/fmu/out/vehicle_global_position", qos,
@@ -19,6 +20,11 @@ GpsNavigationNode::GpsNavigationNode()
     m_timer = this->create_wall_timer(
         std::chrono::milliseconds(100), 
         std::bind(&GpsNavigationNode::timer_callback, this));
+}
+
+void GpsNavigationNode::timer_callback(){
+
+    convert_gps_to_position();
 }
 
 void GpsNavigationNode::current_gps_callback(const px4_msgs::msg::VehicleGlobalPosition::SharedPtr msg){
@@ -35,11 +41,6 @@ void GpsNavigationNode::current_gps_callback(const px4_msgs::msg::VehicleGlobalP
 void GpsNavigationNode::target_gps_callback(const common_msgs::msg::TargetGps::SharedPtr msg){
     m_target_gps = *msg;
     m_convert_flag = true;
-}
-
-void GpsNavigationNode::timer_callback(){
-
-    convert_gps_to_position();
 }
 
 void GpsNavigationNode::convert_gps_to_position(){
@@ -74,13 +75,15 @@ void GpsNavigationNode::convert_gps_to_position(){
 }
 
 void GpsNavigationNode::publish_target_position(double dlat, double dlon, double dz){
-    common_msgs::msg::PositionSetpoint msg;
-    msg.x = dlat;
-    msg.y = dlon;
-    msg.z = -dz;
+    common_msgs::msg::TrajectorySetPoint msg;
+    msg.position[0] = dlat;
+    msg.position[1] = dlon;
+    msg.position[2] = -dz;
 
     RCLCPP_INFO(this->get_logger(), "Publishing goal pose: [%.2f, %.2f, %.2f]",
-                    msg.x, msg.y, msg.z);
+                    msg.position[0], 
+                    msg.position[1], 
+                    msg.position[2]);
     m_target_position_pub->publish(msg);
 }
 

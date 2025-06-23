@@ -2,17 +2,17 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 
 def generate_launch_description():
-    arm_offboard_node = Node(
+    flight_mode_manager_node = Node(
         package='flight_control',
-        executable='arming_offboard_node',
-        name='arming_offboard_node',
+        executable='flight_mode_manager_node',
+        name='flight_mode_manager_node',
         output='screen',
     )
 
-    position_ctrl_node = Node(
+    offboard_ctrl_node = Node(
         package='flight_control',
-        executable='position_ctrl_node',
-        name='position_ctrl_node',
+        executable='offboard_ctrl_node',
+        name='offboard_ctrl_node',
         output='screen',
     )
 
@@ -31,8 +31,8 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        arm_offboard_node,
-        position_ctrl_node,
+        flight_mode_manager_node,
+        offboard_ctrl_node,
         gps_navigation_node,
         rect_detect_node,
     ])
