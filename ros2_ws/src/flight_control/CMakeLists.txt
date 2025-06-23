@@ -34,6 +34,14 @@ include_directories(
 #启动文件
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 
+add_executable(px4_bridge_node src/px4_bridge_node.cpp)
+ament_target_dependencies(px4_bridge_node 
+  rclcpp 
+  px4_msgs 
+  geometry_msgs
+)
+install(TARGETS px4_bridge_node DESTINATION lib/${PROJECT_NAME})
+
 add_executable(flight_mode_manager_node src/flight_mode_manager_node.cpp)
 ament_target_dependencies(flight_mode_manager_node 
   rclcpp 
@@ -61,13 +69,14 @@ ament_target_dependencies(state_estimator_node
 )
 install(TARGETS state_estimator_node DESTINATION lib/${PROJECT_NAME})
 
-add_executable(px4_bridge_node src/px4_bridge_node.cpp)
-ament_target_dependencies(px4_bridge_node 
+add_executable(mission_planner_node src/mission_planner_node.cpp)
+ament_target_dependencies(mission_planner_node 
   rclcpp 
   px4_msgs 
   geometry_msgs
+  common_msgs
 )
-install(TARGETS px4_bridge_node DESTINATION lib/${PROJECT_NAME})
+install(TARGETS mission_planner_node DESTINATION lib/${PROJECT_NAME})
 
 
 ament_package()

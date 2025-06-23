@@ -19,8 +19,8 @@ OffboardCtrlNode::OffboardCtrlNode()
     m_trajectory_setpoint_sub = create_subscription<common_msgs::msg::TrajectorySetPoint>(
         "/control/trajectory_setpoint", 10,
         std::bind(&OffboardCtrlNode::trajectory_setpoint_callback, this, _1));
-    m_current_offboard_mode_sub = create_subscription<common_msgs::msg::ControlMode>(
-        "/control/current_offboard_mode", qos,
+    m_current_offboard_mode_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
+        "/control/px4_mode_status_broadcaster", qos,
         std::bind(&OffboardCtrlNode::current_offboard_callback, this, _1));
     m_timer = create_wall_timer(
         std::chrono::milliseconds(100), 
@@ -45,8 +45,8 @@ void OffboardCtrlNode::current_position_callback(const px4_msgs::msg::VehicleOdo
     m_current_setpoint.position[2] = msg->position[2];
 }
 
-void OffboardCtrlNode::current_offboard_callback(const common_msgs::msg::ControlMode msg){
-    current_offboard_mode = msg;
+void OffboardCtrlNode::current_offboard_callback(const common_msgs::msg::ArmOffboardStatus msg){
+    px4_mode_status_broadcaster = msg;
 }
 
 void OffboardCtrlNode::publish_trajectory_setpoint() {
@@ -65,7 +65,7 @@ void OffboardCtrlNode::offboard_position_mode(px4_msgs::msg::TrajectorySetpoint 
     const auto &setpoint = m_trajectory_setpoint;
     const auto &current = m_current_setpoint;
 
-    if (current_offboard_mode.mode != common_msgs::msg::ControlMode::POSITION) {
+    if (px4_mode_status_broadcaster.mode != common_msgs::msg::ArmOffboardStatus::POSITION) {
         msg.position[0] = std::numeric_limits<float>::quiet_NaN();
         msg.position[1] = std::numeric_limits<float>::quiet_NaN();
         msg.position[2] = std::numeric_limits<float>::quiet_NaN();
@@ -98,7 +98,7 @@ void OffboardCtrlNode::offboard_velocity_mode(px4_msgs::msg::TrajectorySetpoint 
     const auto &setpoint = m_trajectory_setpoint;
     // const auto &current = m_current_setpoint;
 
-    if (current_offboard_mode.mode != common_msgs::msg::ControlMode::VELOCITY) {
+    if (px4_mode_status_broadcaster.mode != common_msgs::msg::ArmOffboardStatus::VELOCITY) {
         msg.velocity[0] = std::numeric_limits<float>::quiet_NaN();
         msg.velocity[1] = std::numeric_limits<float>::quiet_NaN();
         msg.velocity[2] = std::numeric_limits<float>::quiet_NaN();

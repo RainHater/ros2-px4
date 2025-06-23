@@ -6,7 +6,7 @@
 #include <px4_msgs/msg/vehicle_odometry.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <common_msgs/msg/trajectory_set_point.hpp>
-#include <common_msgs/msg/control_mode.hpp>
+#include <common_msgs/msg/arm_offboard_status.hpp>
 
 class OffboardCtrlNode : public rclcpp::Node {
 public:
@@ -19,7 +19,7 @@ protected:
     //当前位置回调函数
     void current_position_callback(const px4_msgs::msg::VehicleOdometry::SharedPtr msg);
     //当前offboard模式状态回调函数
-    void current_offboard_callback(const common_msgs::msg::ControlMode msg);
+    void current_offboard_callback(const common_msgs::msg::ArmOffboardStatus msg);
     //发布offboard控制消息
     void publish_trajectory_setpoint();
     //position模式
@@ -36,13 +36,13 @@ private:
     //订阅当前位置
     rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr m_current_position_sub;
     //订阅当前offboard模式状态
-    rclcpp::Subscription<common_msgs::msg::ControlMode>::SharedPtr m_current_offboard_mode_sub;
+    rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_current_offboard_mode_sub;
     //目标位置
     common_msgs::msg::TrajectorySetPoint m_trajectory_setpoint;
     //当前位置
     common_msgs::msg::TrajectorySetPoint m_current_setpoint;
     //当前offboard模式状态
-    common_msgs::msg::ControlMode current_offboard_mode;
+    common_msgs::msg::ArmOffboardStatus px4_mode_status_broadcaster;
     //最后一次yaw角度
     float m_last_yaw;
 };

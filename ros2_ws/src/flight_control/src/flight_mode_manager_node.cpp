@@ -7,15 +7,15 @@ FlightModeManagerNode::FlightModeManagerNode()
     RCLCPP_INFO(this->get_logger(), "Starting flight_mode_manager_node follower node...");
     
     m_offboard_setpoint_counter = 0;
-    m_current_mode.mode = common_msgs::msg::ControlMode::POSITION;
+    m_current_mode.mode = common_msgs::msg::ArmOffboardStatus::POSITION;
 
     m_offboard_control_mode_pub = create_publisher<px4_msgs::msg::OffboardControlMode>(
         "/interface/in/offboard_control_mode", 10);
     m_vehicle_command_pub = create_publisher<px4_msgs::msg::VehicleCommand>(
         "/interface/in/vehicle_command", 10);
-    m_current_mode_pub = create_publisher<common_msgs::msg::ControlMode>(
-        "/control/current_offboard_mode", 10);
-    m_set_offboard_mode_sub = create_subscription<common_msgs::msg::ControlMode>(
+    m_px4_mode_status_broadcaster_pub = create_publisher<common_msgs::msg::ArmOffboardStatus>(
+        "/control/px4_mode_status_broadcaster", 10);
+    m_set_offboard_mode_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
         "/control/set_offboard_mode", 10, 
         std::bind(&FlightModeManagerNode::set_offboard_mode_callback, this, _1));
     m_timer = this->create_wall_timer(
@@ -58,9 +58,9 @@ void FlightModeManagerNode::publish_vehicle_command(uint16_t command, float para
 
 void FlightModeManagerNode::publish_px4_offboard_mode() {
     px4_msgs::msg::OffboardControlMode msg{};
-    msg.position = (m_current_mode.mode == common_msgs::msg::ControlMode::POSITION);
-    msg.velocity = (m_current_mode.mode == common_msgs::msg::ControlMode::VELOCITY);
-    msg.attitude = (m_current_mode.mode == common_msgs::msg::ControlMode::ATTITUDE);
+    msg.position = (m_current_mode.mode == common_msgs::msg::ArmOffboardStatus::POSITION);
+    msg.velocity = (m_current_mode.mode == common_msgs::msg::ArmOffboardStatus::VELOCITY);
+    msg.attitude = (m_current_mode.mode == common_msgs::msg::ArmOffboardStatus::ATTITUDE);
     msg.acceleration = false;
     msg.body_rate = false;
     msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
@@ -68,10 +68,10 @@ void FlightModeManagerNode::publish_px4_offboard_mode() {
 }
 
 void FlightModeManagerNode::publish_current_offboard_mode(){
-    m_current_mode_pub->publish(m_current_mode);
+    m_px4_mode_status_broadcaster_pub->publish(m_current_mode);
 }
 
-void FlightModeManagerNode::set_offboard_mode_callback(const common_msgs::msg::ControlMode msg){
+void FlightModeManagerNode::set_offboard_mode_callback(const common_msgs::msg::ArmOffboardStatus msg){
 
     m_current_mode.mode = msg.mode;
     RCLCPP_INFO(get_logger(), "current offboard mode: %d", m_current_mode.mode);

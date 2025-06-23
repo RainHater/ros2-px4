@@ -37,10 +37,18 @@ def generate_launch_description():
         output='screen',
     )
 
+    mission_planner_node = Node(
+        package='flight_control',
+        executable='mission_planner_node',
+        name='mission_planner_node',
+        output='screen',
+    )
+
     return LaunchDescription([
         px4_bridge_node,
         flight_mode_manager_node,
         offboard_ctrl_node,
         state_estimator_node,
         rect_detect_node,
+        mission_planner_node,
     ])

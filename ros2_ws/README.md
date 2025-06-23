@@ -50,7 +50,6 @@
 | `/vision/detections`             | `vision_msgs::msg::Detection2DArray`            | → 视觉    | 目标检测结果                              |
 | `/vision/pose`                   | `geometry_msgs::msg::PoseStamped`               | → 视觉&飞控 | 视觉估计的位姿                            |
 | `/mission/goal`                  | `geometry_msgs::msg::PoseStamped`               | → 视觉&飞控 | 视觉伺服下发的新航点                      |
-
 ---
 
 ## 节点详情
@@ -82,9 +81,9 @@
   - `/set_offboard_mode`   
 
 - **发布**  
-  - `/current_offboard_mode`  
+  - `/px4_mode_status_broadcaster`  
   - `/fmu/in/vehicle_command`  
-  - `/current_offboard_mode`  
+  - `/px4_mode_status_broadcaster`  
 
 ---
 
@@ -97,7 +96,7 @@
 - **订阅**  
   - `/trajectory_setpoint`（目标点）  
   - `/fmu/out/vehicle_odometry`（当前位姿）  
-  - `/current_offboard_mode`（当前控制模式）  
+  - `/px4_mode_status_broadcaster`（当前控制模式）  
 
 - **发布**  
   - `/fmu/in/trajectory_setpoint`  

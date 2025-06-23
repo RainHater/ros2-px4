@@ -1,17 +1,17 @@
 #ifndef _FLIGHT_MODE_MANAGER_NODE_H
 #define _FLIGHT_MODE_MANAGER_NODE_H
 
-#include <common_msgs/msg/detail/control_mode__struct.hpp>
+#include <common_msgs/msg/detail/arm_offboard_status__struct.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <px4_msgs/msg/offboard_control_mode.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_command.hpp>
 #include <px4_msgs/msg/vehicle_control_mode.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
-#include <common_msgs/msg/control_mode.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <stdint.h>
+#include <common_msgs/msg/arm_offboard_status.hpp>
 
+#include <stdint.h>
 #include <chrono>
 #include <iostream>
 
@@ -30,7 +30,7 @@ protected:
     //向全局发布当前Offboard模式
     void publish_current_offboard_mode();
     //设置offboard模式回调函数
-    void set_offboard_mode_callback(const common_msgs::msg::ControlMode msg);
+    void set_offboard_mode_callback(const common_msgs::msg::ArmOffboardStatus msg);
     //Arm解锁
     void arm();    
     //Arm上锁
@@ -43,11 +43,12 @@ private:
     //发布 offboard_control_mode 消息
     rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr m_offboard_control_mode_pub;
     //发布当前Offboard模式消息
-    rclcpp::Publisher<common_msgs::msg::ControlMode>::SharedPtr m_current_mode_pub;
+    rclcpp::Publisher<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_px4_mode_status_broadcaster_pub;
     //订阅设置offboard 
-    rclcpp::Subscription<common_msgs::msg::ControlMode>::SharedPtr m_set_offboard_mode_sub;
+    rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_set_offboard_mode_sub;
+    rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_px4_mode_status_broadcaster_sub;
     //当前offboard模式
-    common_msgs::msg::ControlMode m_current_mode;
+    common_msgs::msg::ArmOffboardStatus m_current_mode;
     //offboard setpoint 消息的计数器
     uint64_t m_offboard_setpoint_counter;
 };

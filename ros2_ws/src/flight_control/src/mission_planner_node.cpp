@@ -14,6 +14,23 @@ MissionPlanner::MissionPlanner()
 }
 
 void MissionPlanner::timer_callback(){
-
+    switch(m_current_task_status){
+        case FLY_TO_GPS_TARGET:{
+            common_msgs::msg::TargetGps target_gps;
+            target_gps.lat = 0.0000047;
+            target_gps.lon = 0.0000009;
+            target_gps.alt = 2.0;
+            m_trajectory_setpoint_pub->publish(target_gps);
+        }
+        break;
+    }
 }
 
+int main(int argc, char *argv[]) {
+    setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+    rclcpp::init(argc, argv);
+    rclcpp::spin(std::make_shared<MissionPlanner>());
+
+    rclcpp::shutdown();
+    return 0;
+}

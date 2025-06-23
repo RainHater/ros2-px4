@@ -24,6 +24,9 @@ PX4BridgeNode::PX4BridgeNode()
     m_vehicle_global_position_sub = create_subscription<px4_msgs::msg::VehicleGlobalPosition>(
         "/fmu/out/vehicle_global_position", qos,
         std::bind(&PX4BridgeNode::vehicle_global_position_callback, this, _1)); 
+    m_vehicle_status_sub = create_subscription<px4_msgs::msg::VehicleStatus>(
+        "/fmu/out/vehicle_status_v1", qos,
+        std::bind(&PX4BridgeNode::vehicle_status_callback, this, _1)); 
     //end 对于飞控订阅
 
     //start 对于外部发布
@@ -31,6 +34,8 @@ PX4BridgeNode::PX4BridgeNode()
         "/interface/out/vehicle_odometry", 10);
     m_vehicle_global_position_pub = create_publisher<px4_msgs::msg::VehicleGlobalPosition>(
         "/interface/out/vehicle_global_position", 10);
+    m_vehicle_status_pub = create_publisher<px4_msgs::msg::VehicleStatus>(
+        "/interface/out/vehicle_status_v1", 10);
     //end 对于外部发布
 
     //start 对于外部订阅
@@ -78,6 +83,10 @@ void PX4BridgeNode::offboard_control_mode_callback(const px4_msgs::msg::Offboard
 
 void PX4BridgeNode::vehicle_global_position_callback(const px4_msgs::msg::VehicleGlobalPosition &msg){
     m_vehicle_global_position_pub->publish(msg);
+}
+
+void PX4BridgeNode::vehicle_status_callback(const px4_msgs::msg::VehicleStatus &msg){
+    m_vehicle_status_pub->publish(msg);
 }
 
 int main(int argc, char *argv[]) {
