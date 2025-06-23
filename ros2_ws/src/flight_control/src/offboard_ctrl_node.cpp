@@ -14,8 +14,8 @@ OffboardCtrlNode::OffboardCtrlNode()
     m_trajectory_setpoint_pub = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
         "/fmu/in/trajectory_setpoint", 10);
     m_trajectory_setpoint_sub = create_subscription<common_msgs::msg::TrajectorySetPoint>(
-        "/robot_state", 10,
-        std::bind(&OffboardCtrlNode::target_position_callback, this, _1));
+        "/trajectory_setpoint", 10,
+        std::bind(&OffboardCtrlNode::trajectory_setpoint_callback, this, _1));
     m_current_position_sub = create_subscription<px4_msgs::msg::VehicleOdometry>(
         "/fmu/out/vehicle_odometry", qos,
         std::bind(&OffboardCtrlNode::current_position_callback, this, _1));
@@ -32,7 +32,7 @@ void OffboardCtrlNode::timer_callback(){
     publish_trajectory_setpoint();
 }
 
-void OffboardCtrlNode::target_position_callback(const common_msgs::msg::TrajectorySetPoint msg) {
+void OffboardCtrlNode::trajectory_setpoint_callback(const common_msgs::msg::TrajectorySetPoint msg) {
     m_trajectory_setpoint = msg;
     RCLCPP_INFO(this->get_logger(), "Received target position: [x: %.2f, y: %.2f, z: %.2f]",
                 m_trajectory_setpoint.position[0], 

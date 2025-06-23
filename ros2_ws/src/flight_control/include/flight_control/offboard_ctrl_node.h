@@ -15,7 +15,7 @@ protected:
     //定时器回调
     void timer_callback();
     // 目标位置回调函数
-    void target_position_callback(const common_msgs::msg::TrajectorySetPoint msg);
+    void trajectory_setpoint_callback(const common_msgs::msg::TrajectorySetPoint msg);
     //当前位置回调函数
     void current_position_callback(const px4_msgs::msg::VehicleOdometry::SharedPtr msg);
     //当前offboard模式状态回调函数
