@@ -25,7 +25,7 @@ protected:
     //定时器回调函数
     void timer_callback();
     //设置offboard模式
-    void set_offboard_mode_callback(const common_msgs::msg::ArmOffboardStatus &msg);
+    void set_px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus &msg);
     //获取飞控当前状态
     void px4_mode_status_broadcaster_callback(const px4_msgs::msg::VehicleStatus &msg);
     //发布一个 PX4 的 VehicleCommand 指令
@@ -48,14 +48,14 @@ private:
     //发布当前Offboard模式消息
     rclcpp::Publisher<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_px4_mode_status_broadcaster_pub;
     //订阅设置offboard 
-    rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_set_offboard_mode_sub;
+    rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_set_px4_mode_status_sub;
     //订阅px4飞控当前状态
     rclcpp::Subscription<px4_msgs::msg::VehicleStatus>::SharedPtr m_px4_mode_status_broadcaster_sub;
     //当前offboard模式
     common_msgs::msg::ArmOffboardStatus m_current_mode;
     //offboard setpoint 消息的计数器
     uint64_t m_offboard_setpoint_counter;
-    bool m_offboard_mode = false;
+
 };
 
 #endif
