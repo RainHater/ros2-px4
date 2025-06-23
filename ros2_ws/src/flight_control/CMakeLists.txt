@@ -52,13 +52,13 @@ ament_target_dependencies(offboard_ctrl_node
 )
 install(TARGETS offboard_ctrl_node DESTINATION lib/${PROJECT_NAME})
 
-add_executable(gps_navigation_node src/gps_navigation_node.cpp)
-ament_target_dependencies(gps_navigation_node 
+add_executable(state_estimator_node src/state_estimator_node.cpp)
+ament_target_dependencies(state_estimator_node 
   rclcpp 
   px4_msgs 
   geometry_msgs
   common_msgs
 )
-install(TARGETS gps_navigation_node DESTINATION lib/${PROJECT_NAME})
+install(TARGETS state_estimator_node DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

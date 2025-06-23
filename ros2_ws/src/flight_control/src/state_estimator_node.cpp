@@ -1,16 +1,16 @@
-#include "flight_control/gps_navigation_node.h"
+#include "flight_control/state_estimator_node.h"
 
 using std::placeholders::_1;
 
 GpsNavigationNode::GpsNavigationNode() 
-    : rclcpp::Node("gps_navigation_node") {
-    RCLCPP_INFO(get_logger(), "Starting gps_navigation_node follower node...");
+    : rclcpp::Node("state_estimator_node") {
+    RCLCPP_INFO(get_logger(), "Starting state_estimator_node follower node...");
 
     rclcpp::QoS qos(rclcpp::KeepLast(10));
     qos.best_effort();
     
     m_target_position_pub = create_publisher<common_msgs::msg::TrajectorySetPoint>(
-        "/robot_state", 10);
+        "/trajectory_setpoint", 10);
     m_target_gps_sub = create_subscription<common_msgs::msg::TargetGps>(
         "/target_gps", 10, 
         std::bind(&GpsNavigationNode::target_gps_callback, this, _1));
@@ -69,7 +69,7 @@ void GpsNavigationNode::convert_gps_to_position(){
         publish_target_position(north, east, dz);
     } 
 
-    RCLCPP_INFO(get_logger(), "gps dist: %.7f", dist);
+    RCLCPP_INFO(get_logger(), "gps_dist: %.7f", dist);
     RCLCPP_INFO(get_logger(), "current: {lat: %.7f, lon: %.7f, alt: %.7f}", lat_c, lon_c, alt_c);
     RCLCPP_INFO(get_logger(), "target: {lat: %.7f, lon: %.7f, alt: %.7f}", lat_t, lon_t, alt_t);
 }
