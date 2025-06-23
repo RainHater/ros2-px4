@@ -65,7 +65,7 @@ void OffboardCtrlNode::offboard_position_mode(px4_msgs::msg::TrajectorySetpoint 
     const auto &setpoint = m_trajectory_setpoint;
     const auto &current = m_current_setpoint;
 
-    if (px4_mode_status_broadcaster.mode != common_msgs::msg::ArmOffboardStatus::POSITION) {
+    if (px4_mode_status_broadcaster.offboard_mode != common_msgs::msg::ArmOffboardStatus::POSITION) {
         msg.position[0] = std::numeric_limits<float>::quiet_NaN();
         msg.position[1] = std::numeric_limits<float>::quiet_NaN();
         msg.position[2] = std::numeric_limits<float>::quiet_NaN();
@@ -98,7 +98,7 @@ void OffboardCtrlNode::offboard_velocity_mode(px4_msgs::msg::TrajectorySetpoint 
     const auto &setpoint = m_trajectory_setpoint;
     // const auto &current = m_current_setpoint;
 
-    if (px4_mode_status_broadcaster.mode != common_msgs::msg::ArmOffboardStatus::VELOCITY) {
+    if (px4_mode_status_broadcaster.offboard_mode != common_msgs::msg::ArmOffboardStatus::VELOCITY) {
         msg.velocity[0] = std::numeric_limits<float>::quiet_NaN();
         msg.velocity[1] = std::numeric_limits<float>::quiet_NaN();
         msg.velocity[2] = std::numeric_limits<float>::quiet_NaN();
