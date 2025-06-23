@@ -10,13 +10,13 @@ FlightModeManagerNode::FlightModeManagerNode()
     m_current_mode.mode = common_msgs::msg::ControlMode::POSITION;
 
     m_offboard_control_mode_pub = create_publisher<px4_msgs::msg::OffboardControlMode>(
-        "/fmu/in/offboard_control_mode", 10);
+        "/interface/in/offboard_control_mode", 10);
     m_vehicle_command_pub = create_publisher<px4_msgs::msg::VehicleCommand>(
-        "/fmu/in/vehicle_command", 10);
+        "/interface/in/vehicle_command", 10);
     m_current_mode_pub = create_publisher<common_msgs::msg::ControlMode>(
-        "/current_offboard_mode", 10);
+        "/control/current_offboard_mode", 10);
     m_set_offboard_mode_sub = create_subscription<common_msgs::msg::ControlMode>(
-        "/set_offboard_mode", 10, 
+        "/control/set_offboard_mode", 10, 
         std::bind(&FlightModeManagerNode::set_offboard_mode_callback, this, _1));
     m_timer = this->create_wall_timer(
         std::chrono::milliseconds(100), 

@@ -12,23 +12,22 @@ OffboardCtrlNode::OffboardCtrlNode()
     qos.best_effort();
     
     m_trajectory_setpoint_pub = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
-        "/fmu/in/trajectory_setpoint", 10);
-    m_trajectory_setpoint_sub = create_subscription<common_msgs::msg::TrajectorySetPoint>(
-        "/trajectory_setpoint", 10,
-        std::bind(&OffboardCtrlNode::trajectory_setpoint_callback, this, _1));
+        "/interface/in/trajectory_setpoint", 10);
     m_current_position_sub = create_subscription<px4_msgs::msg::VehicleOdometry>(
-        "/fmu/out/vehicle_odometry", qos,
+        "/interface/out/vehicle_odometry", qos,
         std::bind(&OffboardCtrlNode::current_position_callback, this, _1));
+    m_trajectory_setpoint_sub = create_subscription<common_msgs::msg::TrajectorySetPoint>(
+        "/control/trajectory_setpoint", 10,
+        std::bind(&OffboardCtrlNode::trajectory_setpoint_callback, this, _1));
     m_current_offboard_mode_sub = create_subscription<common_msgs::msg::ControlMode>(
-        "/current_offboard_mode", qos,
+        "/control/current_offboard_mode", qos,
         std::bind(&OffboardCtrlNode::current_offboard_callback, this, _1));
-    m_timer = this->create_wall_timer(
+    m_timer = create_wall_timer(
         std::chrono::milliseconds(100), 
         std::bind(&OffboardCtrlNode::timer_callback, this));
 }
 
 void OffboardCtrlNode::timer_callback(){
-
     publish_trajectory_setpoint();
 }
 

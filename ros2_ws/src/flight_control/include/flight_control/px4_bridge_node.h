@@ -1,0 +1,48 @@
+#ifndef _PX4_BRIDGE_NODE_H
+#define _PX4_BRIDGE_NODE_H
+
+#include <rclcpp/rclcpp.hpp>
+#include <px4_msgs/msg/trajectory_setpoint.hpp>
+#include <px4_msgs/msg/offboard_control_mode.hpp>
+#include <px4_msgs/msg/vehicle_odometry.hpp>
+#include <px4_msgs/msg/vehicle_command.hpp>
+#include <px4_msgs/msg/vehicle_global_position.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+
+class PX4BridgeNode : public rclcpp::Node {
+public:
+    PX4BridgeNode();
+protected:
+    void timer_callback();
+    void vehicle_command_callback(const px4_msgs::msg::VehicleCommand &msg);
+    void trajectory_setpoint_callback(const px4_msgs::msg::TrajectorySetpoint &msg);
+    void vehicle_odometry_callback(const px4_msgs::msg::VehicleOdometry &msg);
+    void offboard_control_mode_callback(const px4_msgs::msg::OffboardControlMode &msg);
+    void vehicle_global_position_callback(const px4_msgs::msg::VehicleGlobalPosition &msg);
+private:
+    rclcpp::TimerBase::SharedPtr m_timer;
+    
+    //start 对于飞控发布
+    rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr m_vehicle_command_pub;
+    rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr m_trajectory_setpoint_pub;
+    rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr m_offboard_control_mode_pub;
+    //end 对于飞控发布
+
+    //start 对于飞控订阅
+    rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr m_vehicle_odometry_sub;
+    rclcpp::Subscription<px4_msgs::msg::VehicleGlobalPosition>::SharedPtr m_vehicle_global_position_sub;
+    //end 对于飞控订阅
+
+    //start 对于外部发布
+    rclcpp::Publisher<px4_msgs::msg::VehicleOdometry>::SharedPtr m_vehicle_odometry_pub;
+    rclcpp::Publisher<px4_msgs::msg::VehicleGlobalPosition>::SharedPtr m_vehicle_global_position_pub;
+    //end 对于外部发布
+
+    //start 对于外部订阅
+    rclcpp::Subscription<px4_msgs::msg::VehicleCommand>::SharedPtr m_vehicle_command_sub;
+    rclcpp::Subscription<px4_msgs::msg::TrajectorySetpoint>::SharedPtr m_trajectory_setpoint_sub;
+    rclcpp::Subscription<px4_msgs::msg::OffboardControlMode>::SharedPtr m_offboard_control_mode_sub;
+    //end 对于外部订阅
+};
+
+#endif

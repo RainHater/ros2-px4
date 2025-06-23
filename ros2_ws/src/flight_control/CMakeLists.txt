@@ -61,4 +61,13 @@ ament_target_dependencies(state_estimator_node
 )
 install(TARGETS state_estimator_node DESTINATION lib/${PROJECT_NAME})
 
+add_executable(px4_bridge_node src/px4_bridge_node.cpp)
+ament_target_dependencies(px4_bridge_node 
+  rclcpp 
+  px4_msgs 
+  geometry_msgs
+)
+install(TARGETS px4_bridge_node DESTINATION lib/${PROJECT_NAME})
+
+
 ament_package()
