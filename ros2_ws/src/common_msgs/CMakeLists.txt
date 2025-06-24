@@ -26,6 +26,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/TargetGps.msg"
   "msg/TrajectorySetPoint.msg"
   "msg/ArmOffboardStatus.msg"
+  "msg/TaskStatus.msg"
   DEPENDENCIES std_msgs
 )
 

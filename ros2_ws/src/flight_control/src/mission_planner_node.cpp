@@ -1,12 +1,11 @@
 #include "flight_control/mission_planner_node.h"
-#include <common_msgs/msg/detail/target_gps__struct.hpp>
 
 using std::placeholders::_1;
 
 MissionPlanner::MissionPlanner()
     : rclcpp::Node("mission_planner_node") {
     RCLCPP_INFO(get_logger(), "Starting mission_planner_node follower node...");
-    
+
     m_trajectory_setpoint_pub = create_publisher<common_msgs::msg::TargetGps>(
         "/control/target_gps", 10);
     
