@@ -4,6 +4,7 @@
 #include <functional>
 
 using std::placeholders::_1;
+using std::placeholders::_2;
 
 static constexpr float kInvalidThreshold = 1e-6f;
 
@@ -14,6 +15,13 @@ OffboardCtrlNode::OffboardCtrlNode()
     rclcpp::QoS qos(rclcpp::KeepLast(10));
     qos.best_effort();
     
+    m_action_nav_server = rclcpp_action::create_server<NavigateToGPS>(
+        this,
+        "/control/navigate_to_gps", 
+        std::bind(&OffboardCtrlNode::nav_handle_goal, this, _1, _2),
+        std::bind(&OffboardCtrlNode::nav_handle_cancel, this, _1),
+        std::bind(&OffboardCtrlNode::nav_handle_accepted, this, _1));
+
     m_trajectory_setpoint_pub = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
         "/interface/in/trajectory_setpoint", 10);
     
@@ -46,6 +54,38 @@ void OffboardCtrlNode::target_setpoint_callback(const common_msgs::msg::Trajecto
     }
     m_target_setpoint.yaw = msg->yaw;
     m_target_setpoint.yawspeed = msg->yawspeed;
+}
+
+rclcpp_action::GoalResponse OffboardCtrlNode::nav_handle_goal(
+        const rclcpp_action::GoalUUID & uuid,
+        std::shared_ptr<const NavigateToGPS::Goal> goal){
+        
+    RCLCPP_INFO(get_logger(), "Received goal: lat=%f lon=%f alt=%f", goal->latitude, goal->longitude, goal->altitude);
+    return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+}
+
+rclcpp_action::CancelResponse OffboardCtrlNode::nav_handle_cancel(
+        const std::shared_ptr<GoalHandleNavigate> goal_handle){
+    
+    RCLCPP_INFO(this->get_logger(), "Received request to cancel goal");
+    return rclcpp_action::CancelResponse::ACCEPT;
+}
+
+void OffboardCtrlNode::nav_handle_accepted(
+        const std::shared_ptr<GoalHandleNavigate> goal_handle){
+
+   std::thread{std::bind(&OffboardCtrlNode::nav_execute, this, goal_handle)}.detach(); 
+}
+
+void nav_execute(
+        const std::shared_ptr<GoalHandleNavigate> goal_handle){
+            
+    auto result = std::make_shared<NavigateToGPS::Result>();
+    auto feedback = std::make_shared<NavigateToGPS::Feedback>();
+
+    result->success = true;
+    result->message = "Arrived at target";
+    goal_handle->succeed(result);
 }
 
 void OffboardCtrlNode::publish_trajectory_setpoint() {

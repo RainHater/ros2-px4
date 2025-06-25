@@ -20,7 +20,6 @@ StateEstimatorNode::StateEstimatorNode()
 }
 
 void StateEstimatorNode::timer_callback(){
-
     convert_gps_to_position();
 }
 

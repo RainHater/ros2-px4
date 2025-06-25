@@ -11,6 +11,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(px4_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -55,6 +56,7 @@ install(TARGETS flight_mode_manager_node DESTINATION lib/${PROJECT_NAME})
 add_executable(offboard_ctrl_node src/offboard_ctrl_node.cpp)
 ament_target_dependencies(offboard_ctrl_node 
   rclcpp 
+  rclcpp_action
   px4_msgs 
   geometry_msgs
   common_msgs
