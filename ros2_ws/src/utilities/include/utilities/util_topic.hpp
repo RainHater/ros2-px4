@@ -21,4 +21,11 @@ make_simple_subscription(
     );
 }
 
+template <typename ContainerSrc, typename ContainerDst>
+void copy_float_data(const ContainerSrc& src, ContainerDst& dst) {
+    static_assert(std::is_same<typename ContainerSrc::value_type, float>::value, "src must hold float");
+    static_assert(std::is_same<typename ContainerDst::value_type, float>::value, "dst must hold float");
+    std::copy(std::begin(src), std::end(src), std::begin(dst));
+}
+
 }
