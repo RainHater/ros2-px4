@@ -10,18 +10,22 @@
 #include <common_msgs/msg/trajectory_set_point.hpp>
 #include <common_msgs/msg/arm_offboard_status.hpp>
 #include <common_msgs/action/navigate_to_gps.hpp>
+#include <common_msgs/srv/transform_gps_to_local.hpp>
 
-using NavigateToGPS = common_msgs::action::NavigateToGPS;
+using common_msgs::action::NavigateToGPS;
+using common_msgs::srv::TransformGpsToLocal;
 using GoalHandleNavigate = rclcpp_action::ServerGoalHandle<NavigateToGPS>;
 
 class OffboardCtrlNode : public rclcpp::Node {
 public:
     OffboardCtrlNode();
 protected:
+    void init_client();
     //定时器回调
     void timer_callback();
     //目标位置订阅
-    void target_setpoint_callback(const common_msgs::msg::TrajectorySetPoint::SharedPtr msg);
+    void target_setpoint_callback(
+        const common_msgs::msg::TrajectorySetPoint::SharedPtr msg);
     //处理导航目标请求
     rclcpp_action::GoalResponse nav_handle_goal(
         const rclcpp_action::GoalUUID & uuid,
@@ -35,6 +39,8 @@ protected:
     //执行导航任务逻辑
     void nav_execute(
         const std::shared_ptr<GoalHandleNavigate> goal_handle);
+    // 请求转换函数
+    bool request_local_target(double lat, double lon, double alt);
     //发布offboard控制消息
     void publish_trajectory_setpoint();
     //判断数据是否有效
@@ -44,6 +50,7 @@ private:
     rclcpp::TimerBase::SharedPtr m_timer;
     //飞到目标经纬度动作
     rclcpp_action::Server<NavigateToGPS>::SharedPtr m_action_nav_server;
+    rclcpp::Client<common_msgs::srv::TransformGpsToLocal>::SharedPtr m_gps_transform_client;
     //发布器：发布 trajectory_setpoint 消息
     rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr m_trajectory_setpoint_pub;
     //订阅目标位置的消息
@@ -56,6 +63,8 @@ private:
     px4_msgs::msg::TrajectorySetpoint m_traj_msg_cache;
     //当前offboard模式状态
     common_msgs::msg::ArmOffboardStatus px4_mode_status_broadcaster;
+    // 转换后的目标局部坐标
+    std::array<float, 3> m_target_local_position;
 };
 
 #endif

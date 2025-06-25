@@ -28,6 +28,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ArmOffboardStatus.msg"
   "msg/TaskStatus.msg"
   "action/NavigateToGPS.action"
+  "srv/TransformGpsToLocal.srv"
   DEPENDENCIES std_msgs builtin_interfaces
 )
 

@@ -76,6 +76,7 @@ install(TARGETS state_estimator_node DESTINATION lib/${PROJECT_NAME})
 add_executable(mission_planner_node src/mission_planner_node.cpp)
 ament_target_dependencies(mission_planner_node 
   rclcpp 
+  rclcpp_action
   px4_msgs 
   geometry_msgs
   common_msgs

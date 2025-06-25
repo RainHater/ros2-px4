@@ -9,6 +9,13 @@ def generate_launch_description():
         output='screen',
     )
 
+    state_estimator_node = Node(
+        package='flight_control',
+        executable='state_estimator_node',
+        name='state_estimator_node',
+        output='screen',
+    )
+
     flight_mode_manager_node = Node(
         package='flight_control',
         executable='flight_mode_manager_node',
@@ -20,13 +27,6 @@ def generate_launch_description():
         package='flight_control',
         executable='offboard_ctrl_node',
         name='offboard_ctrl_node',
-        output='screen',
-    )
-
-    state_estimator_node = Node(
-        package='flight_control',
-        executable='state_estimator_node',
-        name='state_estimator_node',
         output='screen',
     )
 
@@ -46,9 +46,9 @@ def generate_launch_description():
 
     return LaunchDescription([
         px4_bridge_node,
+        state_estimator_node,
         flight_mode_manager_node,
         offboard_ctrl_node,
-        state_estimator_node,
         rect_detect_node,
         mission_planner_node,
     ])

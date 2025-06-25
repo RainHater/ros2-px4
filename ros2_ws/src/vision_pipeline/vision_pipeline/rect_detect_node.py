@@ -60,7 +60,7 @@ class RectDetectorNode(Node):
             cv2.circle(cv_image, (int(x_c), int(y_c)), 5, (255,0,0), -1) 
             cv2.polylines(cv_image, [box], True, (0,0,255), 2)
             
-            self.get_logger().info(f"pixel_dist: {pixel_dist}, angle_x: {angle_x}, angle_y: {angle_y}, angle: {angle}")
+            # self.get_logger().info(f"pixel_dist: {pixel_dist}, angle_x: {angle_x}, angle_y: {angle_y}, angle: {angle}")
             # self.get_logger().info(f"box: {box}, center: {rect[0]}")
             # self.get_logger().info(f"height: {height}, width: {width}")
         else:
