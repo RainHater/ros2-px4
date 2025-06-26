@@ -70,6 +70,7 @@ ament_target_dependencies(state_estimator_node
   px4_msgs 
   geometry_msgs
   common_msgs
+  utilities
 )
 install(TARGETS state_estimator_node DESTINATION lib/${PROJECT_NAME})
 

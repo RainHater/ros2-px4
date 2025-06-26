@@ -24,11 +24,15 @@ protected:
     void timer_callback();
     //px4模式获取
     void px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus::SharedPtr msg);
+    //发送导航目标后的响应回调
     void nav_goal_response_callback(std::shared_ptr<GoalHandleNavigate> future);
+    //导航过程中的实时反馈
     void nav_feedback_callback(
         GoalHandleNavigate::SharedPtr, 
         const std::shared_ptr<const NavigateToGPS::Feedback> feedback);
+    //导航任务完成后的结果回调
     void nav_result_callback(const GoalHandleNavigate::WrappedResult &result);
+    //向导航Action服务发送GPS目标点
     void nav_sends_goal();
 private:
     //定时器

@@ -1,4 +1,5 @@
 #include "flight_control/state_estimator_node.h"
+#include "utilities/util_topic.hpp"
 
 using std::placeholders::_1;
 using std::placeholders::_2;
@@ -23,6 +24,10 @@ void StateEstimatorNode::init_subscription(){
     m_global_position_sub = create_subscription<px4_msgs::msg::VehicleGlobalPosition>(
         "/interface/out/vehicle_global_position", 10,
         std::bind(&StateEstimatorNode::current_gps_callback, this, _1)); 
+    m_current_setpoing_sub = utils::make_simple_subscription<
+        px4_msgs::msg::VehicleOdometry>(
+        "/interface/out/vehicle_odometry",
+        10, this, m_current_setpoint);
 }
 
 void StateEstimatorNode::init_service(){
@@ -48,6 +53,9 @@ void StateEstimatorNode::current_gps_callback(const px4_msgs::msg::VehicleGlobal
         RCLCPP_INFO(this->get_logger(), "Reference GPS origin set: lat=%.7f, lon=%.7f, alt=%.2f",
                     lat, lon, alt_m);
     }
+    m_current_gps.lat = lat;
+    m_current_gps.lon = lon;
+    m_current_gps.alt = alt_m;
 }
 
 void StateEstimatorNode::handle_gps_to_local(
@@ -65,11 +73,23 @@ void StateEstimatorNode::handle_gps_to_local(
     double x = 0.0, y = 0.0;
     gps_to_local(m_reference_gps.lat, m_reference_gps.lon,
                  request->latitude, request->longitude, x, y);
-
-    response->x = x;
-    response->y = y;
-    response->z = request->altitude - m_reference_gps.lat;
-
+    
+    std::array<double, 3> target_position = {x, y, request->altitude - m_reference_gps.lat};
+    const float DIST_THRESHOLD = 0.15f;
+    
+    float dx = target_position[0] - m_current_setpoint.position[0];
+    float dy = target_position[1] - m_current_setpoint.position[1];
+    float dist = std::hypot(dx, dy);
+    
+    response->x = target_position[0];
+    response->y = target_position[1];
+    response->z = -target_position[2];
+    response->lat = m_current_gps.lat;
+    response->lon = m_current_gps.lon;
+    response->alt = m_current_gps.alt;
+    response->arrive = (dist < DIST_THRESHOLD)?true:false;
+    
+    
     // RCLCPP_INFO(this->get_logger(), "Converted GPS(%.6f, %.6f, %.2f) → ENU(%.2f, %.2f, %.2f)",
     //             request->latitude, request->longitude, request->altitude,
     //             x, y, response->z);

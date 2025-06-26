@@ -38,7 +38,7 @@ void OffboardCtrlNode::init_subscription(){
     m_current_offboard_mode_sub = utils::make_simple_subscription<
         common_msgs::msg::ArmOffboardStatus>(
       "/control/px4_mode_status_broadcaster",
-        qos, this, px4_mode_status_broadcaster);
+        qos, this, m_px4_mode_status_broadcaster);
 }
 
 void OffboardCtrlNode::init_action(){
@@ -60,7 +60,7 @@ void OffboardCtrlNode::timer_callback(){
 }
 
 void OffboardCtrlNode::target_setpoint_callback(const common_msgs::msg::TrajectorySetPoint::SharedPtr msg){
-    auto &mode = px4_mode_status_broadcaster.offboard_mode;
+    auto &mode = m_px4_mode_status_broadcaster.offboard_mode;
     auto &POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
     auto &VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
 
@@ -109,53 +109,65 @@ void OffboardCtrlNode::nav_execute(
             return;
         }
 
-        request_local_target(goal_handle, goal->lat, goal->lon, goal->alt);
+        auto request = std::make_shared<TransformGpsToLocal::Request>();
+        auto response = std::make_shared<TransformGpsToLocal::Response>();
+        request->latitude = goal->lat;
+        request->longitude = goal->lon;
+        request->altitude = goal->alt;
+        if (!request_local_target(request, response))
+            continue;
         
-        feedback->current_latitude = 0;
-        feedback->current_longitude = 0;
-        feedback->current_altitude = 0;
+        m_target_setpoint.position[0] = static_cast<float>(response->x);
+        m_target_setpoint.position[1] = static_cast<float>(response->y);
+        m_target_setpoint.position[2] = static_cast<float>(response->z);
+
+        feedback->current_latitude = response->lat;
+        feedback->current_longitude = response->lon;
+        feedback->current_altitude = response->alt;
         feedback->distance_remaining = 0;
 
         goal_handle->publish_feedback(feedback);
+
+        if (response->arrive)
+            break;
     }
 
     result->success = true;
     result->message = "Arrived at target";
     goal_handle->succeed(result);
+    RCLCPP_INFO(get_logger(), "action finsh");
 }
 
-bool OffboardCtrlNode::request_local_target(const std::shared_ptr<GoalHandleNavigate> goal_handle,
-                                            double lat, double lon, double alt){
-    auto request = std::make_shared<TransformGpsToLocal::Request>();
-    request->latitude = lat;
-    request->longitude = lon;
-    request->altitude = alt;
+bool OffboardCtrlNode::request_local_target(
+        const std::shared_ptr<TransformGpsToLocal::Request> request,
+        std::shared_ptr<TransformGpsToLocal::Response> &response){
+    // auto request = std::make_shared<TransformGpsToLocal::Request>();
+    // request->latitude = lat;
+    // request->longitude = lon;
+    // request->altitude = alt;
 
     if (!m_gps_transform_client->wait_for_service(std::chrono::seconds(1))) {
         RCLCPP_ERROR(get_logger(), "GPS transform service not available.");
         return false;
     }
 
-    auto future = m_gps_transform_client->async_send_request(request,
-    [this, goal_handle](rclcpp::Client<TransformGpsToLocal>::SharedFuture future) {
-        auto response = future.get();
+    auto future = m_gps_transform_client->async_send_request(request);
+    // auto response = future.get();
+    // m_target_setpoint.position[0] = static_cast<float>(response->x);
+    // m_target_setpoint.position[1] = static_cast<float>(response->y);
+    // m_target_setpoint.position[2] = static_cast<float>(response->z);
 
-        m_target_setpoint.position[0] = static_cast<float>(response->x);
-        m_target_setpoint.position[1] = static_cast<float>(response->y);
-        m_target_setpoint.position[2] = -static_cast<float>(response->z);
-
-        RCLCPP_DEBUG(this->get_logger(),
-                    "request_local_target: x=%.2f, y=%.2f, z=%.2f",
-                    m_target_setpoint.position[0],
-                    m_target_setpoint.position[1],
-                    m_target_setpoint.position[2]);
-    });
-
+    // RCLCPP_DEBUG(this->get_logger(),
+    //             "request_local_target: x=%.2f, y=%.2f, z=%.2f",
+    //             m_target_setpoint.position[0],
+    //             m_target_setpoint.position[1],
+    //             m_target_setpoint.position[2]);
+    response = future.get();
     return true;
 }
 
 void OffboardCtrlNode::publish_trajectory_setpoint() {
-    auto &arm_state = px4_mode_status_broadcaster.arming_state;
+    auto &arm_state = m_px4_mode_status_broadcaster.arming_state;
     auto &armed = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
 
     if (arm_state != armed)
@@ -165,7 +177,7 @@ void OffboardCtrlNode::publish_trajectory_setpoint() {
     px4_msgs::msg::TrajectorySetpoint msg{};
     auto &POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
     auto &VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
-    auto &mode = px4_mode_status_broadcaster.offboard_mode;
+    auto &mode = m_px4_mode_status_broadcaster.offboard_mode;
 
     if (mode == POSITION && non_zero3(target.position)){
         utils::copy_float_data(target.position, msg.position);
@@ -176,10 +188,10 @@ void OffboardCtrlNode::publish_trajectory_setpoint() {
         msg.yaw = NAN;
         msg.yawspeed = target.yawspeed;
     }
-    RCLCPP_INFO(get_logger(), "px4 setpoint: x=%.2f, y=%.2f, z=%.2f",
-                msg.position[0],
-                msg.position[1],
-                msg.position[2]);
+    // RCLCPP_INFO(get_logger(), "px4 setpoint: x=%.2f, y=%.2f, z=%.2f",
+    //             msg.position[0],
+    //             msg.position[1],
+    //             msg.position[2]);
     msg.timestamp = get_clock()->now().nanoseconds() / 1000;
     m_trajectory_setpoint_pub->publish(msg);
 }

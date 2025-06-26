@@ -68,6 +68,7 @@ void MissionPlanner::nav_result_callback(const GoalHandleNavigate::WrappedResult
     switch (result.code) {
         case rclcpp_action::ResultCode::SUCCEEDED:
             RCLCPP_INFO(get_logger(), "Result: success=%d message=%s", result.result->success, result.result->message.c_str());
+            m_current_task_status = FLY_TO_GPS_TARGET;
             break;
         case rclcpp_action::ResultCode::ABORTED:
             RCLCPP_ERROR(get_logger(), "Goal was aborted");

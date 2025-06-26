@@ -4,6 +4,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_global_position.hpp>
+#include <px4_msgs/msg/vehicle_odometry.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <common_msgs/msg/target_gps.hpp>
 #include <common_msgs/msg/trajectory_set_point.hpp>
@@ -46,9 +47,16 @@ private:
     rclcpp::Service<TransformGpsToLocal>::SharedPtr m_gps_to_local_srv;
     //自身经纬度订阅
     rclcpp::Subscription<px4_msgs::msg::VehicleGlobalPosition>::SharedPtr m_global_position_sub;
+    //订阅当前设定值
+    rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr m_current_setpoing_sub;
     //目标经纬度获取完成标志位
     bool m_reference_initialized = false;
+    //起始经纬度坐标
     GeoCoordinate m_reference_gps;
+    //当前经纬度
+    GeoCoordinate m_current_gps;
+    //当前设定值
+    px4_msgs::msg::VehicleOdometry m_current_setpoint;
 };
 
 #endif
