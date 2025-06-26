@@ -33,6 +33,37 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include 
 )
 
+add_library(${PROJECT_NAME}
+  src/navigation_controller.cpp
+)
+
+ament_target_dependencies(${PROJECT_NAME}
+  rclcpp
+  rclcpp_action
+  common_msgs
+)
+
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
+
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(rclcpp rclcpp_action common_msgs)
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
 add_executable(flight_mode_manager_node src/flight_mode_manager_node.cpp)
 ament_target_dependencies(flight_mode_manager_node 
   rclcpp 

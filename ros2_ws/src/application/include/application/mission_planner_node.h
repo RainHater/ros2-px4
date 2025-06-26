@@ -7,6 +7,7 @@
 #include <common_msgs/msg/target_gps.hpp>
 #include <common_msgs/msg/arm_offboard_status.hpp>
 #include <common_msgs/action/navigate_to_gps.hpp>
+#include <control/navigation_controller.h>
 
 using NavigateToGPS = common_msgs::action::NavigateToGPS;
 using GoalHandleNavigate = rclcpp_action::ClientGoalHandle<NavigateToGPS>;
@@ -48,6 +49,8 @@ private:
     rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_px4_mode_status_sub;
     TaskStatus m_current_task_status = WAIT_FOR_ARM_AND_OFFBOARD;
     TaskStatus m_last_task_status = WAIT_FOR_ARM_AND_OFFBOARD;
+    std::unique_ptr<NavigationController> m_nav_controller;
+    bool run_state = false;
 };
 
 #endif

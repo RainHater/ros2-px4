@@ -16,6 +16,7 @@ find_package(common_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(utilities REQUIRED)
 find_package(rclcpp_action REQUIRED)
+find_package(control REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -42,7 +43,9 @@ ament_target_dependencies(mission_planner_node
   geometry_msgs
   common_msgs
   rclcpp_action
+  control
 )
+
 install(TARGETS mission_planner_node DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

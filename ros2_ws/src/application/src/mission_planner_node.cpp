@@ -20,7 +20,7 @@ MissionPlanner::MissionPlanner()
 void MissionPlanner::init_publisher(){
     m_trajectory_setpoint_pub = create_publisher<common_msgs::msg::TargetGps>(
         "/control/target_gps", 10);
-} 
+}
 
 void MissionPlanner::init_subscription(){
     m_px4_mode_status_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
@@ -29,26 +29,38 @@ void MissionPlanner::init_subscription(){
 } 
 
 void MissionPlanner::init_client(){
-    m_nav_cllient = rclcpp_action::create_client<NavigateToGPS>(
-        this, "/control/navigate_to_gps");
+    // m_nav_cllient = rclcpp_action::create_client<NavigateToGPS>(
+    //     this, "/control/navigate_to_gps");
+    // RCLCPP_INFO(get_logger(), "Constructing MissionPlanner");
+    // m_nav_controller = std::make_unique<NavigationController>(this);
+    // RCLCPP_INFO(get_logger(), "Created NavigationController");
 }
 
 void MissionPlanner::timer_callback(){
-    if (m_last_task_status == m_current_task_status)
-        return;
-    m_last_task_status = m_current_task_status;
-
-    RCLCPP_INFO(get_logger(), "Test");
-    switch(m_current_task_status){
-        case FLY_TO_READY_POSITION:{
-            nav_sends_goal(0.000004998, 0.0000600, 2.0);
-        }
-        break;
-        case FLY_TO_GPS_TARGET:{
-            nav_sends_goal(0.0000047, 0.0000009,  2.0);
-        }
-        break;
+    if (!m_nav_controller) {
+        m_nav_controller = std::make_unique<NavigationController>(shared_from_this());
     }
+    // if (m_current_task_status == FLY_TO_READY_POSITION){
+    //     if (run_state){
+    //         if (m_nav_controller->get_task_status()){
+    //             m_current_task_status = FLY_TO_GPS_TARGET;
+    //             run_state = false;
+    //         }
+    //     }else {
+    //         run_state = true;
+    //         m_nav_controller->fly_to(0.000004998, 0.0000600, 2.0);
+    //     }
+    // }else if (m_current_task_status == FLY_TO_GPS_TARGET){
+    //     if (run_state){
+    //         if (m_nav_controller->get_task_status()){
+    //             m_current_task_status = FLY_TO_READY_POSITION;
+    //             run_state = false;
+    //         }
+    //     }else {
+    //         run_state = true;
+    //         m_nav_controller->fly_to(0.0000047, 0.0000009,  2.0);
+    //     }
+    // }
 }
 
 void MissionPlanner::px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus::SharedPtr msg){
