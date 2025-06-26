@@ -33,7 +33,7 @@ protected:
     //导航任务完成后的结果回调
     void nav_result_callback(const GoalHandleNavigate::WrappedResult &result);
     //向导航Action服务发送GPS目标点
-    void nav_sends_goal();
+    void nav_sends_goal(double lat, double lon, double alt);
 private:
     //定时器
     rclcpp::TimerBase::SharedPtr m_timer;
@@ -44,7 +44,7 @@ private:
     //订阅当前飞控arm和offboard状态
     rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_px4_mode_status_sub;
     TaskStatus m_current_task_status = WAIT_FOR_ARM_AND_OFFBOARD;
-    bool m_action_state = false;
+    TaskStatus m_last_task_status = WAIT_FOR_ARM_AND_OFFBOARD;
 };
 
 #endif

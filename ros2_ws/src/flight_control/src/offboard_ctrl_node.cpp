@@ -135,7 +135,6 @@ void OffboardCtrlNode::nav_execute(
     result->success = true;
     result->message = "Arrived at target";
     goal_handle->succeed(result);
-    RCLCPP_INFO(get_logger(), "action finsh");
 }
 
 bool OffboardCtrlNode::request_local_target(

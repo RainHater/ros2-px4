@@ -1,4 +1,5 @@
 #include "flight_control/mission_planner_node.h"
+#include <rclcpp/logging.hpp>
 
 using std::placeholders::_1;
 using std::placeholders::_2;
@@ -22,17 +23,18 @@ MissionPlanner::MissionPlanner()
 }
 
 void MissionPlanner::timer_callback(){
+    if (m_last_task_status == m_current_task_status)
+        return;
+    m_last_task_status = m_current_task_status;
+
+    RCLCPP_INFO(get_logger(), "Test");
     switch(m_current_task_status){
         case FLY_TO_READY_POSITION:{
-            nav_sends_goal();
+            nav_sends_goal(0.000004998, 0.0000600, 2.0);
         }
         break;
         case FLY_TO_GPS_TARGET:{
-            common_msgs::msg::TargetGps target_gps;
-            target_gps.lat = 0.0000047;
-            target_gps.lon = 0.0000009;
-            target_gps.alt = 2.0;
-            m_trajectory_setpoint_pub->publish(target_gps);
+            nav_sends_goal(0.0000047, 0.0000009,  2.0);
         }
         break;
     }
@@ -67,8 +69,8 @@ void MissionPlanner::nav_feedback_callback(
 void MissionPlanner::nav_result_callback(const GoalHandleNavigate::WrappedResult &result){
     switch (result.code) {
         case rclcpp_action::ResultCode::SUCCEEDED:
-            RCLCPP_INFO(get_logger(), "Result: success=%d message=%s", result.result->success, result.result->message.c_str());
             m_current_task_status = FLY_TO_GPS_TARGET;
+            RCLCPP_INFO(get_logger(), "Result: success=%d message=%s", result.result->success, result.result->message.c_str());
             break;
         case rclcpp_action::ResultCode::ABORTED:
             RCLCPP_ERROR(get_logger(), "Goal was aborted");
@@ -82,10 +84,7 @@ void MissionPlanner::nav_result_callback(const GoalHandleNavigate::WrappedResult
     }
 }
 
-void MissionPlanner::nav_sends_goal(){
-    if(m_action_state)
-        return;
-    m_action_state = true;
+void MissionPlanner::nav_sends_goal(double lat, double lon, double alt){
 
     if (!m_nav_cllient->wait_for_action_server(std::chrono::seconds(5))) {
         RCLCPP_ERROR(get_logger(), "Action server not available.");
@@ -93,9 +92,9 @@ void MissionPlanner::nav_sends_goal(){
     }
 
     auto goal_msg = NavigateToGPS::Goal();
-    goal_msg.lat = 0.000004998;
-    goal_msg.lon = 0.0000600;
-    goal_msg.alt = 2.0;
+    goal_msg.lat = lat;
+    goal_msg.lon = lon;
+    goal_msg.alt = alt;
 
     RCLCPP_INFO(this->get_logger(), "Sending goal: lat=%lf lon=%lf alt=%lf", 
         goal_msg.lat, 
