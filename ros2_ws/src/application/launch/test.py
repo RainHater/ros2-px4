@@ -3,28 +3,28 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     px4_bridge_node = Node(
-        package='flight_control',
+        package='interface',
         executable='px4_bridge_node',
         name='px4_bridge_node',
         output='screen',
     )
 
     state_estimator_node = Node(
-        package='flight_control',
+        package='perception',
         executable='state_estimator_node',
         name='state_estimator_node',
         output='screen',
     )
 
     flight_mode_manager_node = Node(
-        package='flight_control',
+        package='control',
         executable='flight_mode_manager_node',
         name='flight_mode_manager_node',
         output='screen',
     )
 
     offboard_ctrl_node = Node(
-        package='flight_control',
+        package='control',
         executable='offboard_ctrl_node',
         name='offboard_ctrl_node',
         output='screen',
@@ -38,7 +38,7 @@ def generate_launch_description():
     )
 
     mission_planner_node = Node(
-        package='flight_control',
+        package='application',
         executable='mission_planner_node',
         name='mission_planner_node',
         output='screen',

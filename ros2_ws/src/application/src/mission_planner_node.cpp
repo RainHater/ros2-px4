@@ -1,5 +1,4 @@
-#include "flight_control/mission_planner_node.h"
-#include <rclcpp/logging.hpp>
+#include "application/mission_planner_node.h"
 
 using std::placeholders::_1;
 using std::placeholders::_2;

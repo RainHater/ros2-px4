@@ -1,8 +1,7 @@
-#include "flight_control/offboard_ctrl_node.h"
+#include "control/offboard_ctrl_node.h"
 #include "utilities/util_topic.hpp"
 #include <cmath>
 #include <functional>
-#include <rclcpp/logging.hpp>
 
 using std::placeholders::_1;
 using std::placeholders::_2;
