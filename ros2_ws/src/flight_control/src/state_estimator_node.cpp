@@ -23,7 +23,7 @@ StateEstimatorNode::StateEstimatorNode()
 
 void StateEstimatorNode::init_service(){
     m_gps_to_local_srv = create_service<TransformGpsToLocal>(
-        "/transform_gps_to_local", 
+        "/perception/transform_gps_to_local", 
         std::bind(&StateEstimatorNode::handle_gps_to_local, this, _1, _2));
 }
 

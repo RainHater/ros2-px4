@@ -7,6 +7,7 @@ FlightModeManagerNode::FlightModeManagerNode()
     RCLCPP_INFO(this->get_logger(), "Starting flight_mode_manager_node follower node...");
     
     m_offboard_setpoint_counter = 0;
+    m_current_mode.arming_state = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_DISARMED;
     m_current_mode.offboard_mode = PX4_OFFBOARD_DEFAULT_MODE;
     
     m_offboard_control_mode_pub = create_publisher<px4_msgs::msg::OffboardControlMode>(
@@ -84,6 +85,7 @@ void FlightModeManagerNode::publish_current_offboard_mode(){
 
 void FlightModeManagerNode::arm() {
     publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
+    m_current_mode.arming_state = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
     RCLCPP_INFO(this->get_logger(), "Arm command send");
 }
 

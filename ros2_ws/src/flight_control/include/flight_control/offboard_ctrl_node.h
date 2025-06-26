@@ -20,6 +20,9 @@ class OffboardCtrlNode : public rclcpp::Node {
 public:
     OffboardCtrlNode();
 protected:
+    void init_publisher();
+    void init_subscription();
+    void init_action();
     void init_client();
     //定时器回调
     void timer_callback();
@@ -40,7 +43,8 @@ protected:
     void nav_execute(
         const std::shared_ptr<GoalHandleNavigate> goal_handle);
     // 请求转换函数
-    bool request_local_target(double lat, double lon, double alt);
+    bool request_local_target(  const std::shared_ptr<GoalHandleNavigate> goal_handle,
+                                double lat, double lon, double alt);
     //发布offboard控制消息
     void publish_trajectory_setpoint();
     //判断数据是否有效
