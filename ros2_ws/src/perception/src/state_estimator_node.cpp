@@ -50,7 +50,7 @@ void StateEstimatorNode::current_gps_callback(const px4_msgs::msg::VehicleGlobal
         m_reference_gps.alt = alt_m;
         m_reference_initialized = true;
 
-        RCLCPP_INFO(this->get_logger(), "Reference GPS origin set: lat=%.7f, lon=%.7f, alt=%.2f",
+        RCLCPP_INFO(this->get_logger(), "current_gps_callback: lat=%.7f, lon=%.7f, alt=%.2f",
                     lat, lon, alt_m);
     }
     m_current_gps.lat = lat;
@@ -75,7 +75,7 @@ void StateEstimatorNode::handle_gps_to_local(
                  request->latitude, request->longitude, x, y);
     
     std::array<double, 3> target_position = {x, y, request->altitude - m_reference_gps.lat};
-    const float DIST_THRESHOLD = 0.15f;
+    const float DIST_THRESHOLD = 0.6f;
     
     float dx = target_position[0] - m_current_setpoint.position[0];
     float dy = target_position[1] - m_current_setpoint.position[1];
@@ -93,6 +93,7 @@ void StateEstimatorNode::handle_gps_to_local(
     // RCLCPP_INFO(this->get_logger(), "Converted GPS(%.6f, %.6f, %.2f) → ENU(%.2f, %.2f, %.2f)",
     //             request->latitude, request->longitude, request->altitude,
     //             x, y, response->z);
+    RCLCPP_INFO(get_logger(), "handle_gps_to_local dist: %f", dist);
 }
 
 double StateEstimatorNode::deg2rad(double deg){

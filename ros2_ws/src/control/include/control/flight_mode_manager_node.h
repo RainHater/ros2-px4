@@ -22,7 +22,8 @@ class FlightModeManagerNode : public rclcpp::Node {
 public:
     FlightModeManagerNode();
 protected:
-    //定时器回调函数
+    void init_publisher();
+    void init_subscription();
     void timer_callback();
     //设置offboard模式
     void set_px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus &msg);

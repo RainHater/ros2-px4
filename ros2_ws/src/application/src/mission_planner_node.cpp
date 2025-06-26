@@ -1,4 +1,5 @@
 #include "application/mission_planner_node.h"
+#include <rclcpp/logging.hpp>
 
 using std::placeholders::_1;
 using std::placeholders::_2;
@@ -7,18 +8,29 @@ MissionPlanner::MissionPlanner()
     : rclcpp::Node("mission_planner_node") {
     RCLCPP_INFO(get_logger(), "Starting mission_planner_node follower node...");
 
-    m_nav_cllient = rclcpp_action::create_client<NavigateToGPS>(this, "/control/navigate_to_gps");
+    init_publisher();
+    init_subscription();
+    init_client();
 
-    m_trajectory_setpoint_pub = create_publisher<common_msgs::msg::TargetGps>(
-        "/control/target_gps", 10);
-    
-    m_px4_mode_status_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
-        "/control/px4_mode_status_broadcaster", 10, 
-        std::bind(&MissionPlanner::px4_mode_status_callback, this, _1));
-    
     m_timer = create_wall_timer(
         std::chrono::milliseconds(100), 
         std::bind(&MissionPlanner::timer_callback, this));
+}
+
+void MissionPlanner::init_publisher(){
+    m_trajectory_setpoint_pub = create_publisher<common_msgs::msg::TargetGps>(
+        "/control/target_gps", 10);
+} 
+
+void MissionPlanner::init_subscription(){
+    m_px4_mode_status_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
+        "/control/px4_mode_status_broadcaster", 10, 
+        std::bind(&MissionPlanner::px4_mode_status_callback, this, _1));
+} 
+
+void MissionPlanner::init_client(){
+    m_nav_cllient = rclcpp_action::create_client<NavigateToGPS>(
+        this, "/control/navigate_to_gps");
 }
 
 void MissionPlanner::timer_callback(){
@@ -58,17 +70,16 @@ void MissionPlanner::nav_feedback_callback(
         GoalHandleNavigate::SharedPtr, 
         const std::shared_ptr<const NavigateToGPS::Feedback> feedback){
 
-    // RCLCPP_INFO(get_logger(), "Feedback: lat=%f lon=%f alt=%f remaining=%.2f",
-    //                 feedback->current_latitude,
-    //                 feedback->current_longitude,
-    //                 feedback->current_altitude,
-    //                 feedback->distance_remaining);
+    RCLCPP_DEBUG(get_logger(), "nav_feedback_callback: lat=%f lon=%f alt=%f remaining=%.2f",
+                    feedback->current_latitude,
+                    feedback->current_longitude,
+                    feedback->current_altitude,
+                    feedback->distance_remaining);
 }
 
 void MissionPlanner::nav_result_callback(const GoalHandleNavigate::WrappedResult &result){
     switch (result.code) {
         case rclcpp_action::ResultCode::SUCCEEDED:
-            m_current_task_status = FLY_TO_GPS_TARGET;
             RCLCPP_INFO(get_logger(), "Result: success=%d message=%s", result.result->success, result.result->message.c_str());
             break;
         case rclcpp_action::ResultCode::ABORTED:

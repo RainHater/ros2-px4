@@ -2,6 +2,8 @@
 #include "utilities/util_topic.hpp"
 #include <cmath>
 #include <functional>
+#include <sstream>
+#include <iomanip>
 
 using std::placeholders::_1;
 using std::placeholders::_2;
@@ -75,14 +77,18 @@ void OffboardCtrlNode::target_setpoint_callback(const common_msgs::msg::Trajecto
 rclcpp_action::GoalResponse OffboardCtrlNode::nav_handle_goal(
         const rclcpp_action::GoalUUID & uuid,
         std::shared_ptr<const NavigateToGPS::Goal> goal){
-        
-    RCLCPP_INFO(get_logger(), "received goal: lat=%f lon=%f alt=%f", goal->lat, goal->lon, goal->alt);
+    std::stringstream ss;
+    for (auto byte : uuid) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)byte;
+    }
+    RCLCPP_INFO(get_logger(), "uuid: %s, nav_handle_goal: lat=%f lon=%f alt=%f", ss.str().c_str(), goal->lat, goal->lon, goal->alt);
     return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
 }
 
 rclcpp_action::CancelResponse OffboardCtrlNode::nav_handle_cancel(
         const std::shared_ptr<GoalHandleNavigate> goal_handle){
     
+    (void)goal_handle;
     RCLCPP_INFO(get_logger(), "received request to cancel goal");
     return rclcpp_action::CancelResponse::ACCEPT;
 }
@@ -139,10 +145,6 @@ void OffboardCtrlNode::nav_execute(
 bool OffboardCtrlNode::request_local_target(
         const std::shared_ptr<TransformGpsToLocal::Request> request,
         std::shared_ptr<TransformGpsToLocal::Response> &response){
-    // auto request = std::make_shared<TransformGpsToLocal::Request>();
-    // request->latitude = lat;
-    // request->longitude = lon;
-    // request->altitude = alt;
 
     if (!m_gps_transform_client->wait_for_service(std::chrono::seconds(1))) {
         RCLCPP_ERROR(get_logger(), "GPS transform service not available.");
@@ -150,16 +152,6 @@ bool OffboardCtrlNode::request_local_target(
     }
 
     auto future = m_gps_transform_client->async_send_request(request);
-    // auto response = future.get();
-    // m_target_setpoint.position[0] = static_cast<float>(response->x);
-    // m_target_setpoint.position[1] = static_cast<float>(response->y);
-    // m_target_setpoint.position[2] = static_cast<float>(response->z);
-
-    // RCLCPP_DEBUG(this->get_logger(),
-    //             "request_local_target: x=%.2f, y=%.2f, z=%.2f",
-    //             m_target_setpoint.position[0],
-    //             m_target_setpoint.position[1],
-    //             m_target_setpoint.position[2]);
     response = future.get();
     return true;
 }
@@ -186,10 +178,10 @@ void OffboardCtrlNode::publish_trajectory_setpoint() {
         msg.yaw = NAN;
         msg.yawspeed = target.yawspeed;
     }
-    // RCLCPP_INFO(get_logger(), "px4 setpoint: x=%.2f, y=%.2f, z=%.2f",
-    //             msg.position[0],
-    //             msg.position[1],
-    //             msg.position[2]);
+    RCLCPP_DEBUG(get_logger(), "px4 setpoint: x=%.2f, y=%.2f, z=%.2f",
+                msg.position[0],
+                msg.position[1],
+                msg.position[2]);
     msg.timestamp = get_clock()->now().nanoseconds() / 1000;
     m_trajectory_setpoint_pub->publish(msg);
 }

@@ -9,13 +9,25 @@ FlightModeManagerNode::FlightModeManagerNode()
     m_offboard_setpoint_counter = 0;
     m_current_mode.arming_state = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_DISARMED;
     m_current_mode.offboard_mode = PX4_OFFBOARD_DEFAULT_MODE;
-    
+        
+    init_publisher();
+    init_subscription();
+
+    m_timer = this->create_wall_timer(
+        std::chrono::milliseconds(100), 
+        std::bind(&FlightModeManagerNode::timer_callback, this));
+}
+
+void FlightModeManagerNode::init_publisher(){
     m_offboard_control_mode_pub = create_publisher<px4_msgs::msg::OffboardControlMode>(
         "/interface/in/offboard_control_mode", 10);
     m_vehicle_command_pub = create_publisher<px4_msgs::msg::VehicleCommand>(
         "/interface/in/vehicle_command", 10);
     m_px4_mode_status_broadcaster_pub = create_publisher<common_msgs::msg::ArmOffboardStatus>(
         "/control/px4_mode_status_broadcaster", 10);
+}
+
+void FlightModeManagerNode::init_subscription(){
     m_set_px4_mode_status_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
         "/control/set_offboard_mode", 10, 
         std::bind(&FlightModeManagerNode::set_px4_mode_status_callback, this, _1));
@@ -23,9 +35,6 @@ FlightModeManagerNode::FlightModeManagerNode()
     m_px4_mode_status_broadcaster_sub = create_subscription<px4_msgs::msg::VehicleStatus>(
         "/interface/out/vehicle_status_v1", 10, 
         std::bind(&FlightModeManagerNode::px4_mode_status_broadcaster_callback, this, _1));
-    m_timer = this->create_wall_timer(
-        std::chrono::milliseconds(100), 
-        std::bind(&FlightModeManagerNode::timer_callback, this));
 }
 
 void FlightModeManagerNode::timer_callback(){

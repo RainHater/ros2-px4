@@ -21,6 +21,9 @@ class MissionPlanner : public rclcpp::Node {
 public:
     MissionPlanner();
 protected:
+    void init_publisher();
+    void init_subscription();
+    void init_client();
     void timer_callback();
     //px4模式获取
     void px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus::SharedPtr msg);
