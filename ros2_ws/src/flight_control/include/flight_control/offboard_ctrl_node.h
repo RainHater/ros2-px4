@@ -24,7 +24,6 @@ protected:
     void init_subscription();
     void init_action();
     void init_client();
-    //定时器回调
     void timer_callback();
     //目标位置订阅
     void target_setpoint_callback(
@@ -42,7 +41,7 @@ protected:
     //执行导航任务逻辑
     void nav_execute(
         const std::shared_ptr<GoalHandleNavigate> goal_handle);
-    // 请求转换函数
+    //请求转换函数
     bool request_local_target(  const std::shared_ptr<GoalHandleNavigate> goal_handle,
                                 double lat, double lon, double alt);
     //发布offboard控制消息
@@ -63,12 +62,8 @@ private:
     rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_current_offboard_mode_sub;
     //目标位置
     common_msgs::msg::TrajectorySetPoint m_target_setpoint;
-    //控制缓存
-    px4_msgs::msg::TrajectorySetpoint m_traj_msg_cache;
     //当前offboard模式状态
     common_msgs::msg::ArmOffboardStatus px4_mode_status_broadcaster;
-    // 转换后的目标局部坐标
-    std::array<float, 3> m_target_local_position;
 };
 
 #endif

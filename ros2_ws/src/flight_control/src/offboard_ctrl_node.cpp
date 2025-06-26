@@ -162,7 +162,7 @@ void OffboardCtrlNode::publish_trajectory_setpoint() {
         return;
 
     const auto &target = m_target_setpoint;
-    auto &msg = m_traj_msg_cache;
+    px4_msgs::msg::TrajectorySetpoint msg{};
     auto &POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
     auto &VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
     auto &mode = px4_mode_status_broadcaster.offboard_mode;
