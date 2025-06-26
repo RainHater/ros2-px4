@@ -15,6 +15,14 @@ class PX4BridgeNode : public rclcpp::Node {
 public:
     PX4BridgeNode();
 protected:
+    //飞控发布
+    void init_px4_publisher();
+    //飞控订阅
+    void init_px4_subscription();
+    //外部发布
+    void init_external_publisher();
+    //外部订阅
+    void init_external_subscription();
     void timer_callback();
     void vehicle_command_callback(const px4_msgs::msg::VehicleCommand &msg);
     void trajectory_setpoint_callback(const px4_msgs::msg::TrajectorySetpoint &msg);
@@ -23,6 +31,7 @@ protected:
     void vehicle_global_position_callback(const px4_msgs::msg::VehicleGlobalPosition &msg);
     void vehicle_status_callback(const px4_msgs::msg::VehicleStatus &msg);
 private:
+
     rclcpp::TimerBase::SharedPtr m_timer;
     
     //start 对于飞控发布

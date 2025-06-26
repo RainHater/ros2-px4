@@ -6,18 +6,29 @@ PX4BridgeNode::PX4BridgeNode()
     : rclcpp::Node("px4_bridge_node") {
     RCLCPP_INFO(get_logger(), "Starting px4_bridge_node follower node...");
     
-    rclcpp::QoS qos(rclcpp::KeepLast(10));
-    qos.best_effort();
-    //start 对于飞控发布
+    init_px4_publisher();
+    init_px4_subscription();
+    init_external_publisher();
+    init_external_subscription();
+
+    m_timer = create_wall_timer(
+        std::chrono::milliseconds(100), 
+        std::bind(&PX4BridgeNode::timer_callback, this));
+}
+
+void PX4BridgeNode::init_px4_publisher(){
     m_vehicle_command_pub = create_publisher<px4_msgs::msg::VehicleCommand>(
         "/fmu/in/vehicle_command", 10);
     m_trajectory_setpoint_pub = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
         "/fmu/in/trajectory_setpoint", 10);
     m_offboard_control_mode_pub = create_publisher<px4_msgs::msg::OffboardControlMode>(
         "/fmu/in/offboard_control_mode", 10);
-    //end 对于飞控发布
+}
 
-    //start 对于飞控订阅
+void PX4BridgeNode::init_px4_subscription(){
+    rclcpp::QoS qos(rclcpp::KeepLast(10));
+    qos.best_effort();
+
     m_vehicle_odometry_sub = create_subscription<px4_msgs::msg::VehicleOdometry>(
         "/fmu/out/vehicle_odometry", qos,
         std::bind(&PX4BridgeNode::vehicle_odometry_callback, this, _1)); 
@@ -27,18 +38,18 @@ PX4BridgeNode::PX4BridgeNode()
     m_vehicle_status_sub = create_subscription<px4_msgs::msg::VehicleStatus>(
         "/fmu/out/vehicle_status_v1", qos,
         std::bind(&PX4BridgeNode::vehicle_status_callback, this, _1)); 
-    //end 对于飞控订阅
+}
 
-    //start 对于外部发布
+void PX4BridgeNode::init_external_publisher(){
     m_vehicle_odometry_pub = create_publisher<px4_msgs::msg::VehicleOdometry>(
         "/interface/out/vehicle_odometry", 10);
     m_vehicle_global_position_pub = create_publisher<px4_msgs::msg::VehicleGlobalPosition>(
         "/interface/out/vehicle_global_position", 10);
     m_vehicle_status_pub = create_publisher<px4_msgs::msg::VehicleStatus>(
         "/interface/out/vehicle_status_v1", 10);
-    //end 对于外部发布
+}
 
-    //start 对于外部订阅
+void PX4BridgeNode::init_external_subscription(){
     m_vehicle_command_sub = create_subscription<px4_msgs::msg::VehicleCommand>(
         "/interface/in/vehicle_command", 10,
         std::bind(&PX4BridgeNode::vehicle_command_callback, this, _1)); 
@@ -48,10 +59,6 @@ PX4BridgeNode::PX4BridgeNode()
     m_offboard_control_mode_sub = create_subscription<px4_msgs::msg::OffboardControlMode>(
         "/interface/in/offboard_control_mode", 10,
         std::bind(&PX4BridgeNode::offboard_control_mode_callback, this, _1)); 
-    //end 对于外部订阅
-    m_timer = create_wall_timer(
-        std::chrono::milliseconds(100), 
-        std::bind(&PX4BridgeNode::timer_callback, this));
 }
 
 void PX4BridgeNode::timer_callback(){
