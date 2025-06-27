@@ -74,26 +74,32 @@ void StateEstimatorNode::handle_gps_to_local(
     gps_to_local(m_reference_gps.lat, m_reference_gps.lon,
                  request->latitude, request->longitude, x, y);
     
-    std::array<double, 3> target_position = {x, y, request->altitude - m_reference_gps.lat};
-    const float DIST_THRESHOLD = 0.6f;
+    std::array<double, 3> target_position = {x, y, m_reference_gps.lat - request->altitude};
+    const float HORIZONTAL_DIST_THRESHOLD = 0.6f;
+    const float VERTICAL_DIST_THRESHOLD = 0.4f;
     
     float dx = target_position[0] - m_current_setpoint.position[0];
     float dy = target_position[1] - m_current_setpoint.position[1];
-    float dist = std::hypot(dx, dy);
+    float dz = target_position[2] - m_current_setpoint.position[2];
+
+    float horizontal_dist = std::hypot(dx, dy);
+    float vertical_dist = std::abs(dz);
+    bool arrive = (horizontal_dist < HORIZONTAL_DIST_THRESHOLD) && (vertical_dist < VERTICAL_DIST_THRESHOLD);
     
     response->x = target_position[0];
     response->y = target_position[1];
-    response->z = -target_position[2];
+    response->z = target_position[2];
     response->lat = m_current_gps.lat;
     response->lon = m_current_gps.lon;
     response->alt = m_current_gps.alt;
-    response->arrive = (dist < DIST_THRESHOLD)?true:false;
+    response->arrive = arrive;
     
-    
+    // RCLCPP_INFO(get_logger(), "handle_gps_to_local vertical_dist: %f, horizontal_dist: %f", 
+    // vertical_dist, horizontal_dist);
+
     // RCLCPP_INFO(this->get_logger(), "Converted GPS(%.6f, %.6f, %.2f) → ENU(%.2f, %.2f, %.2f)",
     //             request->latitude, request->longitude, request->altitude,
     //             x, y, response->z);
-    RCLCPP_INFO(get_logger(), "handle_gps_to_local dist: %f", dist);
 }
 
 double StateEstimatorNode::deg2rad(double deg){

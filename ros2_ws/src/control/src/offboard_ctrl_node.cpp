@@ -2,6 +2,7 @@
 #include "utilities/util_topic.hpp"
 #include <cmath>
 #include <functional>
+#include <rclcpp/logging.hpp>
 #include <sstream>
 #include <iomanip>
 

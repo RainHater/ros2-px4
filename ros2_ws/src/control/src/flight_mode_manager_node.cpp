@@ -60,7 +60,7 @@ void FlightModeManagerNode::set_px4_mode_status_callback(const common_msgs::msg:
 }
 
 void FlightModeManagerNode::px4_mode_status_broadcaster_callback(const px4_msgs::msg::VehicleStatus &msg){
-
+    (void)msg;
 }
 
 void FlightModeManagerNode::publish_vehicle_command(uint16_t command, float param1, float param2){
