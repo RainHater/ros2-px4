@@ -2,7 +2,6 @@
 #include "utilities/util_topic.hpp"
 #include <cmath>
 #include <functional>
-#include <rclcpp/logging.hpp>
 #include <sstream>
 #include <iomanip>
 
@@ -37,10 +36,9 @@ void OffboardCtrlNode::init_subscription(){
     m_target_setpoint_sub = create_subscription<common_msgs::msg::TrajectorySetPoint>(
         "/control/trajectory_setpoint", 10, 
         std::bind(&OffboardCtrlNode::target_setpoint_callback, this, _1));
-    m_current_offboard_mode_sub = utils::make_simple_subscription<
-        common_msgs::msg::ArmOffboardStatus>(
-      "/control/px4_mode_status_broadcaster",
-        qos, this, m_px4_mode_status_broadcaster);
+    m_current_offboard_mode_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
+        "/control/px4_mode_status_broadcaster", qos, 
+        std::bind(&OffboardCtrlNode::current_offboard_mode_callback, this, _1));
 }
 
 void OffboardCtrlNode::init_action(){
@@ -62,7 +60,7 @@ void OffboardCtrlNode::timer_callback(){
 }
 
 void OffboardCtrlNode::target_setpoint_callback(const common_msgs::msg::TrajectorySetPoint::SharedPtr msg){
-    auto &mode = m_px4_mode_status_broadcaster.offboard_mode;
+    auto &mode = m_current_offboard_mode.offboard_mode;
     auto &POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
     auto &VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
 
@@ -73,6 +71,16 @@ void OffboardCtrlNode::target_setpoint_callback(const common_msgs::msg::Trajecto
     }
     m_target_setpoint.yaw = msg->yaw;
     m_target_setpoint.yawspeed = msg->yawspeed;
+}
+
+void OffboardCtrlNode::current_offboard_mode_callback(const common_msgs::msg::ArmOffboardStatus::SharedPtr msg){
+    if (m_current_offboard_mode.offboard_mode != msg->offboard_mode){
+        m_current_offboard_mode.offboard_mode = msg->offboard_mode;
+        m_target_setpoint.position.fill(0.0f);
+        m_target_setpoint.velocity.fill(0.0f);
+        m_target_setpoint.yaw = 0.0f;
+        m_target_setpoint.yawspeed = 0.0f;
+    }
 }
 
 rclcpp_action::GoalResponse OffboardCtrlNode::nav_handle_goal(
@@ -158,7 +166,7 @@ bool OffboardCtrlNode::request_local_target(
 }
 
 void OffboardCtrlNode::publish_trajectory_setpoint() {
-    auto &arm_state = m_px4_mode_status_broadcaster.arming_state;
+    auto &arm_state = m_current_offboard_mode.arming_state;
     auto &armed = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
 
     if (arm_state != armed)
@@ -168,7 +176,7 @@ void OffboardCtrlNode::publish_trajectory_setpoint() {
     px4_msgs::msg::TrajectorySetpoint msg{};
     auto &POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
     auto &VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
-    auto &mode = m_px4_mode_status_broadcaster.offboard_mode;
+    auto &mode = m_current_offboard_mode.offboard_mode;
 
     if (mode == POSITION && non_zero3(target.position)){
         utils::copy_float_data(target.position, msg.position);

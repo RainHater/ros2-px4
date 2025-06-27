@@ -26,8 +26,9 @@ protected:
     void init_client();
     void timer_callback();
     //目标位置订阅
-    void target_setpoint_callback(
-        const common_msgs::msg::TrajectorySetPoint::SharedPtr msg);
+    void target_setpoint_callback(const common_msgs::msg::TrajectorySetPoint::SharedPtr msg);
+    //当前offboard模式订阅
+    void current_offboard_mode_callback(const common_msgs::msg::ArmOffboardStatus::SharedPtr msg);
     //处理导航目标请求
     rclcpp_action::GoalResponse nav_handle_goal(
         const rclcpp_action::GoalUUID & uuid,
@@ -66,7 +67,7 @@ private:
     //目标位置
     common_msgs::msg::TrajectorySetPoint m_target_setpoint;
     //当前offboard模式状态
-    common_msgs::msg::ArmOffboardStatus m_px4_mode_status_broadcaster;
+    common_msgs::msg::ArmOffboardStatus m_current_offboard_mode;
 };
 
 #endif

@@ -1,5 +1,7 @@
 #include "application/mission_planner_node.h"
+#include <common_msgs/msg/detail/trajectory_set_point__struct.hpp>
 #include <optional>
+#include <rclcpp/logging.hpp>
 
 using std::placeholders::_1;
 
@@ -19,6 +21,10 @@ MissionPlanner::MissionPlanner()
 void MissionPlanner::init_publisher(){
     m_trajectory_setpoint_pub = create_publisher<common_msgs::msg::TargetGps>(
         "/control/target_gps", 10);
+    m_set_offboard_mode_pub = create_publisher<common_msgs::msg::ArmOffboardStatus>(
+        "/control/set_offboard_mode", 10);
+    m_trajectory_set_point_pub = create_publisher<common_msgs::msg::TrajectorySetPoint>(
+        "/control/trajectory_setpoint", 10);
 }
 
 void MissionPlanner::init_subscription(){
@@ -44,10 +50,19 @@ void MissionPlanner::timer_callback(){
         });
     }else if (m_current_task_status == FLY_TO_GPS_TARGET){
         send_goal(0.0000047, 0.0000009,  2.0, [this](){
-            m_current_task_status = FLY_TO_GPS_TARGET_AND_LAND;
+            m_current_task_status = SWITCH_TO_OFFBOARD_VELOCITY_MODE;
         });
-    }else if (m_current_task_status == FLY_TO_GPS_TARGET_AND_LAND){
-       
+    }else if (m_current_task_status == SWITCH_TO_OFFBOARD_VELOCITY_MODE){
+        common_msgs::msg::ArmOffboardStatus msgs{};
+        msgs.offboard_mode = msgs.VELOCITY;
+        m_set_offboard_mode_pub->publish(msgs);
+    }else if (m_current_task_status == VELOCITY_OFFBOARD_READY){
+        RCLCPP_INFO(get_logger(), "开始控制");
+        // common_msgs::msg::TrajectorySetPoint msgs{};
+        // msgs.velocity[0] = 2;
+        // msgs.velocity[1] = 2;
+        // msgs.velocity[2] = 4;
+        // m_trajectory_set_point_pub->publish(msgs);
     }
 }
 
@@ -55,6 +70,10 @@ void MissionPlanner::px4_mode_status_callback(const common_msgs::msg::ArmOffboar
     if (msg->offboard_mode == common_msgs::msg::ArmOffboardStatus::POSITION){
         if (m_current_task_status==WAIT_FOR_ARM_AND_OFFBOARD){
             m_current_task_status = FLY_TO_READY_POSITION;
+        }
+    }else if (msg->offboard_mode == common_msgs::msg::ArmOffboardStatus::VELOCITY){
+        if (m_current_task_status==SWITCH_TO_OFFBOARD_VELOCITY_MODE){
+            m_current_task_status = VELOCITY_OFFBOARD_READY;
         }
     }
 }
