@@ -184,15 +184,15 @@ void OffboardCtrlNode::publish_trajectory_setpoint() {
         utils::copy_float_data(target.position, msg.position);
         msg.yaw = target.yaw;
         msg.yawspeed = 0.0f;
+        RCLCPP_INFO(get_logger(), "Position Setpoint: px=%.2f, py=%.2f, pz=%.2f, yaw=%.2f",
+            msg.position[0], msg.position[1], msg.position[2], msg.yaw);
     }else if (mode == VELOCITY && non_zero3(target.velocity)){
         utils::copy_float_data(target.velocity, msg.velocity);
-        msg.yaw = NAN;
-        msg.yawspeed = target.yawspeed;
-    }
-    RCLCPP_DEBUG(get_logger(), "px4 setpoint: x=%.2f, y=%.2f, z=%.2f",
-                msg.position[0],
-                msg.position[1],
-                msg.position[2]);
+        msg.yaw = 0.0f;
+        msg.yawspeed = std::isnan(target.yawspeed) ? 0.0f : target.yawspeed;
+        RCLCPP_INFO(get_logger(), "Velocity Setpoint: vx=%.2f, vy=%.2f, vz=%.2f, yawspeed=%.2f",
+            msg.velocity[0], msg.velocity[1], msg.velocity[2], msg.yawspeed);
+    }   
     msg.timestamp = get_clock()->now().nanoseconds() / 1000;
     m_trajectory_setpoint_pub->publish(msg);
 }

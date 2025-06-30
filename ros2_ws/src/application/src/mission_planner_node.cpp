@@ -58,11 +58,12 @@ void MissionPlanner::timer_callback(){
         m_set_offboard_mode_pub->publish(msgs);
     }else if (m_current_task_status == VELOCITY_OFFBOARD_READY){
         RCLCPP_INFO(get_logger(), "开始控制");
-        // common_msgs::msg::TrajectorySetPoint msgs{};
-        // msgs.velocity[0] = 2;
-        // msgs.velocity[1] = 2;
-        // msgs.velocity[2] = 4;
-        // m_trajectory_set_point_pub->publish(msgs);
+        common_msgs::msg::TrajectorySetPoint msgs{};
+        msgs.velocity[0] = 0;
+        msgs.velocity[1] = 0;
+        msgs.velocity[2] = -1;
+        msgs.yawspeed = 0;
+        m_trajectory_set_point_pub->publish(msgs);
     }
 }
 
