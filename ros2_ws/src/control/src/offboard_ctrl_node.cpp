@@ -2,6 +2,7 @@
 #include "utilities/util_topic.hpp"
 #include <cmath>
 #include <functional>
+#include <rclcpp/logging.hpp>
 #include <sstream>
 #include <iomanip>
 
@@ -81,6 +82,7 @@ void OffboardCtrlNode::current_offboard_mode_callback(const common_msgs::msg::Ar
         m_target_setpoint.yaw = 0.0f;
         m_target_setpoint.yawspeed = 0.0f;
     }
+    m_current_offboard_mode.arming_state = msg->arming_state;
 }
 
 rclcpp_action::GoalResponse OffboardCtrlNode::nav_handle_goal(
