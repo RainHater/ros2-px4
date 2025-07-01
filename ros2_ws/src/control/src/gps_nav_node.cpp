@@ -1,8 +1,5 @@
 #include "control/gps_nav_node.h"
 
-using std::placeholders::_1;
-using std::placeholders::_2;
-
 GpsNavNode::GpsNavNode()
     : Node("gps_nav_node"){
     RCLCPP_INFO(get_logger(), "Starting gps_nav_node follower node...");

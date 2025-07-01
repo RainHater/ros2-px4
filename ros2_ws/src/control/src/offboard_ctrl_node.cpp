@@ -5,8 +5,6 @@
 #include <sstream>
 #include <iomanip>
 
-using std::placeholders::_1;
-
 OffboardCtrlNode::OffboardCtrlNode() 
     : Node("offboard_ctrl_node") {
     RCLCPP_INFO(get_logger(), "Starting offboard_ctrl_node follower node...");
