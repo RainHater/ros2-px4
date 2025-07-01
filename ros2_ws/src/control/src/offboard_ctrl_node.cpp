@@ -168,17 +168,16 @@ bool OffboardCtrlNode::request_local_target(
 }
 
 void OffboardCtrlNode::publish_trajectory_setpoint() {
-    auto &arm_state = m_current_offboard_mode.arming_state;
-    auto &armed = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
-
+    const auto &target = m_target_setpoint;
+    const auto &arm_state = m_current_offboard_mode.arming_state;
+    const auto &mode = m_current_offboard_mode.offboard_mode;
+    const auto &armed = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
+    const auto &POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
+    const auto &VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
     if (arm_state != armed)
         return;
 
-    const auto &target = m_target_setpoint;
-    px4_msgs::msg::TrajectorySetpoint msg{};
-    auto &POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
-    auto &VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
-    auto &mode = m_current_offboard_mode.offboard_mode;
+    px4_msgs::msg::TrajectorySetpoint msg{};   
     auto use_if_mode = [&](auto& target_mode, float value) {
         return (mode == target_mode) ? value : NAN;
     };
