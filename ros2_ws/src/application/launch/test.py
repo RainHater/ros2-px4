@@ -51,6 +51,13 @@ def generate_launch_description():
         output='screen',
     )
 
+    pid_viewer_node = Node(
+        package='debug',
+        executable='pid_viewer_node',
+        name='pid_viewer_node',
+        output='screen',
+    )
+
     return LaunchDescription([
         px4_bridge_node,
         state_estimator_node,
@@ -59,4 +66,5 @@ def generate_launch_description():
         gps_nav_node,
         rect_detect_node,
         mission_planner_node,
+        pid_viewer_node,
     ])

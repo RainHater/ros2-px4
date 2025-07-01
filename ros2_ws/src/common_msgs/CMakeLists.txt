@@ -26,6 +26,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/TrajectorySetPoint.msg"
   "msg/ArmOffboardStatus.msg"
   "msg/TrackingFeedback.msg"
+  "msg/PidDebug.msg"
   "action/NavigateToGPS.action"
   "srv/TransformGpsToLocal.srv"
   DEPENDENCIES std_msgs builtin_interfaces
