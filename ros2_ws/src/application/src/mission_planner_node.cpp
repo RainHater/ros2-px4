@@ -1,14 +1,15 @@
 #include "application/mission_planner_node.h"
 #include <common_msgs/msg/detail/tracking_feedback__struct.hpp>
 #include <optional>
-#include <rclcpp/logging.hpp>
 #include "control/controller_api.h"
 #include "utilities/util_topic.hpp"
 
 using std::placeholders::_1;
 
 MissionPlanner::MissionPlanner()
-    : rclcpp::Node("mission_planner_node") {
+    : rclcpp::Node("mission_planner_node"), 
+    m_pid_x(0.045f, 0.000f, 0.00f),
+    m_pid_y(0.045f, 0.000f, 0.00f) {
     RCLCPP_INFO(get_logger(), "Starting mission_planner_node follower node...");
 
     init_publisher();
@@ -67,21 +68,22 @@ void MissionPlanner::timer_callback(){
         msgs.offboard_mode = msgs.VELOCITY;
         m_set_offboard_mode_pub->publish(msgs);
     }else if (m_current_task_status == VELOCITY_OFFBOARD_READY){
-        float kp_x = 0.045f; 
-        float kp_y = 0.045f; 
-        float pixel_threshold = 3.0f;
+        float pixel_threshold = 20.0f;
         common_msgs::msg::TrajectorySetPoint msgs{};
         
         if (m_tracking_feedback.pixel_dist < pixel_threshold) {
+            m_pid_x.reset();
+            m_pid_y.reset();
             msgs.velocity[0] = 0.0f;
             msgs.velocity[1] = 0.0f;
-            msgs.velocity[2] = 0.0f;
-            msgs.yawspeed = 0.2f;
+            msgs.velocity[2] = 0.2f;
+            msgs.yawspeed = 0.0f;
         } else {
-            //正值向后，负值向前
-            msgs.velocity[0] = kp_y * m_tracking_feedback.angle_y;  
-            //正值向左，负值向右
-            msgs.velocity[1] = -kp_x * m_tracking_feedback.angle_x;
+            float vx = m_pid_y.update(m_tracking_feedback.angle_y);     //正值向后，负值向前
+            float vy = -m_pid_x.update(m_tracking_feedback.angle_x);    //正值向左，负值向右
+            
+            msgs.velocity[0] = vx;  
+            msgs.velocity[1] = vy;
             msgs.velocity[2] = 0.0f;
             msgs.yawspeed = 0.0f;
         }

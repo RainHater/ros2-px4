@@ -1,8 +1,6 @@
 #ifndef _MISSION_PLANNER_NODE_H
 #define _MISSION_PLANNER_NODE_H
 
-#include <common_msgs/msg/detail/tracking_feedback__struct.hpp>
-#include <common_msgs/msg/detail/trajectory_set_point__struct.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/subscription.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
@@ -11,6 +9,7 @@
 #include <common_msgs/msg/trajectory_set_point.hpp>
 #include <common_msgs/action/navigate_to_gps.hpp>
 #include <common_msgs/msg/tracking_feedback.hpp>
+#include "application/IncrementalPID.hpp"
 
 enum TaskStatus {
     WAIT_FOR_ARM_AND_OFFBOARD = 0,
@@ -51,6 +50,9 @@ private:
     common_msgs::msg::TrackingFeedback m_tracking_feedback;
     //当前任务状态
     TaskStatus m_current_task_status = WAIT_FOR_ARM_AND_OFFBOARD;
+
+    IncrementalPID m_pid_x;
+    IncrementalPID m_pid_y;
 };
 
 #endif
