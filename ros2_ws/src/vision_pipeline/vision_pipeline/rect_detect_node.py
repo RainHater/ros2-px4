@@ -5,16 +5,23 @@ import math
 import numpy as np
 import tf_transformations
 
+
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image, CameraInfo
 from geometry_msgs.msg import Twist
+from common_msgs.msg import TrackingFeedback
 
 class RectDetectorNode(Node):
     def __init__(self):
         super().__init__('rect_detect_node')
         self.bridge = CvBridge()
+        self.tracking_feedback_pub = self.create_publisher(
+            TrackingFeedback,
+            "/vision_pipeline/tracking_feedback",
+            10,
+        )
         self.image_raw_sub = self.create_subscription(
             Image,
             '/camera/image_raw',
@@ -60,7 +67,15 @@ class RectDetectorNode(Node):
             cv2.circle(cv_image, (int(x_c), int(y_c)), 5, (255,0,0), -1) 
             cv2.polylines(cv_image, [box], True, (0,0,255), 2)
             
-            # self.get_logger().info(f"pixel_dist: {pixel_dist}, angle_x: {angle_x}, angle_y: {angle_y}, angle: {angle}")
+            msg = TrackingFeedback()
+            msg.pixel_dist = pixel_dist
+            msg.angle_x = angle_x
+            msg.angle_y = angle_y
+            msg.angle = angle
+            msg.target_found = True
+            self.tracking_feedback_pub.publish(msg)
+
+            self.get_logger().info(f"pixel_dist: {pixel_dist}, angle_x: {angle_x}, angle_y: {angle_y}, angle: {angle}")
             # self.get_logger().info(f"box: {box}, center: {rect[0]}")
             # self.get_logger().info(f"height: {height}, width: {width}")
         else:

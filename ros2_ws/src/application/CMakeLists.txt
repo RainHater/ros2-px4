@@ -44,6 +44,7 @@ ament_target_dependencies(mission_planner_node
   common_msgs
   rclcpp_action
   control
+  utilities
 )
 
 install(TARGETS mission_planner_node DESTINATION lib/${PROJECT_NAME})

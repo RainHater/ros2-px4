@@ -38,7 +38,6 @@ void OffboardCtrlNode::timer_callback(){
     publish_trajectory_setpoint();
 }
 
-
 void OffboardCtrlNode::publish_trajectory_setpoint() {
     const auto &target = m_target_setpoint;
     const auto &arm_state = m_current_offboard_mode.arming_state;

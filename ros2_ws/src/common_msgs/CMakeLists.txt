@@ -23,9 +23,9 @@ if(BUILD_TESTING)
 endif()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/TargetGps.msg"
   "msg/TrajectorySetPoint.msg"
   "msg/ArmOffboardStatus.msg"
+  "msg/TrackingFeedback.msg"
   "action/NavigateToGPS.action"
   "srv/TransformGpsToLocal.srv"
   DEPENDENCIES std_msgs builtin_interfaces
