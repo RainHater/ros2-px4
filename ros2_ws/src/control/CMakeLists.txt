@@ -34,7 +34,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}
-  src/navigation_controller.cpp
+  src/controller_api.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME}
@@ -83,5 +83,16 @@ ament_target_dependencies(offboard_ctrl_node
   rclcpp_action
 )
 install(TARGETS offboard_ctrl_node DESTINATION lib/${PROJECT_NAME})
+
+add_executable(gps_nav_node src/gps_nav_node.cpp)
+ament_target_dependencies(gps_nav_node 
+  rclcpp 
+  px4_msgs 
+  geometry_msgs
+  common_msgs
+  utilities
+  rclcpp_action
+)
+install(TARGETS gps_nav_node DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

@@ -30,6 +30,13 @@ def generate_launch_description():
         output='screen',
     )
 
+    gps_nav_node = Node(
+        package='control',
+        executable='gps_nav_node',
+        name='gps_nav_node',
+        output='screen',
+    )
+
     rect_detect_node = Node(
         package='vision_pipeline',
         executable='rect_detect_node.py',
@@ -49,6 +56,7 @@ def generate_launch_description():
         state_estimator_node,
         flight_mode_manager_node,
         offboard_ctrl_node,
+        gps_nav_node,
         rect_detect_node,
         mission_planner_node,
     ])

@@ -94,8 +94,8 @@ void StateEstimatorNode::handle_gps_to_local(
     response->alt = m_current_gps.alt;
     response->arrive = arrive;
     
-    // RCLCPP_INFO(get_logger(), "handle_gps_to_local vertical_dist: %f, horizontal_dist: %f", 
-    // vertical_dist, horizontal_dist);
+    RCLCPP_INFO(get_logger(), "handle_gps_to_local vertical_dist: %f, horizontal_dist: %f", 
+    vertical_dist, horizontal_dist);
 
     // RCLCPP_INFO(this->get_logger(), "Converted GPS(%.6f, %.6f, %.2f) → ENU(%.2f, %.2f, %.2f)",
     //             request->latitude, request->longitude, request->altitude,

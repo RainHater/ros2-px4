@@ -9,7 +9,6 @@
 #include <common_msgs/msg/arm_offboard_status.hpp>
 #include <common_msgs/msg/trajectory_set_point.hpp>
 #include <common_msgs/action/navigate_to_gps.hpp>
-// #include <control/navigation_controller.h>
 
 enum TaskStatus {
     WAIT_FOR_ARM_AND_OFFBOARD = 0,
@@ -23,7 +22,6 @@ enum TaskStatus {
 class MissionPlanner : public rclcpp::Node {
 public:
     using NavigateToGPS = common_msgs::action::NavigateToGPS;
-    using GoalHandle = rclcpp_action::ClientGoalHandle<NavigateToGPS>;
 public:
     MissionPlanner();
 protected:
@@ -33,7 +31,6 @@ protected:
     void timer_callback();
     //px4模式获取
     void px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus::SharedPtr msg);
-    void send_goal(double lat, double lon, double alt, std::function<void()> succeeded_callback=nullptr);
 private:
     //定时器
     rclcpp::TimerBase::SharedPtr m_timer;
@@ -49,8 +46,6 @@ private:
     rclcpp_action::Client<NavigateToGPS>::SharedPtr m_nav_client;
     //当前任务状态
     TaskStatus m_current_task_status = WAIT_FOR_ARM_AND_OFFBOARD;
-    //导航任务忙碌
-    bool m_nav_is_busy = false;
 };
 
 #endif
