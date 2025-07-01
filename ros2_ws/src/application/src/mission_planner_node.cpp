@@ -58,7 +58,7 @@ void MissionPlanner::timer_callback(){
         });
     }else if (m_current_task_status == FLY_TO_GPS_TARGET){
         ControllerApi::NavApi::Instance().send_goal(shared_from_this(), 
-        m_nav_client, 0.0000047, 0.0000009,  2.0, 
+        m_nav_client, 0.0000047, 0.0000009,  3, 
         [this](){
             m_current_task_status = SWITCH_TO_OFFBOARD_VELOCITY_MODE;
         });
@@ -67,30 +67,31 @@ void MissionPlanner::timer_callback(){
         msgs.offboard_mode = msgs.VELOCITY;
         m_set_offboard_mode_pub->publish(msgs);
     }else if (m_current_task_status == VELOCITY_OFFBOARD_READY){
-        float kp_xy = 0.01f; 
-        float kp_z =  0.01f;
-        float kp_yaw = 0.05f;
-        float pixel_threshold = 5.0f;
+        float kp_x = 0.045f; 
+        float kp_y = 0.045f; 
+        float pixel_threshold = 3.0f;
         common_msgs::msg::TrajectorySetPoint msgs{};
-        msgs.velocity[0] = 0;
-        msgs.velocity[1] = 0;
-        msgs.velocity[2] = 0;
-        msgs.yawspeed = 0;
         
-        // msgs.velocity[0] = 0.0f;  // 前后控制可通过别的逻辑控制（或 angle_y）
-        // msgs.velocity[1] = -kp_xy * m_tracking_feedback.angle_x;  // 横向矫正（右偏为正，速度向左）
-        // msgs.velocity[2] = -kp_z  * m_tracking_feedback.angle_y;  // 垂直矫正（下偏为正，速度向上）
-        // if (m_tracking_feedback.pixel_dist < pixel_threshold) {
-        //     msgs.yawspeed = 0.0f;
-        // } else {
-        //     msgs.yawspeed = -kp_yaw * m_tracking_feedback.angle;
-        // }
+        if (m_tracking_feedback.pixel_dist < pixel_threshold) {
+            msgs.velocity[0] = 0.0f;
+            msgs.velocity[1] = 0.0f;
+            msgs.velocity[2] = 0.0f;
+            msgs.yawspeed = 0.2f;
+        } else {
+            //正值向后，负值向前
+            msgs.velocity[0] = kp_y * m_tracking_feedback.angle_y;  
+            //正值向左，负值向右
+            msgs.velocity[1] = -kp_x * m_tracking_feedback.angle_x;
+            msgs.velocity[2] = 0.0f;
+            msgs.yawspeed = 0.0f;
+        }
         m_trajectory_set_point_pub->publish(msgs);
-        RCLCPP_INFO(get_logger(), "pixel_dist: %.f, angle_x: %.f, angle_y: %.f, angle: %.f", 
-                    m_tracking_feedback.pixel_dist,
-                    m_tracking_feedback.angle_x,
-                    m_tracking_feedback.angle_y,
-                    m_tracking_feedback.angle);
+        RCLCPP_INFO(get_logger(), "velocity[0]: %f, velocity[1]: %f, velocity[2]: %f, yawspeed: %f, pixel_dist: %f", 
+                    msgs.velocity[0],
+                    msgs.velocity[1],
+                    msgs.velocity[2],
+                    msgs.yawspeed,
+                    m_tracking_feedback.pixel_dist);
     }
 }
 

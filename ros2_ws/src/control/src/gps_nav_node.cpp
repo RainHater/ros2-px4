@@ -74,6 +74,7 @@ void GpsNavNode::nav_execute(const std::shared_ptr<GoalHandleNavigate> goal_hand
         msg.position[0] = static_cast<float>(response->x);
         msg.position[1] = static_cast<float>(response->y);
         msg.position[2] = static_cast<float>(response->z);
+        msg.yaw = static_cast<float>(response->yaw);
         m_target_setpoint_pub->publish(msg);
         // m_target_setpoint.position[0] = static_cast<float>(response->x);
         // m_target_setpoint.position[1] = static_cast<float>(response->y);

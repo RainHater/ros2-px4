@@ -50,7 +50,7 @@ void StateEstimatorNode::current_gps_callback(const px4_msgs::msg::VehicleGlobal
         m_reference_gps.alt = alt_m;
         m_reference_initialized = true;
 
-        RCLCPP_INFO(this->get_logger(), "current_gps_callback: lat=%.7f, lon=%.7f, alt=%.2f",
+        RCLCPP_INFO(this->get_logger(), "current_gps_callback: lat=%f, lon=%f, alt=%f",
                     lat, lon, alt_m);
     }
     m_current_gps.lat = lat;
@@ -84,11 +84,13 @@ void StateEstimatorNode::handle_gps_to_local(
 
     float horizontal_dist = std::hypot(dx, dy);
     float vertical_dist = std::abs(dz);
+    float desired_yaw_rad = std::atan2(dy, dx);
     bool arrive = (horizontal_dist < HORIZONTAL_DIST_THRESHOLD) && (vertical_dist < VERTICAL_DIST_THRESHOLD);
     
     response->x = target_position[0];
     response->y = target_position[1];
     response->z = target_position[2];
+    response->yaw = desired_yaw_rad;
     response->lat = m_current_gps.lat;
     response->lon = m_current_gps.lon;
     response->alt = m_current_gps.alt;
