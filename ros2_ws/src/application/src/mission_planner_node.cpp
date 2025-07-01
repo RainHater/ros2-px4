@@ -62,7 +62,7 @@ void MissionPlanner::timer_callback(){
         msgs.velocity[0] = 0;
         msgs.velocity[1] = 0;
         msgs.velocity[2] = -1;
-        msgs.yawspeed = 0;
+        msgs.yawspeed = 0.5;
         m_trajectory_set_point_pub->publish(msgs);
     }
 }

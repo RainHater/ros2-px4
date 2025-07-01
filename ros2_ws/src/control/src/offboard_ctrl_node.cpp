@@ -179,22 +179,28 @@ void OffboardCtrlNode::publish_trajectory_setpoint() {
     auto &POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
     auto &VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
     auto &mode = m_current_offboard_mode.offboard_mode;
+    auto use_if_mode = [&](auto& target_mode, float value) {
+        return (mode == target_mode) ? value : NAN;
+    };
+    
+    msg.position[0] = use_if_mode(POSITION, target.position[0]);
+    msg.position[1] = use_if_mode(POSITION, target.position[1]);
+    msg.position[2] = use_if_mode(POSITION, target.position[2]);
+    msg.velocity[0] = use_if_mode(VELOCITY, target.velocity[0]);
+    msg.velocity[1] = use_if_mode(VELOCITY, target.velocity[1]);
+    msg.velocity[2] = use_if_mode(VELOCITY, target.velocity[2]);
+    msg.yaw = use_if_mode(POSITION, target.yaw);
+    msg.yawspeed = use_if_mode(VELOCITY, target.yawspeed);
+    msg.timestamp = get_clock()->now().nanoseconds() / 1000;
+    m_trajectory_setpoint_pub->publish(msg);
 
-    if (mode == POSITION && non_zero3(target.position)){
-        utils::copy_float_data(target.position, msg.position);
-        msg.yaw = target.yaw;
-        msg.yawspeed = 0.0f;
+    if (mode == POSITION){
         RCLCPP_INFO(get_logger(), "Position Setpoint: px=%.2f, py=%.2f, pz=%.2f, yaw=%.2f",
             msg.position[0], msg.position[1], msg.position[2], msg.yaw);
-    }else if (mode == VELOCITY && non_zero3(target.velocity)){
-        utils::copy_float_data(target.velocity, msg.velocity);
-        msg.yaw = 0.0f;
-        msg.yawspeed = std::isnan(target.yawspeed) ? 0.0f : target.yawspeed;
+    }else if (mode == VELOCITY){
         RCLCPP_INFO(get_logger(), "Velocity Setpoint: vx=%.2f, vy=%.2f, vz=%.2f, yawspeed=%.2f",
             msg.velocity[0], msg.velocity[1], msg.velocity[2], msg.yawspeed);
     }   
-    msg.timestamp = get_clock()->now().nanoseconds() / 1000;
-    m_trajectory_setpoint_pub->publish(msg);
 }
 
 bool OffboardCtrlNode::non_zero3(const std::array<float, 3>& v){
