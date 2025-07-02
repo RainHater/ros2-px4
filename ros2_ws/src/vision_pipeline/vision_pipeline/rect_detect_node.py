@@ -74,7 +74,6 @@ class RectDetectorNode(Node):
             msg.angle = angle
             msg.target_found = True
             self.tracking_feedback_pub.publish(msg)
-
             # self.get_logger().info(f"pixel_dist: {pixel_dist}, angle_x: {angle_x}, angle_y: {angle_y}, angle: {angle}")
             # self.get_logger().info(f"box: {box}, center: {rect[0]}")
             # self.get_logger().info(f"height: {height}, width: {width}")

@@ -1,6 +1,7 @@
 #ifndef _MISSION_PLANNER_NODE_H
 #define _MISSION_PLANNER_NODE_H
 
+#include <common_msgs/msg/detail/pid_debug__struct.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/subscription.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
@@ -9,6 +10,7 @@
 #include <common_msgs/msg/trajectory_set_point.hpp>
 #include <common_msgs/action/navigate_to_gps.hpp>
 #include <common_msgs/msg/tracking_feedback.hpp>
+#include <common_msgs/msg/pid_debug.hpp>
 #include "application/IncrementalPID.hpp"
 
 enum TaskStatus {
@@ -39,6 +41,8 @@ private:
     rclcpp::Publisher<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_set_offboard_mode_pub;
     //发布目标
     rclcpp::Publisher<common_msgs::msg::TrajectorySetPoint>::SharedPtr m_trajectory_set_point_pub;
+    //发布PIDdebug波形显示
+    rclcpp::Publisher<common_msgs::msg::PidDebug>::SharedPtr m_pid_viewer_pub;
     //订阅当前飞控arm和offboard状态
     rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_px4_mode_status_sub;
     //订阅视觉发送的坐标
@@ -56,3 +60,4 @@ private:
 };
 
 #endif
+                                        

@@ -1,5 +1,5 @@
 #include "application/mission_planner_node.h"
-#include <common_msgs/msg/detail/tracking_feedback__struct.hpp>
+#include <cmath>
 #include <optional>
 #include "control/controller_api.h"
 #include "utilities/util_topic.hpp"
@@ -8,11 +8,11 @@ using std::placeholders::_1;
 
 MissionPlanner::MissionPlanner()
     : rclcpp::Node("mission_planner_node"), 
-    m_pid_x(0.045f, 0.000f, 0.00f),
-    m_pid_y(0.045f, 0.000f, 0.00f) {
+    m_pid_x(0.038f, 0.0000000000000001, 0.0000000000099f),
+    m_pid_y(0.038f, 0.0000000000000001, 0.0000000000099f) {
     RCLCPP_INFO(get_logger(), "Starting mission_planner_node follower node...");
 
-    init_publisher();
+    init_publisher();  
     init_subscription();
     init_client();
 
@@ -26,6 +26,8 @@ void MissionPlanner::init_publisher(){
         "/control/set_offboard_mode", 10);
     m_trajectory_set_point_pub = create_publisher<common_msgs::msg::TrajectorySetPoint>(
         "/control/trajectory_setpoint", 10);
+    m_pid_viewer_pub = create_publisher<common_msgs::msg::PidDebug>(
+        "/debug/pid_viewer", 10);
 }
 
 void MissionPlanner::init_subscription(){
@@ -59,7 +61,7 @@ void MissionPlanner::timer_callback(){
         });
     }else if (m_current_task_status == FLY_TO_GPS_TARGET){
         ControllerApi::NavApi::Instance().send_goal(shared_from_this(), 
-        m_nav_client, 0.0000047, 0.0000009,  3, 
+        m_nav_client, 0.0000047, 0.0000009,  5, 
         [this](){
             m_current_task_status = SWITCH_TO_OFFBOARD_VELOCITY_MODE;
         });
@@ -68,15 +70,15 @@ void MissionPlanner::timer_callback(){
         msgs.offboard_mode = msgs.VELOCITY;
         m_set_offboard_mode_pub->publish(msgs);
     }else if (m_current_task_status == VELOCITY_OFFBOARD_READY){
-        float pixel_threshold = 20.0f;
+        float pixel_threshold = 5.0f;
         common_msgs::msg::TrajectorySetPoint msgs{};
         
         if (m_tracking_feedback.pixel_dist < pixel_threshold) {
-            m_pid_x.reset();
             m_pid_y.reset();
+            m_pid_x.reset();
             msgs.velocity[0] = 0.0f;
             msgs.velocity[1] = 0.0f;
-            msgs.velocity[2] = 0.2f;
+            msgs.velocity[2] = 0.5f;
             msgs.yawspeed = 0.0f;
         } else {
             float vx = m_pid_y.update(m_tracking_feedback.angle_y);     //正值向后，负值向前
@@ -88,12 +90,18 @@ void MissionPlanner::timer_callback(){
             msgs.yawspeed = 0.0f;
         }
         m_trajectory_set_point_pub->publish(msgs);
-        RCLCPP_INFO(get_logger(), "velocity[0]: %f, velocity[1]: %f, velocity[2]: %f, yawspeed: %f, pixel_dist: %f", 
-                    msgs.velocity[0],
-                    msgs.velocity[1],
-                    msgs.velocity[2],
-                    msgs.yawspeed,
-                    m_tracking_feedback.pixel_dist);
+        common_msgs::msg::PidDebug debug_msg{};
+        debug_msg.pixel_dist = m_tracking_feedback.pixel_dist;
+        debug_msg.angle_y = m_tracking_feedback.angle_y;
+        debug_msg.angle_x = m_tracking_feedback.angle_x;
+        debug_msg.timestamp = get_clock()->now().nanoseconds() / 1000;
+        m_pid_viewer_pub->publish(debug_msg);
+        // RCLCPP_INFO(get_logger(), "velocity[0]: %f, velocity[1]: %f, velocity[2]: %f, yawspeed: %f, pixel_dist: %f", 
+        //             msgs.velocity[0],
+        //             msgs.velocity[1],
+        //             msgs.velocity[2],
+        //             msgs.yawspeed,
+        //             m_tracking_feedback.pixel_dist);
     }
 }
 

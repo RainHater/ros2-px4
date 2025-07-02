@@ -14,27 +14,55 @@ class PidViewerNode(Node):
             self.listener_callback,
             10)
 
-        self.window_size = 100
-        self.time_data = collections.deque(maxlen=self.window_size)
-        self.pixel_dist_data = collections.deque(maxlen=self.window_size)
+        self.time_data = []
+        self.pixel_dist_data = []
+        self.angle_x_data = []
+        self.angle_y_data = []
 
         plt.ion()
-        self.fig, self.ax = plt.subplots()
-        self.line, = self.ax.plot([], [], label='pixel_dist')
-        self.ax.axhline(0, color='r', linestyle='--', label='target=0')
-        self.ax.legend()
-        self.ax.set_ylim(-5, 5)  # 根据实际pixel_dist范围调整
+        self.fig, self.axs = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
+
+        # pixel_dist plot
+        self.line_pixel, = self.axs[0].plot([], [], label='pixel_dist')
+        self.axs[0].axhline(0, color='r', linestyle='--', label='target=0')
+        self.axs[0].set_ylabel("Pixel Dist")
+        self.axs[0].legend()
+        self.axs[0].grid()
+
+        # angle_x plot
+        self.line_ax, = self.axs[1].plot([], [], label='angle_x')
+        self.axs[1].axhline(0, color='r', linestyle='--')
+        self.axs[1].set_ylabel("Angle X (deg)")
+        self.axs[1].legend()
+        self.axs[1].grid()
+
+        # angle_y plot
+        self.line_ay, = self.axs[2].plot([], [], label='angle_y')
+        self.axs[2].axhline(0, color='r', linestyle='--')
+        self.axs[2].set_ylabel("Angle Y (deg)")
+        self.axs[2].set_xlabel("Time (us)")  # timestamp 是 uint64，单位μs
+        self.axs[2].legend()
+        self.axs[2].grid()
 
     def listener_callback(self, msg):
-        t = msg.stamp.sec + msg.stamp.nanosec * 1e-9
+        t = msg.timestamp
         self.time_data.append(t)
         self.pixel_dist_data.append(msg.pixel_dist)
+        self.angle_x_data.append(msg.angle_x)
+        self.angle_y_data.append(msg.angle_y)
 
-        self.line.set_xdata(self.time_data)
-        self.line.set_ydata(self.pixel_dist_data)
+        self.line_pixel.set_xdata(self.time_data)
+        self.line_pixel.set_ydata(self.pixel_dist_data)
 
-        self.ax.relim()
-        self.ax.autoscale_view()
+        self.line_ax.set_xdata(self.time_data)
+        self.line_ax.set_ydata(self.angle_x_data)
+
+        self.line_ay.set_xdata(self.time_data)
+        self.line_ay.set_ydata(self.angle_y_data)
+
+        for ax in self.axs:
+            ax.relim()
+            ax.autoscale_view()
 
         plt.pause(0.01)
 
