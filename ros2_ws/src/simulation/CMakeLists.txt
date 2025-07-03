@@ -22,6 +22,19 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+# 安装 models 文件夹
+install(DIRECTORY models
+  DESTINATION share/${PROJECT_NAME}
+)
+
+# 安装 worlds 文件夹（如果你有）
+install(DIRECTORY worlds
+  DESTINATION share/${PROJECT_NAME}
+)
+
+# 安装 launch 文件夹
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
+)
 
 ament_package()
