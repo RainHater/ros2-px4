@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.8)
-project(common_msgs)
+project(mission_planner)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -7,8 +10,13 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
+find_package(px4_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(common_msgs REQUIRED)
+find_package(utilities REQUIRED)
+find_package(control_interface REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -22,15 +30,23 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/TrajectorySetPoint.msg"
-  "msg/ArmOffboardStatus.msg"
-  "msg/TrackingFeedback.msg"
-  "msg/PidDebug.msg"
-  "action/NavigateToGPS.action"
-  "action/PrecisionLand.action"
-  "srv/TransformGpsToLocal.srv"
-  DEPENDENCIES std_msgs builtin_interfaces
+include_directories(
+  ${PROJECT_SOURCE_DIR}/include 
 )
+
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+
+add_executable(mission_planner_node src/mission_planner_node.cpp)
+ament_target_dependencies(mission_planner_node 
+  rclcpp
+  rclcpp_action
+  px4_msgs 
+  geometry_msgs
+  common_msgs
+  control_interface
+  utilities
+)
+
+install(TARGETS mission_planner_node DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
