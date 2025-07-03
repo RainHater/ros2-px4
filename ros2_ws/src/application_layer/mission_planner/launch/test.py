@@ -46,7 +46,7 @@ def generate_launch_description():
 
     rect_detect_node = Node(
         package='vision_pipeline',
-        executable='rect_detect_node.py',
+        executable='rect_detect_node',
         name='rect_detect_node',
         output='screen',
     )
