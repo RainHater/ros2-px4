@@ -1,4 +1,0 @@
-GEPRC Mark 4 5" prop guards prototype by MaddatmyHat on Thingiverse: https://www.thingiverse.com/thing:5770891
-
-Summary:
-Prototype for universal 5" propeller guard that I'm working on. Currently made to fit Geprc Mark 4 frame. The intention behind designing this is to help protect car paint during car chases and not so much to protect the drone from damage. Regardless, I'm surprised with how sturdy they feel so I'm sure they'll offer some protection during light crashes. The final design will be made of carbon fiber and have foam or TPU bumpers to protect the car paint from getting scratched.Made with Duramic PLA+ and I'm surprised with how sturdy it came out.will need a good amount of M3 Hardware for these.x24- 12mm M3 screwsx12- 25mm-ish M3 stand offsx16- 16mm M3 screwsx48- M3 nuts (you can use the 3d printed 5mm standoffs instead if you'd like to save some weight, In that case you just need 12 nuts)
