@@ -7,3 +7,4 @@ catkin_pkg
 empy==3.3.4
 lark-parser
 apriltag
+lxml
