@@ -1,4 +1,15 @@
 #include "motion_controller/flight_mode_manager_node.h"
+#include <rclcpp/logging.hpp>
+
+constexpr auto ARMING_STATE_ARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
+constexpr auto ARMING_STATE_DISARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_DISARMED;
+constexpr auto OFFBOARD_NOT_ACTIVE = common_msgs::msg::ArmOffboardStatus::OFFBOARD_NOT_ACTIVE;
+constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
+constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
+constexpr auto ATTITUDE = common_msgs::msg::ArmOffboardStatus::ATTITUDE;
+constexpr auto PX4_OFFBOARD_DEFAULT_MODE = POSITION;
+constexpr auto PX4_CUSTOM_MAIN_MODE_OFFBOARD = 6;
+constexpr auto LOCK_INTERVAL_TIME = 10;
 
 using std::placeholders::_1;
 
@@ -7,8 +18,11 @@ FlightModeManagerNode::FlightModeManagerNode()
     RCLCPP_INFO(this->get_logger(), "Starting flight_mode_manager_node follower node...");
     
     m_offboard_setpoint_counter = 0;
-    m_current_mode.arming_state = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_DISARMED;
-    m_current_mode.offboard_mode = PX4_OFFBOARD_DEFAULT_MODE;
+    m_px4_mode.lock_interval_cnt = 0;
+    m_px4_mode.current.arming_state = ARMING_STATE_DISARMED;
+    m_px4_mode.current.offboard_mode = OFFBOARD_NOT_ACTIVE;
+    m_px4_mode.target.arming_state = ARMING_STATE_ARMED;
+    m_px4_mode.target.offboard_mode = PX4_OFFBOARD_DEFAULT_MODE;
         
     init_publisher();
     init_subscription();
@@ -54,15 +68,27 @@ void FlightModeManagerNode::timer_callback(){
     }
 }
 
-void FlightModeManagerNode::set_px4_mode_status_callback(
-    const common_msgs::msg::ArmOffboardStatus &msg)
-{
-    m_current_mode.offboard_mode = msg.offboard_mode;
-    RCLCPP_INFO(get_logger(), "current offboard mode: %d", m_current_mode.offboard_mode);
+void FlightModeManagerNode::set_px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus &msg){
+    m_px4_mode.target.offboard_mode = msg.offboard_mode;
+    RCLCPP_INFO(get_logger(), "current offboard mode: %d", m_px4_mode.current.offboard_mode);
 }
 
 void FlightModeManagerNode::px4_mode_status_broadcaster_callback(const px4_msgs::msg::VehicleStatus &msg){
-    (void)msg;
+    if (msg.arming_state == 1){
+        m_px4_mode.current.arming_state = ARMING_STATE_DISARMED;
+        if (m_offboard_setpoint_counter == 11 || msg.nav_state != 14){
+            m_px4_mode.lock_interval_cnt ++;
+            if (m_px4_mode.lock_interval_cnt >= LOCK_INTERVAL_TIME){
+                m_offboard_setpoint_counter = 0;
+                m_px4_mode.lock_interval_cnt = 0;
+            }
+        }
+    }else if (msg.arming_state == 2){
+        m_px4_mode.current.arming_state = ARMING_STATE_ARMED;
+    }
+    if (msg.nav_state == 14){
+        m_px4_mode.current.offboard_mode = m_px4_mode.target.offboard_mode;
+    }
 }
 
 void FlightModeManagerNode::publish_vehicle_command(uint16_t command, float param1, float param2){
@@ -80,10 +106,11 @@ void FlightModeManagerNode::publish_vehicle_command(uint16_t command, float para
 }
 
 void FlightModeManagerNode::publish_px4_offboard_mode() {
+    auto &mode = m_px4_mode.target.offboard_mode;
     px4_msgs::msg::OffboardControlMode msg{};
-    msg.position = (m_current_mode.offboard_mode == common_msgs::msg::ArmOffboardStatus::POSITION);
-    msg.velocity = (m_current_mode.offboard_mode == common_msgs::msg::ArmOffboardStatus::VELOCITY);
-    msg.attitude = (m_current_mode.offboard_mode == common_msgs::msg::ArmOffboardStatus::ATTITUDE);
+    msg.position = (mode == POSITION);
+    msg.velocity = (mode == VELOCITY);
+    msg.attitude = (mode == ATTITUDE);
     msg.acceleration = false;
     msg.body_rate = false;
     msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
@@ -91,12 +118,11 @@ void FlightModeManagerNode::publish_px4_offboard_mode() {
 }
 
 void FlightModeManagerNode::publish_current_offboard_mode(){
-    m_px4_mode_status_broadcaster_pub->publish(m_current_mode);
+    m_px4_mode_status_broadcaster_pub->publish(m_px4_mode.current);
 }
 
 void FlightModeManagerNode::arm() {
     publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
-    m_current_mode.arming_state = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
     RCLCPP_INFO(this->get_logger(), "Arm command send");
 }
 

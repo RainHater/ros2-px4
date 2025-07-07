@@ -15,8 +15,14 @@
 #include <chrono>
 #include <iostream>
 
-#define PX4_CUSTOM_MAIN_MODE_OFFBOARD   6
-#define PX4_OFFBOARD_DEFAULT_MODE       common_msgs::msg::ArmOffboardStatus::POSITION
+struct Px4ModeInfo {
+    //当前模式
+    common_msgs::msg::ArmOffboardStatus current;
+    //目标模式
+    common_msgs::msg::ArmOffboardStatus target;
+    //arm未解锁间隔
+    int lock_interval_cnt;
+};
 
 class FlightModeManagerNode : public rclcpp::Node {
 public:
@@ -52,8 +58,8 @@ private:
     rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_set_px4_mode_status_sub;
     //订阅px4飞控当前状态
     rclcpp::Subscription<px4_msgs::msg::VehicleStatus>::SharedPtr m_px4_mode_status_broadcaster_sub;
-    //当前offboard模式
-    common_msgs::msg::ArmOffboardStatus m_current_mode;
+    //飞控模式
+    Px4ModeInfo m_px4_mode;
     //offboard setpoint 消息的计数器
     uint64_t m_offboard_setpoint_counter;
 
