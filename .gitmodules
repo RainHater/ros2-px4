@@ -16,3 +16,6 @@
 [submodule "px4/px4-ros2-interface-lib"]
 	path = px4/px4-ros2-interface-lib
 	url = https://github.com/Auterion/px4-ros2-interface-lib.git
+[submodule "ros2_ws/src/micrortps_agent"]
+	path = ros2_ws/src/micrortps_agent
+	url = https://github.com/PX4/micrortps_agent.git

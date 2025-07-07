@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(mission_planner)
+project(application_test)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -36,8 +36,8 @@ include_directories(
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 
-add_executable(mission_planner_node src/mission_planner_node.cpp)
-ament_target_dependencies(mission_planner_node 
+add_executable(px4_hold_height_test_node src/px4_hold_height_test_node.cpp)
+ament_target_dependencies(px4_hold_height_test_node 
   rclcpp
   rclcpp_action
   px4_msgs 
@@ -46,6 +46,6 @@ ament_target_dependencies(mission_planner_node
   control_interface
   utilities
 )
-install(TARGETS mission_planner_node DESTINATION lib/${PROJECT_NAME})
+install(TARGETS px4_hold_height_test_node DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
