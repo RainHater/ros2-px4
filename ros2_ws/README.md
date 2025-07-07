@@ -22,6 +22,7 @@
 ---
 
 ### **应用层（application_layer）**
+- application_test：仿真转到实体飞控测试任务
 - mission_planner：任务规划
 - debug：调试数据包，比如查看pid波形
 
@@ -35,5 +36,5 @@
 
 ---
 
-> _日期：2025-07-03_  
+> _日期：2025-07-07_  
 > _作者：xuguocai_  

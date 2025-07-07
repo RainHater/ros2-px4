@@ -3,12 +3,11 @@
 ## 环境与工具要求
 
 - **操作系统**：Ubuntu 22.04 LTS
-- **ROS 2 版本**：[Ros Humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
-- **PX4 版本**：v1.15
-- **飞控型号**：H743V2_AIO（微空科技）
+- **ROS2版本**：[Ros Humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
+- **PX4版本**：v1.15
+- **飞控型号**：[H743V2_AIO（微空科技）](https://micoair.cn/docs/MicoAir743v2AIO45A-yi-ti-fei-kong-yong-hu-shou-ce)
 - **飞控机架**：[MDV30（微空科技）](https://micoair.cn/docs/wei-kong-MVD30-3-cun-quan-quan-ji-jia)
-- **通信桥接**：MAVLink
-- **通信中间件**：Micro XRCE-DDS Agent
+- **通信中间件**：[Micro XRCE-DDS Agent](https://docs.px4.io/main/zh/middleware/uxrce_dds.html)
 
 ## 安装与配置步骤
 
@@ -62,5 +61,12 @@ source install/setup.bash
 colcon build --packages-select px4_ros_com
 ```
 
-> _日期：2025-07-03_  
+---
+
+## 板载计算机连接飞控
+```bash
+sudo MicroXRCEAgent serial --dev /dev/ttyUSB0 -b 921600
+```
+
+> _日期：2025-07-07_  
 > _作者：xuguocai_  
