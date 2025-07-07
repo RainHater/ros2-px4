@@ -10,9 +10,11 @@ NavApi& NavApi::Instance(){
     return api;
 }
 
-void NavApi::send_goal(const rclcpp::Node::SharedPtr &node, 
+void NavApi::send_goal(
+    const rclcpp::Node::SharedPtr &node, 
     rclcpp_action::Client<NavigateToGPS>::SharedPtr &nav_clinet, 
-    double lat, double lon, double alt, std::function<void()> succeeded_callback){
+    double lat, double lon, double alt, std::function<void()> succeeded_callback)
+{
     if (m_nav_is_busy)
         return;
 

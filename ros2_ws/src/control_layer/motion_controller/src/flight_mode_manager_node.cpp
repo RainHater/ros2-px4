@@ -54,7 +54,9 @@ void FlightModeManagerNode::timer_callback(){
     }
 }
 
-void FlightModeManagerNode::set_px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus &msg){
+void FlightModeManagerNode::set_px4_mode_status_callback(
+    const common_msgs::msg::ArmOffboardStatus &msg)
+{
     m_current_mode.offboard_mode = msg.offboard_mode;
     RCLCPP_INFO(get_logger(), "current offboard mode: %d", m_current_mode.offboard_mode);
 }

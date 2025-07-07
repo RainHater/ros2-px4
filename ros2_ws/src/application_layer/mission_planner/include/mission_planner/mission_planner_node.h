@@ -1,7 +1,6 @@
 #ifndef _MISSION_PLANNER_NODE_H
 #define _MISSION_PLANNER_NODE_H
 
-#include <common_msgs/msg/detail/pid_debug__struct.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>

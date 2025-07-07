@@ -46,7 +46,18 @@ ament_target_dependencies(mission_planner_node
   control_interface
   utilities
 )
-
 install(TARGETS mission_planner_node DESTINATION lib/${PROJECT_NAME})
+
+add_executable(px4_hold_height_test_node src/px4_hold_height_test_node.cpp)
+ament_target_dependencies(px4_hold_height_test_node 
+  rclcpp
+  rclcpp_action
+  px4_msgs 
+  geometry_msgs
+  common_msgs
+  control_interface
+  utilities
+)
+install(TARGETS px4_hold_height_test_node DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

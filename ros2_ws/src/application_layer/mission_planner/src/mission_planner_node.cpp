@@ -111,7 +111,9 @@ void MissionPlanner::timer_callback(){
     }
 }
 
-void MissionPlanner::px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus::SharedPtr msg){
+void MissionPlanner::px4_mode_status_callback(
+    const common_msgs::msg::ArmOffboardStatus::SharedPtr msg)
+{
     if (msg->offboard_mode == common_msgs::msg::ArmOffboardStatus::POSITION){
         if (m_current_task_status==WAIT_FOR_ARM_AND_OFFBOARD){
             m_current_task_status = FLY_TO_READY_POSITION;

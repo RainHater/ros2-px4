@@ -15,7 +15,6 @@ void GpsNavNode::init_publisher(){
 }
 
 void GpsNavNode::init_action(){
-
     m_action_nav_server = rclcpp_action::create_server<CommonNavigateToGPS>(
         this,
         "/control/navigate_to_gps", 
@@ -47,8 +46,9 @@ void GpsNavNode::init_client(){
         "/perception/transform_gps_to_local");
 }
 
-void GpsNavNode::nav_execute(const std::shared_ptr<GoalHandleNavigate> goal_handle){
-
+void GpsNavNode::nav_execute(
+    const std::shared_ptr<GoalHandleNavigate> goal_handle)
+{
     auto result = std::make_shared<CommonNavigateToGPS::Result>();
     auto feedback = std::make_shared<CommonNavigateToGPS::Feedback>();
     auto goal = goal_handle->get_goal();
@@ -94,9 +94,9 @@ void GpsNavNode::nav_execute(const std::shared_ptr<GoalHandleNavigate> goal_hand
 }
 
 bool GpsNavNode::request_local_target(
-        const std::shared_ptr<CommonSrvTransformGpsToLocal::Request> request, 
-        std::shared_ptr<CommonSrvTransformGpsToLocal::Response> &response){
-
+    const std::shared_ptr<CommonSrvTransformGpsToLocal::Request> request, 
+    std::shared_ptr<CommonSrvTransformGpsToLocal::Response> &response)
+{
     if (!m_gps_transform_client->wait_for_service(std::chrono::seconds(1))) {
         RCLCPP_ERROR(get_logger(), "GPS transform service not available.");
         return false;
