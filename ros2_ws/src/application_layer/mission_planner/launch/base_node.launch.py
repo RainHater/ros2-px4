@@ -37,42 +37,10 @@ def generate_launch_description():
         output='screen',
     )
 
-    # attitude_controller_node = Node(
-    #     package='control',
-    #     executable='attitude_controller_node',
-    #     name='attitude_controller_node',
-    #     output='screen',
-    # )
-
-    rect_detect_node = Node(
-        package='vision_pipeline',
-        executable='rect_detect_node',
-        name='rect_detect_node',
-        output='screen',
-    )
-
-    mission_planner_node = Node(
-        package='mission_planner',
-        executable='mission_planner_node',
-        name='mission_planner_node',
-        output='screen',
-    )
-
-    pid_viewer_node = Node(
-        package='debug',
-        executable='pid_viewer_node',
-        name='pid_viewer_node',
-        output='screen',
-    )
-
     return LaunchDescription([
         px4_bridge_node,
         state_estimator_node,
         flight_mode_manager_node,
         offboard_ctrl_node,
-        gps_nav_node,
-        # attitude_controller_node,
-        rect_detect_node,
-        mission_planner_node,
-        pid_viewer_node,
+        gps_nav_node
     ])

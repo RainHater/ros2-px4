@@ -1,9 +1,16 @@
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess
+from launch.actions import DeclareLaunchArgument, ExecuteProcess
+from launch.substitutions import LaunchConfiguration
 import subprocess
 import os
 
 def generate_launch_description():
+    model_arg = DeclareLaunchArgument('model', default_value='iris', description='PX4 模型名')
+    world_arg = DeclareLaunchArgument('world', default_value='empty', description='Gazebo 世界名')
+
+    model = LaunchConfiguration('model')
+    world = LaunchConfiguration('world')
+
     try:
         top_dir = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).decode().strip()
     except subprocess.CalledProcessError:
@@ -11,12 +18,19 @@ def generate_launch_description():
 
     sitl_script = f'{top_dir}/px4/PX4-Autopilot/Tools/simulation/gazebo-classic/sitl_run.sh'
     px4_bin = f'{top_dir}/px4/PX4-Autopilot/build/px4_sitl_default/bin/px4'
-    model = 'iris_downward_depth_camera'
-    world = 'landing_place'
     px4_src = f'{top_dir}/px4/PX4-Autopilot'
     px4_build = f'{top_dir}/px4/PX4-Autopilot/build/px4_sitl_default'
 
+    microxrce_agent_cmd = ['MicroXRCEAgent', 'udp4', '-p', '8888']
+
     return LaunchDescription([
+        model_arg,
+        world_arg,
+        ExecuteProcess(
+            cmd=microxrce_agent_cmd,
+            output='screen',
+            shell=False
+        ),
         ExecuteProcess(
             cmd=[
                 sitl_script,

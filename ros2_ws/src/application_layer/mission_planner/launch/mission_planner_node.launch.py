@@ -6,6 +6,7 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 
 def generate_launch_description():
+    
     base_node = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
@@ -16,13 +17,30 @@ def generate_launch_description():
         )
     )
 
-    px4_hold_height_test_node = Node(
-        package='application_test',
-        executable='px4_hold_height_test_node',
-        name='px4_hold_height_test_node',
+    rect_detect_node = Node(
+        package='vision_pipeline',
+        executable='rect_detect_node',
+        name='rect_detect_node',
         output='screen',
     )
+
+    mission_planner_node = Node(
+        package='mission_planner',
+        executable='mission_planner_node',
+        name='mission_planner_node',
+        output='screen',
+    )
+
+    pid_viewer_node = Node(
+        package='debug',
+        executable='pid_viewer_node',
+        name='pid_viewer_node',
+        output='screen',
+    )
+
     return LaunchDescription([
         base_node,
-        px4_hold_height_test_node,
+        rect_detect_node,
+        mission_planner_node,
+        pid_viewer_node,
     ])
