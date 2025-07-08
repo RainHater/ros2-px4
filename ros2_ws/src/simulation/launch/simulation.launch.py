@@ -6,7 +6,7 @@ import os
 
 def generate_launch_description():
     model_arg = DeclareLaunchArgument('model', default_value='iris', description='PX4 模型名')
-    world_arg = DeclareLaunchArgument('world', default_value='empty', description='Gazebo 世界名')
+    world_arg = DeclareLaunchArgument('world', default_value='mcity', description='Gazebo 世界名')
 
     model = LaunchConfiguration('model')
     world = LaunchConfiguration('world')
