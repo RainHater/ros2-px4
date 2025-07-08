@@ -4,15 +4,12 @@
 [submodule "px4/PX4-Autopilot"]
 	path = px4/PX4-Autopilot
 	url = https://github.com/PX4/PX4-Autopilot.git
+[submodule "px4/DDS"]
+	path = px4/DDS
+	url = https://github.com/eProsima/Micro-XRCE-DDS-Agent.git
 [submodule "ros2_ws/src/interface_layer/msgs/px4_msgs"]
 	path = ros2_ws/src/interface_layer/msgs/px4_msgs
 	url = https://github.com/PX4/px4_msgs.git
 [submodule "ros2_ws/src/interface_layer/px4_ros_com"]
 	path = ros2_ws/src/interface_layer/px4_ros_com
 	url = https://github.com/PX4/px4_ros_com.git
-[submodule "px4/DDS"]
-	path = px4/DDS
-	url = https://github.com/eProsima/Micro-XRCE-DDS-Agent.git
-[submodule "px4/px4-ros2-interface-lib"]
-	path = px4/px4-ros2-interface-lib
-	url = https://github.com/Auterion/px4-ros2-interface-lib.git
