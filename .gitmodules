@@ -4,11 +4,11 @@
 [submodule "px4/PX4-Autopilot"]
 	path = px4/PX4-Autopilot
 	url = https://github.com/PX4/PX4-Autopilot.git
-[submodule "ros2_ws/src/px4_msgs"]
-	path = ros2_ws/src/px4_msgs
+[submodule "ros2_ws/src/interface_layer/msgs/px4_msgs"]
+	path = ros2_ws/src/interface_layer/msgs/px4_msgs
 	url = https://github.com/PX4/px4_msgs.git
-[submodule "ros2_ws/src/px4_ros_com"]
-	path = ros2_ws/src/px4_ros_com
+[submodule "ros2_ws/src/interface_layer/px4_ros_com"]
+	path = ros2_ws/src/interface_layer/px4_ros_com
 	url = https://github.com/PX4/px4_ros_com.git
 [submodule "px4/DDS"]
 	path = px4/DDS

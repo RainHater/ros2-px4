@@ -6,11 +6,13 @@
 - **控制层(control_layer)**：根据感知层的状态和目标，计算控制命令，执行闭环控制包括飞行姿态控制、速度控制、任务执行等。
 ---
 
-## **层级的包划分**
+## **层级的划分**
 
 ### **接口层（interface_layer）**
 - flight_controller_interface：和飞控固件通信，订阅/发布飞控状态、发送控制指令
 - communication_interface（未创建）：和外部系统（地面站、云端）的通信协议处理（比如MAVLink、ROS Topic）
+- msgs： 一些消息的包定义
+- px4_ros_com：px4官方库
 
 ---
 
