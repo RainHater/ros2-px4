@@ -43,6 +43,7 @@ sudo make install
 5. 配置ros humble工具包
 ```bash
 sudo apt install ros-humble-cv-bridge ros-humble-tf2-ros ros-humble-vision-opencv ros-dev-tools -y
+sudo apt install python3-colcon-common-extensions -y
 ```
 
 6. 配置python环境
@@ -66,6 +67,11 @@ colcon build --packages-select px4_ros_com
 ## 板载计算机连接飞控
 ```bash
 sudo MicroXRCEAgent serial --dev /dev/ttyUSB0 -b 921600
+```
+
+## 上传代码到板载计算机上
+```bash
+sudo rsync -aAXv   --exclude="/.cache/"   --exclude="/.venv/"   --exclude="/build/"   --exclude="/install/"   --exclude="/log/"   --exclude="/tmp/"  --exclude="/src/simulation"   /home/ros2/Projects/ros2_px4/ros2_ws/   sunrise@192.168.0.160:/home/sunrise/Desktop/ros2_px4
 ```
 
 > _日期：2025-07-07_  

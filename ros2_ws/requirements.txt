@@ -1,7 +1,7 @@
 matplotlib
 opencv-python
 numpy<2
-tf-transformations
+transformations
 transforms3d 
 catkin_pkg
 empy==3.3.4
