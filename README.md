@@ -74,5 +74,28 @@ sudo MicroXRCEAgent serial --dev /dev/ttyUSB0 -b 921600
 sudo rsync -aAXv   --exclude="/.cache/"   --exclude="/.venv/"   --exclude="/build/"   --exclude="/install/"   --exclude="/log/"   --exclude="/tmp/"  --exclude="/src/simulation"   /home/ros2/Projects/ros2_px4/ros2_ws/   sunrise@192.168.0.160:/home/sunrise/Desktop/ros2_px4
 ```
 
+## 连接板载计算机的数传
+停掉 getty：
+```bash
+sudo systemctl stop serial-getty@ttyS1.service
+```
+
+强制设置 ttyS1 波特率为 57600：
+```bash
+sudo stty -F /dev/ttyS1 57600
+```
+
+检查是否设置成功：
+```bash
+sudo stty -F /dev/ttyS1
+```
+
+重启
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable serial-getty@ttyS1.service
+sudo systemctl restart serial-getty@ttyS1.service
+```
+
 > _日期：2025-07-07_  
 > _作者：xuguocai_  
