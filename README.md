@@ -140,5 +140,11 @@ sudo systemctl daemon-reload
 sudo systemctl restart serial-getty@ttyS1.service
 ```
 
+## **注意点:**
+当 clangd 解析不到ros的代码时，可以安装 libstdc++-12-dev 来解决问题
+```bash
+sudo apt install --reinstall libstdc++-12-dev
+```
+
 > _日期：2025-07-15_  
 > _作者：xuguocai_  

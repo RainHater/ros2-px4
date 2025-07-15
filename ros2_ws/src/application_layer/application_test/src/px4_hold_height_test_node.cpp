@@ -44,7 +44,7 @@ void Px4HoldHeightTestNode::timer_callback(){
         common_msgs::msg::TrajectorySetPoint msg{};
         msg.position[0] = 0;
         msg.position[1] = 0;
-        msg.position[2] = -1;
+        msg.position[2] = -0.5;
         m_trajectory_set_point_pub->publish(msg);
     }else {
         common_msgs::msg::ArmOffboardStatus msg{};
