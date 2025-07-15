@@ -65,8 +65,41 @@ colcon build --packages-select px4_ros_com
 ---
 
 ## 板载计算机连接飞控
+1. 创建服务文件
 ```bash
-sudo MicroXRCEAgent serial --dev /dev/ttyUSB0 -b 921600
+sudo nano /etc/systemd/system/microxrceagent.service
+```
+
+2. 把下面内容粘贴进去
+```ini
+[Unit]
+Description=Micro XRCE Agent serial service
+After=network.target
+
+[Service]
+ExecStart=/bin/bash -c "source /opt/ros/humble/setup.bash && source /home/sunrise/Desktop/ros2_px4/install/setup.bash && /usr/local/bin/MicroXRCEAgent serial --dev /dev/ttyS7 -b 921600"
+Restart=always
+RestartSec=3
+User=root
+
+[Install]
+WantedBy=multi-user.target
+```
+
+3. 刷新 systemd 配置并启用服务
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable microxrceagent.service
+```
+
+4. 立即启动服务
+```bash
+sudo systemctl start microxrceagent.service
+```
+
+5. 验证是否运行成功
+```bash
+systemctl status microxrceagent.service
 ```
 
 ## 上传代码到板载计算机上
@@ -75,27 +108,37 @@ sudo rsync -aAXv   --exclude="/.cache/"   --exclude="/.venv/"   --exclude="/buil
 ```
 
 ## 连接板载计算机的数传
-停掉 getty：
+1. 创建一个 systemd 服务脚本：
 ```bash
-sudo systemctl stop serial-getty@ttyS1.service
+sudo nano /etc/systemd/system/serial-port-setup.service
 ```
 
-强制设置 ttyS1 波特率为 57600：
-```bash
-sudo stty -F /dev/ttyS1 57600
+2. 填入以下内容
+```ini
+[Unit]
+Description=Set serial port baud rate
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/stty -F /dev/ttyS1 57600
+
+[Install]
+WantedBy=multi-user.target
 ```
 
-检查是否设置成功：
+3. 启用该服务：
 ```bash
-sudo stty -F /dev/ttyS1
+sudo systemctl daemon-reexec
+sudo systemctl enable serial-port-setup.service
+sudo systemctl start serial-port-setup.service
 ```
 
 重启
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable serial-getty@ttyS1.service
 sudo systemctl restart serial-getty@ttyS1.service
 ```
 
-> _日期：2025-07-07_  
+> _日期：2025-07-15_  
 > _作者：xuguocai_  
