@@ -8,6 +8,7 @@
 #include <px4_msgs/msg/vehicle_odometry.hpp>
 #include <px4_msgs/msg/vehicle_command.hpp>
 #include <px4_msgs/msg/vehicle_global_position.hpp>
+#include <px4_msgs/msg/vehicle_local_position.hpp>
 #include <px4_msgs/msg/vehicle_status.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
@@ -30,6 +31,7 @@ protected:
     void offboard_control_mode_callback(const px4_msgs::msg::OffboardControlMode &msg);
     void vehicle_global_position_callback(const px4_msgs::msg::VehicleGlobalPosition &msg);
     void vehicle_status_callback(const px4_msgs::msg::VehicleStatus &msg);
+    void vehicle_local_position_callbacks(const px4_msgs::msg::VehicleLocalPosition &msg);
 private:
 
     rclcpp::TimerBase::SharedPtr m_timer;
@@ -44,12 +46,14 @@ private:
     rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr m_vehicle_odometry_sub;
     rclcpp::Subscription<px4_msgs::msg::VehicleGlobalPosition>::SharedPtr m_vehicle_global_position_sub;
     rclcpp::Subscription<px4_msgs::msg::VehicleStatus>::SharedPtr m_vehicle_status_sub;
+    rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr m_vehicle_local_position_sub;
     //end 对于飞控订阅
 
     //start 对于外部发布
     rclcpp::Publisher<px4_msgs::msg::VehicleOdometry>::SharedPtr m_vehicle_odometry_pub;
     rclcpp::Publisher<px4_msgs::msg::VehicleGlobalPosition>::SharedPtr m_vehicle_global_position_pub;
     rclcpp::Publisher<px4_msgs::msg::VehicleStatus>::SharedPtr m_vehicle_status_pub;
+    rclcpp::Publisher<px4_msgs::msg::VehicleLocalPosition>::SharedPtr m_vehicle_local_position_pub;
     //end 对于外部发布
 
     //start 对于外部订阅

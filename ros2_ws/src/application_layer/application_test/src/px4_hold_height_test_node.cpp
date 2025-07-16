@@ -32,6 +32,9 @@ void Px4HoldHeightTestNode::init_subscription(){
     m_px4_mode_status_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
         "/control/px4_mode_status_broadcaster", 10, 
         std::bind(&Px4HoldHeightTestNode::px4_mode_status_callback, this, _1));
+    m_vehicle_local_position_sub = create_subscription<px4_msgs::msg::VehicleLocalPosition>(
+        "/interface/out/vehicle_local_position", 10, 
+        std::bind(&Px4HoldHeightTestNode::vehicle_local_position_callback, this, _1));
 }
 
 void Px4HoldHeightTestNode::timer_callback(){
@@ -42,9 +45,10 @@ void Px4HoldHeightTestNode::timer_callback(){
         offboard_mode == POSITION)
     {
         common_msgs::msg::TrajectorySetPoint msg{};
-        msg.position[0] = 0;
-        msg.position[1] = 0;
-        msg.position[2] = -0.5;
+        msg.position[0] = 0.0;
+        msg.position[1] = 0.0;
+        msg.position[2] = -1;
+        msg.yaw = 0.0;
         m_trajectory_set_point_pub->publish(msg);
     }else {
         common_msgs::msg::ArmOffboardStatus msg{};
@@ -57,6 +61,12 @@ void Px4HoldHeightTestNode::px4_mode_status_callback(
     const common_msgs::msg::ArmOffboardStatus::SharedPtr msg)
 {
     m_px4_current_mode = *msg;
+}
+
+void Px4HoldHeightTestNode::vehicle_local_position_callback(
+    const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg){
+    m_velocity_y = msg->vy;
+    m_velocity_x = msg->vy;
 }
 
 int main(int argc, char *argv[]) {

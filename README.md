@@ -104,7 +104,7 @@ systemctl status microxrceagent.service
 
 ## 上传代码到板载计算机上
 ```bash
-sudo rsync -aAXv   --exclude="/.cache/"   --exclude="/.venv/"   --exclude="/build/"   --exclude="/install/"   --exclude="/log/"   --exclude="/tmp/"  --exclude="/src/simulation"   /home/ros2/Projects/ros2_px4/ros2_ws/   sunrise@192.168.0.160:/home/sunrise/Desktop/ros2_px4
+bash scripts/sync_ros2_ws.sh 192.168.0.44
 ```
 
 ## 连接板载计算机的数传
@@ -146,5 +146,5 @@ sudo systemctl restart serial-getty@ttyS1.service
 sudo apt install --reinstall libstdc++-12-dev
 ```
 
-> _日期：2025-07-15_  
+> _日期：2025-07-16_  
 > _作者：xuguocai_  
