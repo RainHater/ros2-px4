@@ -1,6 +1,7 @@
 #ifndef _FLIGHT_MODE_MANAGER_NODE_H
 #define _FLIGHT_MODE_MANAGER_NODE_H
 
+#include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <px4_msgs/msg/offboard_control_mode.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
@@ -15,13 +16,38 @@
 #include <chrono>
 #include <iostream>
 
+constexpr auto ARMING_STATE_ARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
+constexpr auto ARMING_STATE_DISARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_DISARMED;
+constexpr auto OFFBOARD_NOT_ACTIVE = common_msgs::msg::ArmOffboardStatus::OFFBOARD_NOT_ACTIVE;
+constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
+constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
+constexpr auto ATTITUDE = common_msgs::msg::ArmOffboardStatus::ATTITUDE;
+constexpr auto PX4_OFFBOARD_DEFAULT_MODE = POSITION;
+constexpr auto PX4_CUSTOM_MAIN_MODE_OFFBOARD = 6;
+constexpr auto LOCK_INTERVAL_TIME = 10;
+
 struct Px4ModeInfo {
     //当前模式
     common_msgs::msg::ArmOffboardStatus current;
     //目标模式
     common_msgs::msg::ArmOffboardStatus target;
+    //上一次px4模式模式
+    common_msgs::msg::ArmOffboardStatus last;
     //arm未解锁间隔
     int lock_interval_cnt;
+
+    //发布模式切换日志
+    void state_release(const rclcpp::Node::SharedPtr & node){
+        if (last.offboard_mode != current.offboard_mode){
+            last.offboard_mode = current.offboard_mode;
+            RCLCPP_INFO(node->get_logger(), "offboard 切换: %d", current.offboard_mode);
+        }
+        if (last.arming_state != current.arming_state){
+            last.arming_state = current.arming_state;
+            std::string release_str = (current.arming_state==ARMING_STATE_ARMED)?"已解锁":"未解锁";
+            RCLCPP_INFO(node->get_logger(), "arm: %s", release_str.c_str());
+        }
+    }
 };
 
 class FlightModeManagerNode : public rclcpp::Node {

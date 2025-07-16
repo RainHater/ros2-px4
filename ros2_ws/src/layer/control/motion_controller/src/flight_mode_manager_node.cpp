@@ -1,16 +1,7 @@
 #include "motion_controller/flight_mode_manager_node.h"
 #include "utilities/topic_pub_tool.hpp"
 #include "utilities/topic_sub_tool.hpp"
-
-constexpr auto ARMING_STATE_ARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
-constexpr auto ARMING_STATE_DISARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_DISARMED;
-constexpr auto OFFBOARD_NOT_ACTIVE = common_msgs::msg::ArmOffboardStatus::OFFBOARD_NOT_ACTIVE;
-constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
-constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
-constexpr auto ATTITUDE = common_msgs::msg::ArmOffboardStatus::ATTITUDE;
-constexpr auto PX4_OFFBOARD_DEFAULT_MODE = POSITION;
-constexpr auto PX4_CUSTOM_MAIN_MODE_OFFBOARD = 6;
-constexpr auto LOCK_INTERVAL_TIME = 10;
+#include <rclcpp/logging.hpp>
 
 using std::placeholders::_1;
 
@@ -24,6 +15,7 @@ FlightModeManagerNode::FlightModeManagerNode()
     m_px4_mode.current.offboard_mode = OFFBOARD_NOT_ACTIVE;
     m_px4_mode.target.arming_state = ARMING_STATE_ARMED;
     m_px4_mode.target.offboard_mode = PX4_OFFBOARD_DEFAULT_MODE;
+    m_px4_mode.last.offboard_mode = m_px4_mode.current.offboard_mode;
 }
 
 void FlightModeManagerNode::initialize(){
@@ -57,9 +49,21 @@ void FlightModeManagerNode::init_subscription(){
 }
 
 void FlightModeManagerNode::timer_callback(){
+    auto &mode = m_px4_mode.target.offboard_mode;
+    const auto &LAND = common_msgs::msg::ArmOffboardStatus::LAND;
+
+    m_px4_mode.state_release(shared_from_this());
+
+    if (mode == LAND){
+        publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_NAV_LAND, 0, 0);
+        m_px4_mode.current.offboard_mode = LAND;
+        return;
+    }
+
     if (m_offboard_setpoint_counter == 10) {
         // Change to Offboard mode after 10 setpoints
         publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_OFFBOARD);
+        
         // Arm the vehicle
         arm();
     }
@@ -75,7 +79,6 @@ void FlightModeManagerNode::timer_callback(){
 
 void FlightModeManagerNode::set_px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus::SharedPtr msg){
     m_px4_mode.target.offboard_mode = msg->offboard_mode;
-    RCLCPP_INFO(get_logger(), "current offboard mode: %d", m_px4_mode.current.offboard_mode);
 }
 
 void FlightModeManagerNode::px4_mode_status_broadcaster_callback(const px4_msgs::msg::VehicleStatus::SharedPtr msg){
@@ -83,14 +86,15 @@ void FlightModeManagerNode::px4_mode_status_broadcaster_callback(const px4_msgs:
         m_px4_mode.current.arming_state = ARMING_STATE_DISARMED;
         if (m_offboard_setpoint_counter == 11 || msg->nav_state != 14){
             m_px4_mode.lock_interval_cnt ++;
-            if (m_px4_mode.lock_interval_cnt >= LOCK_INTERVAL_TIME){
-                m_offboard_setpoint_counter = 0;
-                m_px4_mode.lock_interval_cnt = 0;
-            }
+        }
+        if (m_px4_mode.lock_interval_cnt >= LOCK_INTERVAL_TIME){
+            m_offboard_setpoint_counter = 0;
+            m_px4_mode.lock_interval_cnt = 0;
         }
     }else if (msg->arming_state == 2){
         m_px4_mode.current.arming_state = ARMING_STATE_ARMED;
     }
+    
     if (msg->nav_state == 14){
         m_px4_mode.current.offboard_mode = m_px4_mode.target.offboard_mode;
     }
@@ -128,12 +132,12 @@ void FlightModeManagerNode::publish_current_offboard_mode(){
 
 void FlightModeManagerNode::arm() {
     publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
-    RCLCPP_INFO(this->get_logger(), "Arm command send");
+    RCLCPP_DEBUG(get_logger(), "Arm command send");
 }
 
 void FlightModeManagerNode::disarm() {
     publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
-    RCLCPP_INFO(this->get_logger(), "Disarm command send");
+    RCLCPP_DEBUG(get_logger(), "Disarm command send");
 }
 
 int main(int argc, char *argv[]) {

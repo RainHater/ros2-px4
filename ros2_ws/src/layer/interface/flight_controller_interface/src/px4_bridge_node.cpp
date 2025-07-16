@@ -74,8 +74,6 @@ void PX4BridgeNode::timer_callback(){
 
 void PX4BridgeNode::vehicle_command_callback(const px4_msgs::msg::VehicleCommand::SharedPtr msg){
     m_vehicle_command_pub->publish(*msg);
-
-    RCLCPP_INFO(this->get_logger(), "Forwarded VehicleCommand: command=%u", msg->command);
 }
 
 void PX4BridgeNode::trajectory_setpoint_callback(const px4_msgs::msg::TrajectorySetpoint::SharedPtr msg){

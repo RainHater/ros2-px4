@@ -15,7 +15,7 @@ def generate_launch_description():
             
     mission_planner_launch = PythonLaunchDescriptionSource(
                 PathJoinSubstitution([
-                    FindPackageShare('application_test'),
+                    FindPackageShare('real_machine_test'),
                     'launch',
                     'px4_hold_height_node.launch.py'
                 ])

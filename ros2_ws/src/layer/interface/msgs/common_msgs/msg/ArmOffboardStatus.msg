@@ -1,6 +1,7 @@
 uint8 POSITION = 0                  #位置控制
 uint8 VELOCITY = 1                  #速度控制
 uint8 ATTITUDE = 2                  #姿态控制
+uint8 LAND = 3                      #降落控制模式，原地垂直降落
 
 uint8 ARMING_STATE_DISARMED = 1     #arm上锁
 uint8 ARMING_STATE_ARMED    = 2     #arm解锁
