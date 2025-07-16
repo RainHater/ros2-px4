@@ -17,7 +17,7 @@ def generate_launch_description():
     )
 
     px4_hold_height_test_node = Node(
-        package='application_test',
+        package='real_machine_test',
         executable='px4_hold_height_test_node',
         name='px4_hold_height_test_node',
         output='screen',
