@@ -18,6 +18,7 @@ public:
     using GoalHandleNavigate = rclcpp_action::ServerGoalHandle<CommonNavigateToGPS>;
 public:
     GpsNavNode();
+    void initialize();
 protected:
     void init_publisher();
     void init_action();

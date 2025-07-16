@@ -27,6 +27,7 @@ public:
     // using CommonPrecisionLand = common_msgs::action::PrecisionLand;
 public:
     MissionPlanner();
+    void initialized();
 protected:
     void init_publisher();
     void init_subscription();

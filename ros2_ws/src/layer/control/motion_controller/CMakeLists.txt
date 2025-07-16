@@ -38,6 +38,7 @@ ament_target_dependencies(flight_mode_manager_node
   px4_msgs 
   geometry_msgs
   common_msgs
+  utilities
 )
 install(TARGETS flight_mode_manager_node DESTINATION lib/${PROJECT_NAME})
 

@@ -5,10 +5,14 @@
 #include <common_msgs/msg/trajectory_set_point.hpp>
 #include <common_msgs/msg/arm_offboard_status.hpp>
 #include <px4_msgs/msg/vehicle_local_position.hpp>
+#include <px4_msgs/msg/vehicle_odometry.hpp>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 
 class Px4HoldHeightTestNode : public rclcpp::Node {
 public:
     Px4HoldHeightTestNode();
+    void initialize();
 private:
     void init_publisher();
     void init_subscription();
@@ -26,6 +30,10 @@ private:
     rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_px4_mode_status_sub;
     //订阅当前速度
     rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr m_vehicle_local_position_sub;
+    //订阅当前设定值
+    rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr m_current_setpoing_sub;
+    //当前设定值
+    px4_msgs::msg::VehicleOdometry m_current_setpoint;
     //当前飞控模式
     common_msgs::msg::ArmOffboardStatus m_px4_current_mode;
     float m_velocity_y;

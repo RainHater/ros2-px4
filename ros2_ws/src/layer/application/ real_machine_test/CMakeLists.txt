@@ -17,6 +17,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
 find_package(utilities REQUIRED)
 find_package(control_interface REQUIRED)
+find_package(tf2 REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -45,6 +46,7 @@ ament_target_dependencies(px4_hold_height_test_node
   common_msgs
   control_interface
   utilities
+  tf2
 )
 install(TARGETS px4_hold_height_test_node DESTINATION lib/${PROJECT_NAME})
 

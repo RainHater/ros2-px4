@@ -3,7 +3,7 @@
 
 #include <math.h>
 
-namespace geo_utils {
+namespace geo_tool {
 //角度转弧度
 inline double deg2rad(double deg){
     return deg * M_PI / 180.0;

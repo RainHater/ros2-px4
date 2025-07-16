@@ -1,6 +1,6 @@
 #include "state_estimator/state_estimator_node.h"
-#include "utilities/topic_utils.hpp"
-#include "utilities/geo_utils.hpp"
+#include "utilities/topic_tool.hpp"
+#include "utilities/geo_tool.hpp"
 
 using std::placeholders::_1;
 using std::placeholders::_2;
@@ -8,7 +8,9 @@ using std::placeholders::_2;
 StateEstimatorNode::StateEstimatorNode() 
     : rclcpp::Node("state_estimator_node") {
     RCLCPP_INFO(get_logger(), "Starting state_estimator_node follower node...");
-    
+}
+
+void StateEstimatorNode::initialized(){
     init_subscription();
     init_service();
     
@@ -25,7 +27,7 @@ void StateEstimatorNode::init_subscription(){
     m_global_position_sub = create_subscription<px4_msgs::msg::VehicleGlobalPosition>(
         "/interface/out/vehicle_global_position", 10,
         std::bind(&StateEstimatorNode::current_gps_callback, this, _1)); 
-    m_current_setpoing_sub = topic_utils::make_simple_subscription<
+    m_current_setpoing_sub = topic_tool::make_simple_subscription<
         px4_msgs::msg::VehicleOdometry>(
         "/interface/out/vehicle_odometry",
         10, this, m_current_setpoint);
@@ -77,7 +79,7 @@ void StateEstimatorNode::handle_gps_to_local(
     }
 
     double x = 0.0, y = 0.0;
-    geo_utils::gps_to_local(m_reference_gps.lat, m_reference_gps.lon,
+    geo_tool::gps_to_local(m_reference_gps.lat, m_reference_gps.lon,
                  request->latitude, request->longitude, x, y);
     
     std::array<double, 3> target_position = {x, y, m_reference_gps.lat - request->altitude};
@@ -113,8 +115,9 @@ void StateEstimatorNode::handle_gps_to_local(
 int main(int argc, char *argv[]) {
     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<StateEstimatorNode>());
-
+    auto node = std::make_shared<StateEstimatorNode>();
+    node->initialized();
+    rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;
 }

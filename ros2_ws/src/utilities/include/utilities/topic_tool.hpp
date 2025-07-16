@@ -3,7 +3,7 @@
 #include <string>
 #include <rclcpp/rclcpp.hpp>
 
-namespace topic_utils {
+namespace topic_tool {
 
 template<typename MsgT, typename MemberT>
 inline typename rclcpp::Subscription<MsgT>::SharedPtr

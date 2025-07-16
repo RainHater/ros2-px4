@@ -1,5 +1,6 @@
 #include "motion_controller/flight_mode_manager_node.h"
-#include <rclcpp/logging.hpp>
+#include "utilities/topic_pub_tool.hpp"
+#include "utilities/topic_sub_tool.hpp"
 
 constexpr auto ARMING_STATE_ARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
 constexpr auto ARMING_STATE_DISARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_DISARMED;
@@ -23,7 +24,9 @@ FlightModeManagerNode::FlightModeManagerNode()
     m_px4_mode.current.offboard_mode = OFFBOARD_NOT_ACTIVE;
     m_px4_mode.target.arming_state = ARMING_STATE_ARMED;
     m_px4_mode.target.offboard_mode = PX4_OFFBOARD_DEFAULT_MODE;
-        
+}
+
+void FlightModeManagerNode::initialize(){
     init_publisher();
     init_subscription();
 
@@ -33,22 +36,24 @@ FlightModeManagerNode::FlightModeManagerNode()
 }
 
 void FlightModeManagerNode::init_publisher(){
-    m_offboard_control_mode_pub = create_publisher<px4_msgs::msg::OffboardControlMode>(
-        "/interface/in/offboard_control_mode", 10);
-    m_vehicle_command_pub = create_publisher<px4_msgs::msg::VehicleCommand>(
-        "/interface/in/vehicle_command", 10);
-    m_px4_mode_status_broadcaster_pub = create_publisher<common_msgs::msg::ArmOffboardStatus>(
-        "/control/px4_mode_status_broadcaster", 10);
+    topic_pub_tool::offboard_control_mode(
+        shared_from_this(), m_offboard_control_mode_pub);
+    topic_pub_tool::vehicle_command(
+        shared_from_this(), m_vehicle_command_pub);
+    topic_pub_tool::control_px4_mode_status(
+        shared_from_this(), m_px4_mode_status_broadcaster_pub);
 }
 
 void FlightModeManagerNode::init_subscription(){
-    m_set_px4_mode_status_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
-        "/control/set_offboard_mode", 10, 
-        std::bind(&FlightModeManagerNode::set_px4_mode_status_callback, this, _1));
-    
-    m_px4_mode_status_broadcaster_sub = create_subscription<px4_msgs::msg::VehicleStatus>(
-        "/interface/out/vehicle_status", 10, 
-        std::bind(&FlightModeManagerNode::px4_mode_status_broadcaster_callback, this, _1));
+    topic_sub_tool::control_set_offboard_mode(
+        shared_from_this(), m_set_px4_mode_status_sub, 
+        std::bind(&FlightModeManagerNode::set_px4_mode_status_callback, this, _1)
+    );
+
+    topic_sub_tool::vehicle_status(
+        shared_from_this(), m_px4_mode_status_broadcaster_sub, 
+        std::bind(&FlightModeManagerNode::px4_mode_status_broadcaster_callback, this, _1)
+    );
 }
 
 void FlightModeManagerNode::timer_callback(){
@@ -68,25 +73,25 @@ void FlightModeManagerNode::timer_callback(){
     }
 }
 
-void FlightModeManagerNode::set_px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus &msg){
-    m_px4_mode.target.offboard_mode = msg.offboard_mode;
+void FlightModeManagerNode::set_px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus::SharedPtr msg){
+    m_px4_mode.target.offboard_mode = msg->offboard_mode;
     RCLCPP_INFO(get_logger(), "current offboard mode: %d", m_px4_mode.current.offboard_mode);
 }
 
-void FlightModeManagerNode::px4_mode_status_broadcaster_callback(const px4_msgs::msg::VehicleStatus &msg){
-    if (msg.arming_state == 1){
+void FlightModeManagerNode::px4_mode_status_broadcaster_callback(const px4_msgs::msg::VehicleStatus::SharedPtr msg){
+    if (msg->arming_state == 1){
         m_px4_mode.current.arming_state = ARMING_STATE_DISARMED;
-        if (m_offboard_setpoint_counter == 11 || msg.nav_state != 14){
+        if (m_offboard_setpoint_counter == 11 || msg->nav_state != 14){
             m_px4_mode.lock_interval_cnt ++;
             if (m_px4_mode.lock_interval_cnt >= LOCK_INTERVAL_TIME){
                 m_offboard_setpoint_counter = 0;
                 m_px4_mode.lock_interval_cnt = 0;
             }
         }
-    }else if (msg.arming_state == 2){
+    }else if (msg->arming_state == 2){
         m_px4_mode.current.arming_state = ARMING_STATE_ARMED;
     }
-    if (msg.nav_state == 14){
+    if (msg->nav_state == 14){
         m_px4_mode.current.offboard_mode = m_px4_mode.target.offboard_mode;
     }
 }
@@ -134,7 +139,9 @@ void FlightModeManagerNode::disarm() {
 int main(int argc, char *argv[]) {
     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<FlightModeManagerNode>());
+    auto node = std::make_shared<FlightModeManagerNode>();
+    node->initialize();
+    rclcpp::spin(node);
 
     rclcpp::shutdown();
     return 0;

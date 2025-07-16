@@ -1,5 +1,7 @@
 #include "motion_controller/offboard_ctrl_node.h"
-#include "utilities/topic_utils.hpp"
+#include "utilities/topic_tool.hpp"
+#include "utilities/topic_pub_tool.hpp"
+#include "utilities/topic_sub_tool.hpp"
 #include <cmath>
 #include <functional>
 #include <sstream>
@@ -8,7 +10,9 @@
 OffboardCtrlNode::OffboardCtrlNode() 
     : Node("offboard_ctrl_node") {
     RCLCPP_INFO(get_logger(), "Starting offboard_ctrl_node follower node...");
-    
+}
+
+void OffboardCtrlNode::initialize(){
     init_publisher();
     init_subscription();
 
@@ -18,20 +22,19 @@ OffboardCtrlNode::OffboardCtrlNode()
 }
 
 void OffboardCtrlNode::init_publisher(){
-    m_trajectory_setpoint_pub = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
-        "/interface/in/trajectory_setpoint", 10);
+    topic_pub_tool::trajectory_setpoint(
+        shared_from_this(), m_trajectory_setpoint_pub);
 }
 
 void OffboardCtrlNode::init_subscription(){
-    m_target_setpoint_sub = topic_utils::make_simple_subscription<common_msgs::msg::TrajectorySetPoint>(
-        "/control/trajectory_setpoint", 10, 
-        this, 
-        m_target_setpoint);
-
-    m_current_offboard_mode_sub = topic_utils::make_simple_subscription<common_msgs::msg::ArmOffboardStatus>(
-        "/control/px4_mode_status_broadcaster", 10, 
-        this, 
-        m_current_offboard_mode);
+    topic_sub_tool::control_trajectory_setpoint(shared_from_this(), m_target_setpoint_sub, [this](
+        const common_msgs::msg::TrajectorySetPoint::SharedPtr msg){
+            m_target_setpoint = *msg;
+        });
+    topic_sub_tool::control_px4_mode_status(shared_from_this(), m_current_offboard_mode_sub, [this](
+        const common_msgs::msg::ArmOffboardStatus::SharedPtr msg){
+            m_current_offboard_mode = *msg;
+        });
 }
 
 void OffboardCtrlNode::timer_callback(){
@@ -52,7 +55,7 @@ void OffboardCtrlNode::publish_trajectory_setpoint() {
     auto use_if_mode = [&](auto& target_mode, float value) {
         return (mode == target_mode) ? value : NAN;
     };
-    
+
     msg.position[0] = use_if_mode(POSITION, target.position[0]);
     msg.position[1] = use_if_mode(POSITION, target.position[1]);
     msg.position[2] = use_if_mode(POSITION, target.position[2]);
@@ -68,7 +71,9 @@ void OffboardCtrlNode::publish_trajectory_setpoint() {
 int main(int argc, char *argv[]) {
     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<OffboardCtrlNode>());
+    auto node = std::make_shared<OffboardCtrlNode>();
+    node->initialize();
+    rclcpp::spin(node);
 
     rclcpp::shutdown();
     return 0;

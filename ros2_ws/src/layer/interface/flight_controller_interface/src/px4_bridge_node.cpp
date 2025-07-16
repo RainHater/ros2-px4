@@ -5,7 +5,9 @@ using std::placeholders::_1;
 PX4BridgeNode::PX4BridgeNode()
     : rclcpp::Node("px4_bridge_node") {
     RCLCPP_INFO(get_logger(), "Starting px4_bridge_node follower node...");
-    
+}
+
+void PX4BridgeNode::initialized(){
     init_px4_publisher();
     init_px4_subscription();
     init_external_publisher();
@@ -70,46 +72,47 @@ void PX4BridgeNode::timer_callback(){
     
 }
 
-void PX4BridgeNode::vehicle_command_callback(const px4_msgs::msg::VehicleCommand &msg){
-    m_vehicle_command_pub->publish(msg);
+void PX4BridgeNode::vehicle_command_callback(const px4_msgs::msg::VehicleCommand::SharedPtr msg){
+    m_vehicle_command_pub->publish(*msg);
 
-    RCLCPP_INFO(this->get_logger(), "Forwarded VehicleCommand: command=%u", msg.command);
+    RCLCPP_INFO(this->get_logger(), "Forwarded VehicleCommand: command=%u", msg->command);
 }
 
-void PX4BridgeNode::trajectory_setpoint_callback(const px4_msgs::msg::TrajectorySetpoint &msg){
-    m_trajectory_setpoint_pub->publish(msg);
+void PX4BridgeNode::trajectory_setpoint_callback(const px4_msgs::msg::TrajectorySetpoint::SharedPtr msg){
+    m_trajectory_setpoint_pub->publish(*msg);
 
     RCLCPP_DEBUG(this->get_logger(), "Published TrajectorySetpoint: x=%.2f y=%.2f z=%.2f",
-                    msg.position[0],
-                    msg.position[1],
-                    msg.position[2]);
+                    msg->position[0],
+                    msg->position[1],
+                    msg->position[2]);
 }
 
-void PX4BridgeNode::vehicle_odometry_callback(const px4_msgs::msg::VehicleOdometry &msg){
-    m_vehicle_odometry_pub->publish(msg);
+void PX4BridgeNode::vehicle_odometry_callback(const px4_msgs::msg::VehicleOdometry::SharedPtr msg){
+    m_vehicle_odometry_pub->publish(*msg);
 }
 
-void PX4BridgeNode::offboard_control_mode_callback(const px4_msgs::msg::OffboardControlMode &msg){
-    m_offboard_control_mode_pub->publish(msg);
+void PX4BridgeNode::offboard_control_mode_callback(const px4_msgs::msg::OffboardControlMode::SharedPtr msg){
+    m_offboard_control_mode_pub->publish(*msg);
 }
 
-void PX4BridgeNode::vehicle_global_position_callback(const px4_msgs::msg::VehicleGlobalPosition &msg){
-    m_vehicle_global_position_pub->publish(msg);
+void PX4BridgeNode::vehicle_global_position_callback(const px4_msgs::msg::VehicleGlobalPosition::SharedPtr msg){
+    m_vehicle_global_position_pub->publish(*msg);
 }
 
-void PX4BridgeNode::vehicle_status_callback(const px4_msgs::msg::VehicleStatus &msg){
-    m_vehicle_status_pub->publish(msg);
+void PX4BridgeNode::vehicle_status_callback(const px4_msgs::msg::VehicleStatus::SharedPtr msg){
+    m_vehicle_status_pub->publish(*msg);
 }
 
-void PX4BridgeNode::vehicle_local_position_callbacks(const px4_msgs::msg::VehicleLocalPosition &msg){
-    m_vehicle_local_position_pub->publish(msg);
+void PX4BridgeNode::vehicle_local_position_callbacks(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg){
+    m_vehicle_local_position_pub->publish(*msg);
 }
 
 int main(int argc, char *argv[]) {
     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<PX4BridgeNode>());
-
+    auto node = std::make_shared<PX4BridgeNode>();
+    node->initialized();
+    rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;
 }

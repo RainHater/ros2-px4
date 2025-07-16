@@ -11,6 +11,8 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(common_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -31,7 +33,11 @@ target_include_directories(${PROJECT_NAME} INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(${PROJECT_NAME} INTERFACE rclcpp::rclcpp)
+target_link_libraries(${PROJECT_NAME} INTERFACE 
+  rclcpp::rclcpp
+  tf2::tf2
+  # common_msgs::common_msgs
+)
 
 # 安装头文件
 install(
@@ -47,6 +53,10 @@ install(
 
 # 让其他包能 find_package(utilities) 并链接
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
-ament_export_dependencies(rclcpp)
+ament_export_dependencies(
+  rclcpp
+  tf2
+  common_msgs
+)
 
 ament_package()

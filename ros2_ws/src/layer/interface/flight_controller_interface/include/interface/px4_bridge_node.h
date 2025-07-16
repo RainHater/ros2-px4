@@ -15,6 +15,7 @@
 class PX4BridgeNode : public rclcpp::Node {
 public:
     PX4BridgeNode();
+    void initialized();
 protected:
     //飞控发布
     void init_px4_publisher();
@@ -25,13 +26,13 @@ protected:
     //外部订阅
     void init_external_subscription();
     void timer_callback();
-    void vehicle_command_callback(const px4_msgs::msg::VehicleCommand &msg);
-    void trajectory_setpoint_callback(const px4_msgs::msg::TrajectorySetpoint &msg);
-    void vehicle_odometry_callback(const px4_msgs::msg::VehicleOdometry &msg);
-    void offboard_control_mode_callback(const px4_msgs::msg::OffboardControlMode &msg);
-    void vehicle_global_position_callback(const px4_msgs::msg::VehicleGlobalPosition &msg);
-    void vehicle_status_callback(const px4_msgs::msg::VehicleStatus &msg);
-    void vehicle_local_position_callbacks(const px4_msgs::msg::VehicleLocalPosition &msg);
+    void vehicle_command_callback(const px4_msgs::msg::VehicleCommand::SharedPtr msg);
+    void trajectory_setpoint_callback(const px4_msgs::msg::TrajectorySetpoint::SharedPtr msg);
+    void vehicle_odometry_callback(const px4_msgs::msg::VehicleOdometry::SharedPtr msg);
+    void offboard_control_mode_callback(const px4_msgs::msg::OffboardControlMode::SharedPtr msg);
+    void vehicle_global_position_callback(const px4_msgs::msg::VehicleGlobalPosition::SharedPtr msg);
+    void vehicle_status_callback(const px4_msgs::msg::VehicleStatus::SharedPtr msg);
+    void vehicle_local_position_callbacks(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg);
 private:
 
     rclcpp::TimerBase::SharedPtr m_timer;

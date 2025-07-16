@@ -1,17 +1,20 @@
 #include "task_executor/gps_nav_node.h"
+#include "utilities/topic_pub_tool.hpp"
 
 GpsNavNode::GpsNavNode()
     : Node("gps_nav_node"){
     RCLCPP_INFO(get_logger(), "Starting gps_nav_node follower node...");
+}
 
+void GpsNavNode::initialize(){
     init_publisher();
     init_action();
     init_client();
 }
 
 void GpsNavNode::init_publisher(){
-    m_target_setpoint_pub = create_publisher<common_msgs::msg::TrajectorySetPoint>(
-        "/control/trajectory_setpoint", 10);
+    topic_pub_tool::control_trajectory_setpoint(
+        shared_from_this(), m_target_setpoint_pub);
 }
 
 void GpsNavNode::init_action(){
@@ -110,8 +113,9 @@ bool GpsNavNode::request_local_target(
 int main(int argc, char *argv[]) {
     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<GpsNavNode>());
-
+    auto node = std::make_shared<GpsNavNode>();
+    node->initialize();
+    rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;
 }

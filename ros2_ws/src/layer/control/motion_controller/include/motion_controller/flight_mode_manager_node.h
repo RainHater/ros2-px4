@@ -27,14 +27,15 @@ struct Px4ModeInfo {
 class FlightModeManagerNode : public rclcpp::Node {
 public:
     FlightModeManagerNode();
+    void initialize();
 protected:
     void init_publisher();
     void init_subscription();
     void timer_callback();
     //设置offboard模式
-    void set_px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus &msg);
+    void set_px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus::SharedPtr msg);
     //获取飞控当前状态
-    void px4_mode_status_broadcaster_callback(const px4_msgs::msg::VehicleStatus &msg);
+    void px4_mode_status_broadcaster_callback(const px4_msgs::msg::VehicleStatus::SharedPtr msg);
     //发布一个 PX4 的 VehicleCommand 指令
     void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0);
     //向PX4发布Offboard模式

@@ -1,7 +1,9 @@
 #include "mission_planner/mission_planner_node.h"
 #include <cmath>
 #include <optional>
-#include "utilities/topic_utils.hpp"
+#include "utilities/topic_tool.hpp"
+#include "utilities/topic_pub_tool.hpp"
+#include "utilities/topic_sub_tool.hpp"
 #include "control_interface/gps_nav_api.h"
 
 using std::placeholders::_1;
@@ -11,7 +13,9 @@ MissionPlanner::MissionPlanner()
     m_pid_x(0.038f, 0.0000000000000001, 0.0000000000099f),
     m_pid_y(0.038f, 0.0000000000000001, 0.0000000000099f){
     RCLCPP_INFO(get_logger(), "Starting mission_planner_node follower node...");
+}
 
+void MissionPlanner::initialized(){
     init_publisher();  
     init_subscription();
     init_client();
@@ -22,20 +26,20 @@ MissionPlanner::MissionPlanner()
 }
 
 void MissionPlanner::init_publisher(){
-    m_set_offboard_mode_pub = create_publisher<common_msgs::msg::ArmOffboardStatus>(
-        "/control/set_offboard_mode", 10);
-    m_trajectory_set_point_pub = create_publisher<common_msgs::msg::TrajectorySetPoint>(
-        "/control/trajectory_setpoint", 10);
+    topic_pub_tool::control_set_offboard_mode(
+        shared_from_this(), m_set_offboard_mode_pub);    
+    topic_pub_tool::control_trajectory_setpoint(
+        shared_from_this(), m_trajectory_set_point_pub);
     m_pid_viewer_pub = create_publisher<common_msgs::msg::PidDebug>(
         "/debug/pid_viewer", 10);
 }
 
 void MissionPlanner::init_subscription(){
-    m_px4_mode_status_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
-        "/control/px4_mode_status_broadcaster", 10, 
-        std::bind(&MissionPlanner::px4_mode_status_callback, this, _1));
+    topic_sub_tool::control_px4_mode_status(
+        shared_from_this(), m_px4_mode_status_sub, 
+    std::bind(&MissionPlanner::px4_mode_status_callback, this, _1));
     
-    m_tracking_feedback_sub = topic_utils::make_simple_subscription<common_msgs::msg::TrackingFeedback>(
+    m_tracking_feedback_sub = topic_tool::make_simple_subscription<common_msgs::msg::TrackingFeedback>(
         "/vision_pipeline/tracking_feedback", 10, 
         this, 
         m_tracking_feedback);
@@ -128,7 +132,10 @@ void MissionPlanner::px4_mode_status_callback(
 int main(int argc, char *argv[]) {
     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<MissionPlanner>());
+    auto node = std::make_shared<MissionPlanner>();
+    node->initialized();
+    rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;
 }
+

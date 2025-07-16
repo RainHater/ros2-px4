@@ -18,6 +18,7 @@ struct GeoCoordinate {
 class StateEstimatorNode : public rclcpp::Node {
 public:
     StateEstimatorNode();
+    void initialized();
 protected:
     void timer_callback();
     void init_subscription();

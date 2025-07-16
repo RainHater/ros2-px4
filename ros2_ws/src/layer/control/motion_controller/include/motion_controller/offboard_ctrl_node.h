@@ -11,6 +11,7 @@
 class OffboardCtrlNode : public rclcpp::Node {
 public:
     OffboardCtrlNode();
+    void initialize();
 protected:
     void init_publisher();
     void init_subscription();
@@ -25,7 +26,6 @@ private:
     rclcpp::Subscription<common_msgs::msg::TrajectorySetPoint>::SharedPtr m_target_setpoint_sub;
     //订阅当前offboard模式状态
     rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_current_offboard_mode_sub;
-    
     //目标位置
     common_msgs::msg::TrajectorySetPoint m_target_setpoint;
     //当前offboard模式状态
