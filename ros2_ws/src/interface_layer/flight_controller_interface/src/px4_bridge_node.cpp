@@ -36,7 +36,7 @@ void PX4BridgeNode::init_px4_subscription(){
         "/fmu/out/vehicle_global_position", qos,
         std::bind(&PX4BridgeNode::vehicle_global_position_callback, this, _1)); 
     m_vehicle_status_sub = create_subscription<px4_msgs::msg::VehicleStatus>(
-        "/fmu/out/vehicle_status_v1", qos,
+        "/fmu/out/vehicle_status", qos,
         std::bind(&PX4BridgeNode::vehicle_status_callback, this, _1)); 
 }
 
@@ -46,7 +46,7 @@ void PX4BridgeNode::init_external_publisher(){
     m_vehicle_global_position_pub = create_publisher<px4_msgs::msg::VehicleGlobalPosition>(
         "/interface/out/vehicle_global_position", 10);
     m_vehicle_status_pub = create_publisher<px4_msgs::msg::VehicleStatus>(
-        "/interface/out/vehicle_status_v1", 10);
+        "/interface/out/vehicle_status", 10);
 }
 
 void PX4BridgeNode::init_external_subscription(){

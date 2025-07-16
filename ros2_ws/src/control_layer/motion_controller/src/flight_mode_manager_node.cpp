@@ -47,7 +47,7 @@ void FlightModeManagerNode::init_subscription(){
         std::bind(&FlightModeManagerNode::set_px4_mode_status_callback, this, _1));
     
     m_px4_mode_status_broadcaster_sub = create_subscription<px4_msgs::msg::VehicleStatus>(
-        "/interface/out/vehicle_status_v1", 10, 
+        "/interface/out/vehicle_status", 10, 
         std::bind(&FlightModeManagerNode::px4_mode_status_broadcaster_callback, this, _1));
 }
 

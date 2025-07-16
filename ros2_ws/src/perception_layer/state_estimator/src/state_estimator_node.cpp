@@ -42,10 +42,15 @@ void StateEstimatorNode::current_gps_callback(const px4_msgs::msg::VehicleGlobal
     double lat = msg->lat / 1e7;
     double lon = msg->lon / 1e7;
     double alt_m = msg->alt / 1e3; 
+    bool lat_lon_valid = !std::isnan(msg->lat) && std::abs(msg->lat) > 0.1 &&
+                     !std::isnan(msg->lon) && std::abs(msg->lon) > 0.1;
+
+    bool alt_valid = !std::isnan(msg->alt) && std::abs(msg->alt) > 0.1;
+
 
     if (!m_reference_initialized && 
-        msg->lat_lon_valid &&
-        msg->alt_valid){
+        lat_lon_valid &&
+        alt_valid){
         m_reference_gps.lat = lat;
         m_reference_gps.lon = lon;
         m_reference_gps.alt = alt_m;
