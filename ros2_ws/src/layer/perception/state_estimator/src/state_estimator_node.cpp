@@ -89,9 +89,9 @@ void StateEstimatorNode::handle_gps_to_local(
     const float VERTICAL_DIST_THRESHOLD = 0.4f;
     const auto &current_setpoint = m_current_setpoing_listener.get_msg();
 
-    float dx = target_position[0] - current_setpoint->position[0];
-    float dy = target_position[1] - current_setpoint->position[1];
-    float dz = target_position[2] - current_setpoint->position[2];
+    float dx = target_position[0] - current_setpoint.position[0];
+    float dy = target_position[1] - current_setpoint.position[1];
+    float dz = target_position[2] - current_setpoint.position[2];
 
     float horizontal_dist = std::hypot(dx, dy);
     float vertical_dist = std::abs(dz);

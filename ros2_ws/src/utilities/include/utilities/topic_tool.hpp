@@ -20,11 +20,11 @@ public:
             topic_name, qos, 
             [this](const MsgPtr msg){
                 std::lock_guard<std::mutex> lock(m_mutex);
-                m_msg = msg;
+                m_msg = *msg;
             }
         );
     }
-    const MsgPtr get_msg(){
+    const MsgT& get_msg(){
         std::lock_guard<std::mutex> lock(m_mutex);
         return m_msg;
     }
@@ -32,5 +32,5 @@ public:
 private:
     std::mutex m_mutex;
     SubscriptionPtr m_sub;
-    MsgPtr m_msg;
+    MsgT m_msg;
 };

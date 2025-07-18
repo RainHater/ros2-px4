@@ -41,29 +41,28 @@ void OffboardCtrlNode::timer_callback(){
 }
 
 void OffboardCtrlNode::publish_trajectory_setpoint() {
-    const auto &target = m_target_setpoint_listener.get_msg();
-    const auto &arm_state = m_current_offboard_mode_listener.get_msg()->arming_state;
-    const auto &mode = m_current_offboard_mode_listener.get_msg()->offboard_mode;
-    const auto &armed = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
-    const auto &POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
-    const auto &VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
+    const auto target = m_target_setpoint_listener.get_msg();
+    const auto offboard_mode = m_current_offboard_mode_listener.get_msg();
+    const auto armed = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
+    const auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
+    const auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
     auto use_if_mode = [&](auto& target_mode, float value) {
-        return (mode == target_mode) ? value : NAN;
+        return (offboard_mode.offboard_mode == target_mode) ? value : NAN;
     };
 
-    if (arm_state != armed)
+    if (offboard_mode.arming_state != armed)
         return;
 
     px4_msgs::msg::TrajectorySetpoint msg{};   
     
-    msg.position[0] = use_if_mode(POSITION, target->position[0]);
-    msg.position[1] = use_if_mode(POSITION, target->position[1]);
-    msg.position[2] = use_if_mode(POSITION, target->position[2]);
-    msg.velocity[0] = use_if_mode(VELOCITY, target->velocity[0]);
-    msg.velocity[1] = use_if_mode(VELOCITY, target->velocity[1]);
-    msg.velocity[2] = use_if_mode(VELOCITY, target->velocity[2]);
-    msg.yaw = use_if_mode(POSITION, target->yaw);
-    msg.yawspeed = use_if_mode(VELOCITY, target->yawspeed);
+    msg.position[0] = use_if_mode(POSITION, target.position[0]);
+    msg.position[1] = use_if_mode(POSITION, target.position[1]);
+    msg.position[2] = use_if_mode(POSITION, target.position[2]);
+    msg.velocity[0] = use_if_mode(VELOCITY, target.velocity[0]);
+    msg.velocity[1] = use_if_mode(VELOCITY, target.velocity[1]);
+    msg.velocity[2] = use_if_mode(VELOCITY, target.velocity[2]);
+    msg.yaw = use_if_mode(POSITION, target.yaw);
+    msg.yawspeed = use_if_mode(VELOCITY, target.yawspeed);
     msg.timestamp = get_clock()->now().nanoseconds() / 1000;
     m_trajectory_setpoint_pub->publish(msg); 
 }

@@ -80,18 +80,18 @@ void MissionPlanner::timer_callback(){
         float pixel_threshold = 10.0f;
         common_msgs::msg::TrajectorySetPoint msgs{};
         
-        float vx = -m_pid_y.update(tracking_feedback->angle_y);     //正值向后，负值向前
-        float vy = m_pid_x.update(tracking_feedback->angle_x);    //正值向左，负值向右
+        float vx = -m_pid_y.update(tracking_feedback.angle_y);     //正值向后，负值向前
+        float vy = m_pid_x.update(tracking_feedback.angle_x);    //正值向左，负值向右
         
         msgs.velocity[0] = vx;  
         msgs.velocity[1] = vy;
-        msgs.velocity[2] = (tracking_feedback->pixel_dist < pixel_threshold)?2.0f:0.0f;
+        msgs.velocity[2] = (tracking_feedback.pixel_dist < pixel_threshold)?2.0f:0.0f;
         msgs.yawspeed = 0.0f;
         m_trajectory_set_point_pub->publish(msgs);
         common_msgs::msg::PidDebug debug_msg{};
-        debug_msg.pixel_dist = tracking_feedback->pixel_dist;
-        debug_msg.angle_y = tracking_feedback->angle_y;
-        debug_msg.angle_x = tracking_feedback->angle_x;
+        debug_msg.pixel_dist = tracking_feedback.pixel_dist;
+        debug_msg.angle_y = tracking_feedback.angle_y;
+        debug_msg.angle_x = tracking_feedback.angle_x;
         debug_msg.timestamp = get_clock()->now().nanoseconds() / 1000;
         m_pid_viewer_pub->publish(debug_msg);
         RCLCPP_INFO(get_logger(), "velocity[0]: %f, velocity[1]: %f, velocity[2]: %f, yawspeed: %f, pixel_dist: %f", 
@@ -99,7 +99,7 @@ void MissionPlanner::timer_callback(){
                     msgs.velocity[1],
                     msgs.velocity[2],
                     msgs.yawspeed,
-                    tracking_feedback->pixel_dist);
+                    tracking_feedback.pixel_dist);
     }else if (m_current_task_status == LANDING){
         common_msgs::msg::TrajectorySetPoint msgs{};
         msgs.velocity[0] = 0.0f;
