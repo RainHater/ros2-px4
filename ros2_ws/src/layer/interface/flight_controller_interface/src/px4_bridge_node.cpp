@@ -1,7 +1,6 @@
-#include "interface/px4_bridge_node.h"
+#include "flight_controller_interface/px4_bridge_node.h"
+#include "flight_controller_interface/px4_topic_name.hpp"
 #include "utilities/topic_name.hpp"
-
-using std::placeholders::_1;
 
 PX4BridgeNode::PX4BridgeNode()
     : rclcpp::Node("px4_bridge_node") 
@@ -10,101 +9,64 @@ PX4BridgeNode::PX4BridgeNode()
 }
 
 void PX4BridgeNode::initialized(){
-    init_px4_publisher();
-    init_px4_subscription();
-    init_external_publisher();
-    init_external_subscription();
-
-    m_timer = create_wall_timer(
-        std::chrono::milliseconds(100), 
-        std::bind(&PX4BridgeNode::timer_callback, this));
+    init_forwarder();
+    init_forwarder_px4();
 }
 
-void PX4BridgeNode::init_px4_publisher(){
-    m_vehicle_command_pub = create_publisher<px4_msgs::msg::VehicleCommand>(
-        "/fmu/in/vehicle_command", 10);
-    m_trajectory_setpoint_pub = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
-        "/fmu/in/trajectory_setpoint", 10);
-    m_offboard_control_mode_pub = create_publisher<px4_msgs::msg::OffboardControlMode>(
-        "/fmu/in/offboard_control_mode", 10);
-}
-
-void PX4BridgeNode::init_px4_subscription(){
+void PX4BridgeNode::init_forwarder(){
     rclcpp::QoS qos(rclcpp::KeepLast(10));
     qos.best_effort();
 
-    m_vehicle_odometry_sub = create_subscription<px4_msgs::msg::VehicleOdometry>(
-        "/fmu/out/vehicle_odometry", qos,
-        std::bind(&PX4BridgeNode::vehicle_odometry_callback, this, _1)); 
-    m_vehicle_global_position_sub = create_subscription<px4_msgs::msg::VehicleGlobalPosition>(
-        "/fmu/out/vehicle_global_position", qos,
-        std::bind(&PX4BridgeNode::vehicle_global_position_callback, this, _1)); 
-    m_vehicle_status_sub = create_subscription<px4_msgs::msg::VehicleStatus>(
-        "/fmu/out/vehicle_status", qos,
-        std::bind(&PX4BridgeNode::vehicle_status_callback, this, _1)); 
-    m_vehicle_local_position_sub = create_subscription<px4_msgs::msg::VehicleLocalPosition>(
-        "/fmu/out/vehicle_local_position", qos,
-        std::bind(&PX4BridgeNode::vehicle_local_position_callbacks, this, _1)); 
+    m_vehicle_odometry_pair.create_forwarding_subscription(
+        shared_from_this(), 
+        topic_px4_out::VEHICLE_ODOMETRY,
+        topic_sub::VEHICLE_ODOMETRY,
+        qos
+    );
+
+    m_vehicle_status_pair.create_forwarding_subscription(
+        shared_from_this(), 
+        topic_px4_out::VEHICLE_STATUS,
+        topic_sub::VEHICLE_STATUS,
+        qos
+    );
+
+    m_vehicle_global_position_pair.create_forwarding_subscription(
+        shared_from_this(), 
+        topic_px4_out::VEHICLE_GLOBAL_POSITION,
+        topic_sub::VEHICLE_GLOBAL_POSITION,
+        qos
+    );
+
+    m_vehicle_local_position_pair.create_forwarding_subscription(
+        shared_from_this(), 
+        topic_px4_out::VEHICLE_LOCAL_POSITION,
+        topic_sub::VEHICLE_LOCAL_POSITION,
+        qos
+    );
 }
 
-void PX4BridgeNode::init_external_publisher(){
-    m_vehicle_odometry_pub = create_publisher<px4_msgs::msg::VehicleOdometry>(
-        topic_sub::VEHICLE_ODOMETRY, 10);
-    m_vehicle_global_position_pub = create_publisher<px4_msgs::msg::VehicleGlobalPosition>(
-        topic_sub::VEHICLE_GLOBAL_POSITION, 10);
-    m_vehicle_status_pub = create_publisher<px4_msgs::msg::VehicleStatus>(
-        topic_sub::VEHICLE_STATUS, 10);
-    m_vehicle_local_position_pub = create_publisher<px4_msgs::msg::VehicleLocalPosition>(
-        topic_sub::VEHICLE_LOCAL_POSITION, 10);
-}
+void PX4BridgeNode::init_forwarder_px4(){
+    m_vehicle_command_px4.create_forwarding_subscription(
+        shared_from_this(), 
+        topic_pub::VEHICLE_COMMAND, 
+        topic_px4_in::VEHICLE_COMMAND,
+        10
+    );
 
-void PX4BridgeNode::init_external_subscription(){
-    m_vehicle_command_sub = create_subscription<px4_msgs::msg::VehicleCommand>(
-        topic_pub::VEHICLE_COMMAND, 10,
-        std::bind(&PX4BridgeNode::vehicle_command_callback, this, _1)); 
-    m_trajectory_setpoint_sub = create_subscription<px4_msgs::msg::TrajectorySetpoint>(
-        topic_pub::PX4_TRAJECTORY_SETPOINT, 10,
-        std::bind(&PX4BridgeNode::trajectory_setpoint_callback, this, _1)); 
-    m_offboard_control_mode_sub = create_subscription<px4_msgs::msg::OffboardControlMode>(
-        topic_pub::OFFBOARD_CONTROL_MODE, 10,
-        std::bind(&PX4BridgeNode::offboard_control_mode_callback, this, _1)); 
-}
+    m_trajectory_setpoint_px4.create_forwarding_subscription(
+        shared_from_this(), 
+        topic_pub::PX4_TRAJECTORY_SETPOINT, 
+        topic_px4_in::TRAJECTORY_SETPOINT,
+        10
+    );
 
-void PX4BridgeNode::timer_callback(){
-    
-}
-
-void PX4BridgeNode::vehicle_command_callback(const px4_msgs::msg::VehicleCommand::SharedPtr msg){
-    m_vehicle_command_pub->publish(*msg);
-}
-
-void PX4BridgeNode::trajectory_setpoint_callback(const px4_msgs::msg::TrajectorySetpoint::SharedPtr msg){
-    m_trajectory_setpoint_pub->publish(*msg);
-
-    RCLCPP_DEBUG(this->get_logger(), "Published TrajectorySetpoint: x=%.2f y=%.2f z=%.2f",
-                    msg->position[0],
-                    msg->position[1],
-                    msg->position[2]);
-}
-
-void PX4BridgeNode::vehicle_odometry_callback(const px4_msgs::msg::VehicleOdometry::SharedPtr msg){
-    m_vehicle_odometry_pub->publish(*msg);
-}
-
-void PX4BridgeNode::offboard_control_mode_callback(const px4_msgs::msg::OffboardControlMode::SharedPtr msg){
-    m_offboard_control_mode_pub->publish(*msg);
-}
-
-void PX4BridgeNode::vehicle_global_position_callback(const px4_msgs::msg::VehicleGlobalPosition::SharedPtr msg){
-    m_vehicle_global_position_pub->publish(*msg);
-}
-
-void PX4BridgeNode::vehicle_status_callback(const px4_msgs::msg::VehicleStatus::SharedPtr msg){
-    m_vehicle_status_pub->publish(*msg);
-}
-
-void PX4BridgeNode::vehicle_local_position_callbacks(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg){
-    m_vehicle_local_position_pub->publish(*msg);
+    m_offboard_control_mode_px4.create_forwarding_subscription(
+        shared_from_this(), 
+        topic_pub::OFFBOARD_CONTROL_MODE, 
+        topic_px4_in::OFFBOARD_CONTROL_MODE,
+        10
+    );
 }
 
 int main(int argc, char *argv[]) {
