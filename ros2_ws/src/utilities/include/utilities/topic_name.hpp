@@ -1,5 +1,7 @@
 #pragma once
 
+//外部话题的话题订阅
+
 namespace common_topics {
     constexpr const char* TRAJECTORY_SETPOINT       = "/control/trajectory_setpoint";
     constexpr const char* PX4_MODE_STATUS           = "/control/px4_mode_status_broadcaster";

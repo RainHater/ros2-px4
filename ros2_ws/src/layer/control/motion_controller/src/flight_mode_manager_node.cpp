@@ -1,8 +1,5 @@
 #include "motion_controller/flight_mode_manager_node.h"
-#include "utilities/topic_pub_tool.hpp"
-#include "utilities/topic_sub_tool.hpp"
 #include "utilities/topic_name.hpp"
-#include <rclcpp/logging.hpp>
 
 using std::placeholders::_1;
 
@@ -41,13 +38,13 @@ void FlightModeManagerNode::init_publisher(){
 }
 
 void FlightModeManagerNode::init_subscription(){
-    topic_sub_tool::control_set_offboard_mode(
-        shared_from_this(), m_set_px4_mode_status_sub, 
+    m_set_px4_mode_status_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
+        topic_sub::SET_OFFBOARD_MODE, 10, 
         std::bind(&FlightModeManagerNode::set_px4_mode_status_callback, this, _1)
     );
 
-    topic_sub_tool::vehicle_status(
-        shared_from_this(), m_px4_mode_status_broadcaster_sub, 
+    m_px4_mode_status_broadcaster_sub = create_subscription<px4_msgs::msg::VehicleStatus>(
+        topic_sub::VEHICLE_STATUS, 10, 
         std::bind(&FlightModeManagerNode::px4_mode_status_broadcaster_callback, this, _1)
     );
 }

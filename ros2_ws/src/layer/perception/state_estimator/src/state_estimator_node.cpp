@@ -1,7 +1,5 @@
 #include "state_estimator/state_estimator_node.h"
-#include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
-#include "utilities/geo_tool.hpp"
 
 using std::placeholders::_1;
 using std::placeholders::_2;
@@ -15,14 +13,6 @@ StateEstimatorNode::StateEstimatorNode()
 void StateEstimatorNode::initialized(){
     init_subscription();
     init_service();
-    
-    m_timer = create_wall_timer(
-        std::chrono::milliseconds(100), 
-        std::bind(&StateEstimatorNode::timer_callback, this));
-}
-
-void StateEstimatorNode::timer_callback(){
-    
 }
 
 void StateEstimatorNode::init_subscription(){
@@ -32,11 +22,9 @@ void StateEstimatorNode::init_subscription(){
         std::bind(&StateEstimatorNode::current_gps_callback, this, _1)
     );
 
-    m_current_setpoing_sub = create_subscription<px4_msgs::msg::VehicleOdometry>(
-        topic_sub::VEHICLE_ODOMETRY, 10,
-        [this](px4_msgs::msg::VehicleOdometry::SharedPtr msgs){
-            m_current_setpoint = *msgs;
-        }
+    m_current_setpoing_listener.subscribe(
+        shared_from_this(), 
+        topic_sub::VEHICLE_ODOMETRY, 10
     );
 }
 
@@ -46,8 +34,9 @@ void StateEstimatorNode::init_service(){
         std::bind(&StateEstimatorNode::handle_gps_to_local, this, _1, _2));
 }
 
-void StateEstimatorNode::current_gps_callback(const px4_msgs::msg::VehicleGlobalPosition::SharedPtr msg){
-    
+void StateEstimatorNode::current_gps_callback(
+    const px4_msgs::msg::VehicleGlobalPosition::SharedPtr msg)
+{
     double lat = msg->lat / 1e7;
     double lon = msg->lon / 1e7;
     double alt_m = msg->alt / 1e3; 
@@ -56,28 +45,27 @@ void StateEstimatorNode::current_gps_callback(const px4_msgs::msg::VehicleGlobal
 
     bool alt_valid = !std::isnan(msg->alt) && std::abs(msg->alt) > 0.1;
 
-
-    if (!m_reference_initialized && 
+    if (!m_geo_ref_status.reference_initialized && 
         lat_lon_valid &&
         alt_valid){
-        m_reference_gps.lat = lat;
-        m_reference_gps.lon = lon;
-        m_reference_gps.alt = alt_m;
-        m_reference_initialized = true;
+        m_geo_ref_status.reference_gps.lat = lat;
+        m_geo_ref_status.reference_gps.lon = lon;
+        m_geo_ref_status.reference_gps.alt = alt_m;
+        m_geo_ref_status.reference_initialized = true;
 
         RCLCPP_INFO(this->get_logger(), "current_gps_callback: lat=%f, lon=%f, alt=%f",
                     lat, lon, alt_m);
     }
-    m_current_gps.lat = lat;
-    m_current_gps.lon = lon;
-    m_current_gps.alt = alt_m;
+    m_geo_ref_status.current_gps.lat = lat;
+    m_geo_ref_status.current_gps.lon = lon;
+    m_geo_ref_status.current_gps.alt = alt_m;
 }
 
 void StateEstimatorNode::handle_gps_to_local(
         const std::shared_ptr<TransformGpsToLocal::Request> request,
-        std::shared_ptr<TransformGpsToLocal::Response> response){
-
-    if (!m_reference_initialized) {
+        std::shared_ptr<TransformGpsToLocal::Response> response)
+{
+    if (!m_geo_ref_status.reference_initialized) {
         // RCLCPP_WARN(this->get_logger(), "Reference origin not initialized, cannot transform.");
         response->x = 0;
         response->y = 0;
@@ -86,16 +74,24 @@ void StateEstimatorNode::handle_gps_to_local(
     }
 
     double x = 0.0, y = 0.0;
-    geo_tool::gps_to_local(m_reference_gps.lat, m_reference_gps.lon,
-                 request->latitude, request->longitude, x, y);
+    geo_tool::gps_to_local(
+        m_geo_ref_status.reference_gps.lat, 
+        m_geo_ref_status.reference_gps.lon,
+        request->latitude, request->longitude, 
+        x, y
+    );
     
-    std::array<double, 3> target_position = {x, y, m_reference_gps.lat - request->altitude};
+    std::array<double, 3> target_position = {
+        x, y, 
+        m_geo_ref_status.reference_gps.lat - request->altitude
+    };
     const float HORIZONTAL_DIST_THRESHOLD = 0.9f;
     const float VERTICAL_DIST_THRESHOLD = 0.4f;
-    
-    float dx = target_position[0] - m_current_setpoint.position[0];
-    float dy = target_position[1] - m_current_setpoint.position[1];
-    float dz = target_position[2] - m_current_setpoint.position[2];
+    const auto &current_setpoint = m_current_setpoing_listener.get_msg();
+
+    float dx = target_position[0] - current_setpoint->position[0];
+    float dy = target_position[1] - current_setpoint->position[1];
+    float dz = target_position[2] - current_setpoint->position[2];
 
     float horizontal_dist = std::hypot(dx, dy);
     float vertical_dist = std::abs(dz);
@@ -106,9 +102,9 @@ void StateEstimatorNode::handle_gps_to_local(
     response->y = target_position[1];
     response->z = target_position[2];
     response->yaw = desired_yaw_rad;
-    response->lat = m_current_gps.lat;
-    response->lon = m_current_gps.lon;
-    response->alt = m_current_gps.alt;
+    response->lat = m_geo_ref_status.current_gps.lat;
+    response->lon = m_geo_ref_status.current_gps.lon;
+    response->alt = m_geo_ref_status.current_gps.alt;
     response->arrive = arrive;
     
     // RCLCPP_INFO(get_logger(), "handle_gps_to_local vertical_dist: %f, horizontal_dist: %f", 

@@ -1,7 +1,6 @@
 #ifndef _FLIGHT_MODE_MANAGER_NODE_H
 #define _FLIGHT_MODE_MANAGER_NODE_H
 
-#include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <px4_msgs/msg/offboard_control_mode.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
@@ -11,6 +10,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <common_msgs/msg/arm_offboard_status.hpp>
+#include "utilities/topic_tool.hpp"
 
 #include <stdint.h>
 #include <chrono>
@@ -89,7 +89,6 @@ private:
     Px4ModeInfo m_px4_mode;
     //offboard setpoint 消息的计数器
     uint64_t m_offboard_setpoint_counter;
-
 };
 
 #endif

@@ -1,5 +1,4 @@
 #include "motion_controller/offboard_ctrl_node.h"
-#include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
 #include <cmath>
 #include <functional>
@@ -27,20 +26,13 @@ void OffboardCtrlNode::init_publisher(){
 }
 
 void OffboardCtrlNode::init_subscription(){
-    m_target_setpoint_sub = create_subscription<common_msgs::msg::TrajectorySetPoint>(
-        topic_sub::TRAJECTORY_SETPOINT, 10, 
-        [this](
-        const common_msgs::msg::TrajectorySetPoint::SharedPtr msg){
-            m_target_setpoint = *msg;
-        }
+    m_target_setpoint_listener.subscribe(
+        shared_from_this(), 
+        topic_sub::TRAJECTORY_SETPOINT, 10
     );
-
-    m_current_offboard_mode_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
-        topic_sub::PX4_MODE_STATUS, 10, 
-        [this](
-        const common_msgs::msg::ArmOffboardStatus::SharedPtr msg){
-            m_current_offboard_mode = *msg;
-        }
+    m_current_offboard_mode_listener.subscribe(
+        shared_from_this(), 
+        topic_sub::PX4_MODE_STATUS, 10
     );
 }
 
@@ -49,28 +41,29 @@ void OffboardCtrlNode::timer_callback(){
 }
 
 void OffboardCtrlNode::publish_trajectory_setpoint() {
-    const auto &target = m_target_setpoint;
-    const auto &arm_state = m_current_offboard_mode.arming_state;
-    const auto &mode = m_current_offboard_mode.offboard_mode;
+    const auto &target = m_target_setpoint_listener.get_msg();
+    const auto &arm_state = m_current_offboard_mode_listener.get_msg()->arming_state;
+    const auto &mode = m_current_offboard_mode_listener.get_msg()->offboard_mode;
     const auto &armed = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
     const auto &POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
     const auto &VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
-    if (arm_state != armed)
-        return;
-
-    px4_msgs::msg::TrajectorySetpoint msg{};   
     auto use_if_mode = [&](auto& target_mode, float value) {
         return (mode == target_mode) ? value : NAN;
     };
 
-    msg.position[0] = use_if_mode(POSITION, target.position[0]);
-    msg.position[1] = use_if_mode(POSITION, target.position[1]);
-    msg.position[2] = use_if_mode(POSITION, target.position[2]);
-    msg.velocity[0] = use_if_mode(VELOCITY, target.velocity[0]);
-    msg.velocity[1] = use_if_mode(VELOCITY, target.velocity[1]);
-    msg.velocity[2] = use_if_mode(VELOCITY, target.velocity[2]);
-    msg.yaw = use_if_mode(POSITION, target.yaw);
-    msg.yawspeed = use_if_mode(VELOCITY, target.yawspeed);
+    if (arm_state != armed)
+        return;
+
+    px4_msgs::msg::TrajectorySetpoint msg{};   
+    
+    msg.position[0] = use_if_mode(POSITION, target->position[0]);
+    msg.position[1] = use_if_mode(POSITION, target->position[1]);
+    msg.position[2] = use_if_mode(POSITION, target->position[2]);
+    msg.velocity[0] = use_if_mode(VELOCITY, target->velocity[0]);
+    msg.velocity[1] = use_if_mode(VELOCITY, target->velocity[1]);
+    msg.velocity[2] = use_if_mode(VELOCITY, target->velocity[2]);
+    msg.yaw = use_if_mode(POSITION, target->yaw);
+    msg.yawspeed = use_if_mode(VELOCITY, target->yawspeed);
     msg.timestamp = get_clock()->now().nanoseconds() / 1000;
     m_trajectory_setpoint_pub->publish(msg); 
 }
@@ -81,7 +74,6 @@ int main(int argc, char *argv[]) {
     auto node = std::make_shared<OffboardCtrlNode>();
     node->initialize();
     rclcpp::spin(node);
-
     rclcpp::shutdown();
     return 0;
 }

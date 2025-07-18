@@ -5,6 +5,7 @@
 template<typename MsgT>
 class TopicForwarder{
 public:
+    using MsgPtr = typename MsgT::SharedPtr;
     using PublisherPtr = typename rclcpp::Publisher<MsgT>::SharedPtr;
     using SubscriptionPtr = typename rclcpp::Subscription<MsgT>::SharedPtr;
 public:
@@ -17,7 +18,7 @@ public:
         m_pub = node->create_publisher<MsgT>(output_topic, 10);
         m_sub = node->create_subscription<MsgT>(
         input_topic, qos,
-        [this](const typename MsgT::SharedPtr msg){
+        [this](const MsgPtr msg){
             m_pub->publish(*msg);
         }
     );

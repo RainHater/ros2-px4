@@ -10,6 +10,7 @@
 #include <common_msgs/msg/tracking_feedback.hpp>
 #include <common_msgs/msg/pid_debug.hpp>
 #include "mission_planner/IncrementalPID.hpp"
+#include "utilities/topic_tool.hpp"
 
 enum TaskStatus {
     WAIT_FOR_ARM_AND_OFFBOARD = 0,
@@ -46,15 +47,11 @@ private:
     rclcpp::Publisher<common_msgs::msg::PidDebug>::SharedPtr m_pid_viewer_pub;
     //订阅当前飞控arm和offboard状态
     rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_px4_mode_status_sub;
-    //订阅视觉发送的坐标
-    rclcpp::Subscription<common_msgs::msg::TrackingFeedback>::SharedPtr m_tracking_feedback_sub;
     //nav导航客户端
     rclcpp_action::Client<NavigateToGPS>::SharedPtr m_nav_client;
-    //定点降落客户端
-    // rclcpp_action::Client<CommonPrecisionLand>::SharedPtr m_precision_land_client;
-    
-    //视觉消息
-    common_msgs::msg::TrackingFeedback m_tracking_feedback;
+    //视觉消息监听
+    TopicListener<common_msgs::msg::TrackingFeedback> m_tracking_feedback_listener;
+
     //当前任务状态
     TaskStatus m_current_task_status = WAIT_FOR_ARM_AND_OFFBOARD;
 

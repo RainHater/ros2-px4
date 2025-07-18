@@ -1,31 +1,36 @@
 #pragma once
 
-#include <string>
 #include <rclcpp/rclcpp.hpp>
+#include <string>
+#include <mutex>
 
-namespace topic_tool {
+//话题消息监听可直接获取话题的消息
+template<typename MsgT>
+class TopicListener{
+public:
+    using MsgPtr = typename MsgT::SharedPtr;
+    using SubscriptionPtr = typename rclcpp::Subscription<MsgT>::SharedPtr;
+public:
+    void subscribe(
+        rclcpp::Node::SharedPtr node,
+        const std::string & topic_name,
+        const rclcpp::QoS &qos)
+    {
+        m_sub = node->create_subscription<MsgT>(
+            topic_name, qos, 
+            [this](const MsgPtr msg){
+                std::lock_guard<std::mutex> lock(m_mutex);
+                m_msg = msg;
+            }
+        );
+    }
+    const MsgPtr get_msg(){
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_msg;
+    }
 
-template<typename MsgT, typename MemberT>
-inline typename rclcpp::Subscription<MsgT>::SharedPtr
-make_simple_subscription(
-    const std::string &topic,
-    const rclcpp::QoS &qos,
-    rclcpp::Node *node,
-    MemberT &member)
-{
-    return node->create_subscription<MsgT>(
-        topic, qos,
-        [&member](const typename MsgT::SharedPtr msg) {
-            member = *msg;
-        }
-    );
-}
-
-template <typename ContainerSrc, typename ContainerDst>
-void copy_float_data(const ContainerSrc& src, ContainerDst& dst) {
-    static_assert(std::is_same<typename ContainerSrc::value_type, float>::value, "src must hold float");
-    static_assert(std::is_same<typename ContainerDst::value_type, float>::value, "dst must hold float");
-    std::copy(std::begin(src), std::end(src), std::begin(dst));
-}
-
-}
+private:
+    std::mutex m_mutex;
+    SubscriptionPtr m_sub;
+    MsgPtr m_msg;
+};

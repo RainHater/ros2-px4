@@ -4,6 +4,12 @@
 #include <math.h>
 
 namespace geo_tool {
+struct GeoCoordinate {
+    double lat;     // 纬度
+    double lon;     // 经度
+    double alt;     // 高度
+};
+
 //角度转弧度
 inline double deg2rad(double deg){
     return deg * M_PI / 180.0;
