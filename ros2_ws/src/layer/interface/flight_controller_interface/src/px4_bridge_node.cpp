@@ -4,7 +4,8 @@
 using std::placeholders::_1;
 
 PX4BridgeNode::PX4BridgeNode()
-    : rclcpp::Node("px4_bridge_node") {
+    : rclcpp::Node("px4_bridge_node") 
+{
     RCLCPP_INFO(get_logger(), "Starting px4_bridge_node follower node...");
 }
 

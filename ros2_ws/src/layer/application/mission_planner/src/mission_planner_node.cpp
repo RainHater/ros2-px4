@@ -10,7 +10,8 @@ using std::placeholders::_1;
 MissionPlanner::MissionPlanner()
     : rclcpp::Node("mission_planner_node"), 
     m_pid_x(0.038f, 0.0000000000000001, 0.0000000000099f),
-    m_pid_y(0.038f, 0.0000000000000001, 0.0000000000099f){
+    m_pid_y(0.038f, 0.0000000000000001, 0.0000000000099f)
+{
     RCLCPP_INFO(get_logger(), "Starting mission_planner_node follower node...");
 }
 

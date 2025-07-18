@@ -7,7 +7,8 @@
 #include <iomanip>
 
 OffboardCtrlNode::OffboardCtrlNode() 
-    : Node("offboard_ctrl_node") {
+    : Node("offboard_ctrl_node") 
+{
     RCLCPP_INFO(get_logger(), "Starting offboard_ctrl_node follower node...");
 }
 

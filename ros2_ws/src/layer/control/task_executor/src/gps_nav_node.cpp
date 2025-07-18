@@ -2,7 +2,8 @@
 #include "utilities/topic_name.hpp"
 
 GpsNavNode::GpsNavNode()
-    : Node("gps_nav_node"){
+    : Node("gps_nav_node")
+{
     RCLCPP_INFO(get_logger(), "Starting gps_nav_node follower node...");
 }
 

@@ -7,7 +7,8 @@
 using std::placeholders::_1;
 
 FlightModeManagerNode::FlightModeManagerNode() 
-    : Node("flight_mode_manager_node"){
+    : Node("flight_mode_manager_node")
+{
     RCLCPP_INFO(this->get_logger(), "Starting flight_mode_manager_node follower node...");
     
     m_offboard_setpoint_counter = 0;

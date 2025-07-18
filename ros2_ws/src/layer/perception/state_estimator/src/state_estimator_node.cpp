@@ -7,7 +7,8 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 
 StateEstimatorNode::StateEstimatorNode() 
-    : rclcpp::Node("state_estimator_node") {
+    : rclcpp::Node("state_estimator_node") 
+{
     RCLCPP_INFO(get_logger(), "Starting state_estimator_node follower node...");
 }
 
