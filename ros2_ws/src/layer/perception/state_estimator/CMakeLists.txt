@@ -32,14 +32,14 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include 
 )
 
-add_executable(state_estimator_node src/state_estimator_node.cpp)
-ament_target_dependencies(state_estimator_node 
+add_executable(state_estimator_service src/state_estimator_service.cpp)
+ament_target_dependencies(state_estimator_service 
   rclcpp 
   px4_msgs 
   geometry_msgs
   common_msgs
   utilities
 )
-install(TARGETS state_estimator_node DESTINATION lib/${PROJECT_NAME})
+install(TARGETS state_estimator_service DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

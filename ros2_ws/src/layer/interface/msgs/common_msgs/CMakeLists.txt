@@ -29,6 +29,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PidDebug.msg"
   "action/NavigateToGPS.action"
   "action/PrecisionLand.action"
+  "action/FlyRelativeDirection.action"
   "srv/TransformGpsToLocal.srv"
   DEPENDENCIES std_msgs builtin_interfaces
 )

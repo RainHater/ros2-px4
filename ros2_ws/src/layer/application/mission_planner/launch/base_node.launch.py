@@ -9,10 +9,10 @@ def generate_launch_description():
         output='screen',
     )
 
-    state_estimator_node = Node(
+    state_estimator_service = Node(
         package='state_estimator',
-        executable='state_estimator_node',
-        name='state_estimator_node',
+        executable='state_estimator_service',
+        name='state_estimator_service',
         output='screen',
     )
 
@@ -30,17 +30,17 @@ def generate_launch_description():
         output='screen',
     )
 
-    gps_nav_node = Node(
+    gps_nav_action = Node(
         package='task_executor',
-        executable='gps_nav_node',
-        name='gps_nav_node',
+        executable='gps_nav_action',
+        name='gps_nav_action',
         output='screen',
     )
 
     return LaunchDescription([
         px4_bridge_node,
-        state_estimator_node,
+        state_estimator_service,
         flight_mode_manager_node,
         offboard_ctrl_node,
-        gps_nav_node
+        gps_nav_action
     ])

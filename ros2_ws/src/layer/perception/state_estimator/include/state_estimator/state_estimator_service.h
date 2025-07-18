@@ -1,5 +1,5 @@
-#ifndef _STATE_ESTIMATOR_NODE_H
-#define _STATE_ESTIMATOR_NODE_H
+#ifndef _STATE_ESTIMATOR_SERVICE_H
+#define _STATE_ESTIMATOR_SERVICE_H
 
 #include <rclcpp/rclcpp.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
@@ -21,9 +21,9 @@ struct GeoReferenceStatus {
     geo_tool::GeoCoordinate current_gps;
 };
 
-class StateEstimatorNode : public rclcpp::Node {
+class StateEstimatorService : public rclcpp::Node {
 public:
-    StateEstimatorNode();
+    StateEstimatorService();
     void initialized();
 protected:
     void init_subscription();

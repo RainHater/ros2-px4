@@ -1,25 +1,25 @@
-#include "state_estimator/state_estimator_node.h"
+#include "state_estimator/state_estimator_service.h"
 #include "utilities/topic_name.hpp"
 
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-StateEstimatorNode::StateEstimatorNode() 
-    : rclcpp::Node("state_estimator_node") 
+StateEstimatorService::StateEstimatorService() 
+    : rclcpp::Node("state_estimator_service") 
 {
-    RCLCPP_INFO(get_logger(), "Starting state_estimator_node follower node...");
+    RCLCPP_INFO(get_logger(), "Starting state_estimator_service follower node...");
 }
 
-void StateEstimatorNode::initialized(){
+void StateEstimatorService::initialized(){
     init_subscription();
     init_service();
 }
 
-void StateEstimatorNode::init_subscription(){
+void StateEstimatorService::init_subscription(){
 
     m_global_position_sub = create_subscription<px4_msgs::msg::VehicleGlobalPosition>(
         topic_sub::VEHICLE_GLOBAL_POSITION, 10, 
-        std::bind(&StateEstimatorNode::current_gps_callback, this, _1)
+        std::bind(&StateEstimatorService::current_gps_callback, this, _1)
     );
 
     m_current_setpoing_listener.subscribe(
@@ -28,13 +28,13 @@ void StateEstimatorNode::init_subscription(){
     );
 }
 
-void StateEstimatorNode::init_service(){
+void StateEstimatorService::init_service(){
     m_gps_to_local_srv = create_service<TransformGpsToLocal>(
         topic_srv::TRANSFORM_GPS_TO_LOCAL, 
-        std::bind(&StateEstimatorNode::handle_gps_to_local, this, _1, _2));
+        std::bind(&StateEstimatorService::handle_gps_to_local, this, _1, _2));
 }
 
-void StateEstimatorNode::current_gps_callback(
+void StateEstimatorService::current_gps_callback(
     const px4_msgs::msg::VehicleGlobalPosition::SharedPtr msg)
 {
     double lat = msg->lat / 1e7;
@@ -61,7 +61,7 @@ void StateEstimatorNode::current_gps_callback(
     m_geo_ref_status.current_gps.alt = alt_m;
 }
 
-void StateEstimatorNode::handle_gps_to_local(
+void StateEstimatorService::handle_gps_to_local(
         const std::shared_ptr<TransformGpsToLocal::Request> request,
         std::shared_ptr<TransformGpsToLocal::Response> response)
 {
@@ -118,7 +118,7 @@ void StateEstimatorNode::handle_gps_to_local(
 int main(int argc, char *argv[]) {
     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
     rclcpp::init(argc, argv);
-    auto node = std::make_shared<StateEstimatorNode>();
+    auto node = std::make_shared<StateEstimatorService>();
     node->initialized();
     rclcpp::spin(node);
     rclcpp::shutdown();

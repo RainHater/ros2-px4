@@ -1,5 +1,4 @@
-#ifndef _GEO_UTILS_H
-#define _GEO_UTILS_H
+#pragma once
 
 #include <math.h>
 
@@ -30,5 +29,3 @@ inline void gps_to_local(double lat0, double lon0,
     y = R * dLat;     
 }
 }
-
-#endif
