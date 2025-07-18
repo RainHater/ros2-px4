@@ -21,16 +21,24 @@ public:
             [this](const MsgPtr msg){
                 std::lock_guard<std::mutex> lock(m_mutex);
                 m_msg = *msg;
+                m_received = true;
             }
         );
     }
+
     const MsgT& get_msg(){
         std::lock_guard<std::mutex> lock(m_mutex);
         return m_msg;
     }
 
+    bool has_received() const {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_received;
+    }
+
 private:
-    std::mutex m_mutex;
+    mutable std::mutex m_mutex;
     SubscriptionPtr m_sub;
     MsgT m_msg;
+    bool m_received = false;
 };

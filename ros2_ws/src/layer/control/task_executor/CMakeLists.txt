@@ -34,8 +34,8 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include 
 )
 
-add_executable(gps_nav_node src/gps_nav_node.cpp)
-ament_target_dependencies(gps_nav_node 
+add_executable(gps_nav_action src/gps_nav_action.cpp)
+ament_target_dependencies(gps_nav_action 
   rclcpp 
   px4_msgs 
   geometry_msgs
@@ -43,6 +43,21 @@ ament_target_dependencies(gps_nav_node
   utilities
   rclcpp_action
 )
-install(TARGETS gps_nav_node DESTINATION lib/${PROJECT_NAME})
+install(TARGETS gps_nav_action DESTINATION lib/${PROJECT_NAME})
+
+include_directories(
+  ${PROJECT_SOURCE_DIR}/include 
+)
+
+add_executable(fly_relative_direction_action src/fly_relative_direction_action.cpp)
+ament_target_dependencies(fly_relative_direction_action 
+  rclcpp 
+  px4_msgs 
+  geometry_msgs
+  common_msgs
+  utilities
+  rclcpp_action
+)
+install(TARGETS fly_relative_direction_action DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

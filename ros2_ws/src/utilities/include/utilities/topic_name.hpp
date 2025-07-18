@@ -28,6 +28,7 @@ namespace topic_pub {
 namespace common_services {
     constexpr const char* TRANSFORM_GPS_TO_LOCAL        = "/perception/transform_gps_to_local";
     constexpr const char* NAVIGATE_TO_GPS               = "/control/navigate_to_gps";
+    constexpr const char* FLY_RELATIVE_DIRECTION        = "/control/fly_relative_direction";
 }
 
 namespace topic_srv {
