@@ -1,4 +1,5 @@
 #include "interface/px4_bridge_node.h"
+#include "utilities/topic_name.hpp"
 
 using std::placeholders::_1;
 
@@ -47,24 +48,24 @@ void PX4BridgeNode::init_px4_subscription(){
 
 void PX4BridgeNode::init_external_publisher(){
     m_vehicle_odometry_pub = create_publisher<px4_msgs::msg::VehicleOdometry>(
-        "/interface/out/vehicle_odometry", 10);
+        topic_sub::VEHICLE_ODOMETRY, 10);
     m_vehicle_global_position_pub = create_publisher<px4_msgs::msg::VehicleGlobalPosition>(
-        "/interface/out/vehicle_global_position", 10);
+        topic_sub::VEHICLE_GLOBAL_POSITION, 10);
     m_vehicle_status_pub = create_publisher<px4_msgs::msg::VehicleStatus>(
-        "/interface/out/vehicle_status", 10);
+        topic_sub::VEHICLE_STATUS, 10);
     m_vehicle_local_position_pub = create_publisher<px4_msgs::msg::VehicleLocalPosition>(
-        "/interface/out/vehicle_local_position", 10);
+        topic_sub::VEHICLE_LOCAL_POSITION, 10);
 }
 
 void PX4BridgeNode::init_external_subscription(){
     m_vehicle_command_sub = create_subscription<px4_msgs::msg::VehicleCommand>(
-        "/interface/in/vehicle_command", 10,
+        topic_pub::VEHICLE_COMMAND, 10,
         std::bind(&PX4BridgeNode::vehicle_command_callback, this, _1)); 
     m_trajectory_setpoint_sub = create_subscription<px4_msgs::msg::TrajectorySetpoint>(
-        "/interface/in/trajectory_setpoint", 10,
+        topic_pub::PX4_TRAJECTORY_SETPOINT, 10,
         std::bind(&PX4BridgeNode::trajectory_setpoint_callback, this, _1)); 
     m_offboard_control_mode_sub = create_subscription<px4_msgs::msg::OffboardControlMode>(
-        "/interface/in/offboard_control_mode", 10,
+        topic_pub::OFFBOARD_CONTROL_MODE, 10,
         std::bind(&PX4BridgeNode::offboard_control_mode_callback, this, _1)); 
 }
 

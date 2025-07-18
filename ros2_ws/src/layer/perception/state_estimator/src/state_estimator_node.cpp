@@ -1,5 +1,6 @@
 #include "state_estimator/state_estimator_node.h"
 #include "utilities/topic_tool.hpp"
+#include "utilities/topic_name.hpp"
 #include "utilities/geo_tool.hpp"
 
 using std::placeholders::_1;
@@ -24,18 +25,23 @@ void StateEstimatorNode::timer_callback(){
 }
 
 void StateEstimatorNode::init_subscription(){
+
     m_global_position_sub = create_subscription<px4_msgs::msg::VehicleGlobalPosition>(
-        "/interface/out/vehicle_global_position", 10,
-        std::bind(&StateEstimatorNode::current_gps_callback, this, _1)); 
-    m_current_setpoing_sub = topic_tool::make_simple_subscription<
-        px4_msgs::msg::VehicleOdometry>(
-        "/interface/out/vehicle_odometry",
-        10, this, m_current_setpoint);
+        topic_sub::VEHICLE_GLOBAL_POSITION, 10, 
+        std::bind(&StateEstimatorNode::current_gps_callback, this, _1)
+    );
+
+    m_current_setpoing_sub = create_subscription<px4_msgs::msg::VehicleOdometry>(
+        topic_sub::VEHICLE_ODOMETRY, 10,
+        [this](px4_msgs::msg::VehicleOdometry::SharedPtr msgs){
+            m_current_setpoint = *msgs;
+        }
+    );
 }
 
 void StateEstimatorNode::init_service(){
     m_gps_to_local_srv = create_service<TransformGpsToLocal>(
-        "/perception/transform_gps_to_local", 
+        topic_srv::TRANSFORM_GPS_TO_LOCAL, 
         std::bind(&StateEstimatorNode::handle_gps_to_local, this, _1, _2));
 }
 

@@ -2,8 +2,7 @@
 #include <cmath>
 #include <optional>
 #include "utilities/topic_tool.hpp"
-#include "utilities/topic_pub_tool.hpp"
-#include "utilities/topic_sub_tool.hpp"
+#include "utilities/topic_name.hpp"
 #include "control_interface/gps_nav_api.h"
 
 using std::placeholders::_1;
@@ -26,28 +25,31 @@ void MissionPlanner::initialized(){
 }
 
 void MissionPlanner::init_publisher(){
-    topic_pub_tool::control_set_offboard_mode(
-        shared_from_this(), m_set_offboard_mode_pub);    
-    topic_pub_tool::control_trajectory_setpoint(
-        shared_from_this(), m_trajectory_set_point_pub);
+    m_set_offboard_mode_pub = create_publisher<common_msgs::msg::ArmOffboardStatus>(
+        topic_pub::SET_OFFBOARD_MODE, 10);
+
+    m_trajectory_set_point_pub = create_publisher<common_msgs::msg::TrajectorySetPoint>(
+        topic_pub::TRAJECTORY_SETPOINT, 10);
+
     m_pid_viewer_pub = create_publisher<common_msgs::msg::PidDebug>(
-        "/debug/pid_viewer", 10);
+        topic_pub::PID_VIEWER, 10);
 }
 
 void MissionPlanner::init_subscription(){
-    topic_sub_tool::control_px4_mode_status(
-        shared_from_this(), m_px4_mode_status_sub, 
-    std::bind(&MissionPlanner::px4_mode_status_callback, this, _1));
+    m_px4_mode_status_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
+        topic_sub::PX4_MODE_STATUS, 10, 
+        std::bind(&MissionPlanner::px4_mode_status_callback, this, _1)
+    );
     
     m_tracking_feedback_sub = topic_tool::make_simple_subscription<common_msgs::msg::TrackingFeedback>(
-        "/vision_pipeline/tracking_feedback", 10, 
+        topic_sub::TRACKING_FEEDBACK, 10, 
         this, 
         m_tracking_feedback);
 } 
 
 void MissionPlanner::init_client(){
     m_nav_client = rclcpp_action::create_client<NavigateToGPS>(
-        this, "/control/navigate_to_gps");
+        this, topic_cli::NAVIGATE_TO_GPS);
     // m_precision_land_client = rclcpp_action::create_client<CommonPrecisionLand>(
     //     this, "/perception/precision_land");
 }

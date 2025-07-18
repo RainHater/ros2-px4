@@ -1,5 +1,5 @@
 #include "task_executor/gps_nav_node.h"
-#include "utilities/topic_pub_tool.hpp"
+#include "utilities/topic_name.hpp"
 
 GpsNavNode::GpsNavNode()
     : Node("gps_nav_node"){
@@ -13,29 +13,26 @@ void GpsNavNode::initialize(){
 }
 
 void GpsNavNode::init_publisher(){
-    topic_pub_tool::control_trajectory_setpoint(
-        shared_from_this(), m_target_setpoint_pub);
+    m_target_setpoint_pub = create_publisher<common_msgs::msg::TrajectorySetPoint>(
+        topic_pub::TRAJECTORY_SETPOINT, 10);
 }
 
 void GpsNavNode::init_action(){
     m_action_nav_server = rclcpp_action::create_server<CommonNavigateToGPS>(
         this,
-        "/control/navigate_to_gps", 
+        topic_srv::NAVIGATE_TO_GPS, 
         //处理导航目标请求
-        [this](const rclcpp_action::GoalUUID & uuid, 
+        [this](const rclcpp_action::GoalUUID &uuid, 
         std::shared_ptr<const CommonNavigateToGPS::Goal> goal){
-            std::stringstream ss;
-            for (auto byte : uuid) {
-                ss << std::hex << std::setw(2) << std::setfill('0') << (int)byte;
-            }
-            RCLCPP_INFO(get_logger(), "uuid: %s, nav_handle_goal: lat=%f lon=%f alt=%f", 
-                                    ss.str().c_str(), goal->lat, goal->lon, goal->alt);
+            (void)uuid;
+            RCLCPP_INFO(get_logger(), "接收的目标航点: lat=%f lon=%f alt=%f", 
+                                    goal->lat, goal->lon, goal->alt);
             return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
         },
         //处理取消导航请求
         [this](const std::shared_ptr<GoalHandleNavigate> goal_handle){
             (void)goal_handle;
-            RCLCPP_INFO(get_logger(), "received request to cancel goal");
+            RCLCPP_INFO(get_logger(), "目标航点已取消");
             return rclcpp_action::CancelResponse::ACCEPT;
         },
         //接收并准备执行导航任务
@@ -46,7 +43,7 @@ void GpsNavNode::init_action(){
 
 void GpsNavNode::init_client(){
     m_gps_transform_client = create_client<CommonSrvTransformGpsToLocal>(
-        "/perception/transform_gps_to_local");
+        topic_cli::TRANSFORM_GPS_TO_LOCAL);
 }
 
 void GpsNavNode::nav_execute(

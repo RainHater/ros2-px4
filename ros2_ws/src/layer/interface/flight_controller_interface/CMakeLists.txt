@@ -13,6 +13,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(utilities REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -35,6 +36,7 @@ ament_target_dependencies(px4_bridge_node
   rclcpp 
   px4_msgs 
   geometry_msgs
+  utilities
 )
 install(TARGETS px4_bridge_node DESTINATION lib/${PROJECT_NAME})
 

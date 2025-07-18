@@ -1,6 +1,7 @@
 #include "motion_controller/flight_mode_manager_node.h"
 #include "utilities/topic_pub_tool.hpp"
 #include "utilities/topic_sub_tool.hpp"
+#include "utilities/topic_name.hpp"
 #include <rclcpp/logging.hpp>
 
 using std::placeholders::_1;
@@ -28,12 +29,14 @@ void FlightModeManagerNode::initialize(){
 }
 
 void FlightModeManagerNode::init_publisher(){
-    topic_pub_tool::offboard_control_mode(
-        shared_from_this(), m_offboard_control_mode_pub);
-    topic_pub_tool::vehicle_command(
-        shared_from_this(), m_vehicle_command_pub);
-    topic_pub_tool::control_px4_mode_status(
-        shared_from_this(), m_px4_mode_status_broadcaster_pub);
+    m_offboard_control_mode_pub = create_publisher<px4_msgs::msg::OffboardControlMode>(
+        topic_pub::OFFBOARD_CONTROL_MODE, 10);
+
+    m_vehicle_command_pub = create_publisher<px4_msgs::msg::VehicleCommand>(
+        topic_pub::VEHICLE_COMMAND, 10);
+
+    m_px4_mode_status_broadcaster_pub = create_publisher<common_msgs::msg::ArmOffboardStatus>(
+        topic_pub::PX4_MODE_STATUS, 10);
 }
 
 void FlightModeManagerNode::init_subscription(){

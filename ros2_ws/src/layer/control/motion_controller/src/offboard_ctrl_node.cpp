@@ -1,7 +1,6 @@
 #include "motion_controller/offboard_ctrl_node.h"
 #include "utilities/topic_tool.hpp"
-#include "utilities/topic_pub_tool.hpp"
-#include "utilities/topic_sub_tool.hpp"
+#include "utilities/topic_name.hpp"
 #include <cmath>
 #include <functional>
 #include <sstream>
@@ -22,19 +21,26 @@ void OffboardCtrlNode::initialize(){
 }
 
 void OffboardCtrlNode::init_publisher(){
-    topic_pub_tool::trajectory_setpoint(
-        shared_from_this(), m_trajectory_setpoint_pub);
+    m_trajectory_setpoint_pub = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
+        topic_pub::PX4_TRAJECTORY_SETPOINT, 10);
 }
 
 void OffboardCtrlNode::init_subscription(){
-    topic_sub_tool::control_trajectory_setpoint(shared_from_this(), m_target_setpoint_sub, [this](
+    m_target_setpoint_sub = create_subscription<common_msgs::msg::TrajectorySetPoint>(
+        topic_sub::TRAJECTORY_SETPOINT, 10, 
+        [this](
         const common_msgs::msg::TrajectorySetPoint::SharedPtr msg){
             m_target_setpoint = *msg;
-        });
-    topic_sub_tool::control_px4_mode_status(shared_from_this(), m_current_offboard_mode_sub, [this](
+        }
+    );
+
+    m_current_offboard_mode_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
+        topic_sub::PX4_MODE_STATUS, 10, 
+        [this](
         const common_msgs::msg::ArmOffboardStatus::SharedPtr msg){
             m_current_offboard_mode = *msg;
-        });
+        }
+    );
 }
 
 void OffboardCtrlNode::timer_callback(){

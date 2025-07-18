@@ -1,17 +1,11 @@
 #include "application_test/px4_hold_height_test_node.h"
 #include "utilities/topic_tool.hpp"
+#include "utilities/topic_name.hpp"
 #include "utilities/tf2_tool.hpp"
-#include "utilities/topic_pub_tool.hpp"
-#include "utilities/topic_sub_tool.hpp"
 #include <chrono>
-#include <rclcpp/logging.hpp>
 
 constexpr auto ARMING_STATE_ARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
-constexpr auto ARMING_STATE_DISARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_DISARMED;
-constexpr auto OFFBOARD_NOT_ACTIVE = common_msgs::msg::ArmOffboardStatus::OFFBOARD_NOT_ACTIVE;
 constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
-constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
-constexpr auto ATTITUDE = common_msgs::msg::ArmOffboardStatus::ATTITUDE;
 constexpr auto LAND = common_msgs::msg::ArmOffboardStatus::LAND;
 
 using std::placeholders::_1;
@@ -39,21 +33,25 @@ void Px4HoldHeightTestNode::initialize(){
 }
 
 void Px4HoldHeightTestNode::init_publisher(){
-    topic_pub_tool::control_trajectory_setpoint(
-        shared_from_this(), m_trajectory_set_point_pub);
-    topic_pub_tool::control_set_offboard_mode(
-        shared_from_this(), m_set_offboard_mode_pub);
+    m_trajectory_set_point_pub = create_publisher<common_msgs::msg::TrajectorySetPoint>(
+        topic_pub::TRAJECTORY_SETPOINT, 10);
+
+    m_set_offboard_mode_pub = create_publisher<common_msgs::msg::ArmOffboardStatus>(
+        topic_pub::SET_OFFBOARD_MODE, 10);
 }
 
 void Px4HoldHeightTestNode::init_subscription(){
-    topic_sub_tool::control_px4_mode_status(
-        shared_from_this(), m_px4_mode_status_sub,
-        std::bind(&Px4HoldHeightTestNode::px4_mode_status_callback, this, _1));
-    topic_sub_tool::vehicle_odometry(
-        shared_from_this(), m_current_setpoing_sub,
+    m_px4_mode_status_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
+        topic_sub::PX4_MODE_STATUS, 10, 
+        std::bind(&Px4HoldHeightTestNode::px4_mode_status_callback, this, _1)
+    );
+
+    m_current_setpoing_sub = create_subscription<px4_msgs::msg::VehicleOdometry>(
+        topic_sub::VEHICLE_ODOMETRY, 10, 
         [this](const px4_msgs::msg::VehicleOdometry::SharedPtr msg){
             m_current_setpoint = *msg;
-        });
+        }
+    );
 }
 
 void Px4HoldHeightTestNode::timer_callback(){
