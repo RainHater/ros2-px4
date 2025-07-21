@@ -1,4 +1,4 @@
-#include "task_executor/gps_nav_action.h"
+#include "task_executor/action/gps_nav_action.h"
 #include "utilities/topic_name.hpp"
 
 GpsNavAction::GpsNavAction()

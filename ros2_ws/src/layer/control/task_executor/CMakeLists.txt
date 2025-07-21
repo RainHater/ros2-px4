@@ -34,7 +34,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include 
 )
 
-add_executable(gps_nav_action src/gps_nav_action.cpp)
+add_executable(gps_nav_action action/gps_nav_action.cpp)
 ament_target_dependencies(gps_nav_action 
   rclcpp 
   px4_msgs 
@@ -49,7 +49,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include 
 )
 
-add_executable(fly_relative_direction_action src/fly_relative_direction_action.cpp)
+add_executable(fly_relative_direction_action action/fly_relative_direction_action.cpp)
 ament_target_dependencies(fly_relative_direction_action 
   rclcpp 
   px4_msgs 
@@ -60,7 +60,7 @@ ament_target_dependencies(fly_relative_direction_action
 )
 install(TARGETS fly_relative_direction_action DESTINATION lib/${PROJECT_NAME})
 
-add_executable(controlled_descent_action src/controlled_descent_action.cpp)
+add_executable(controlled_descent_action action/controlled_descent_action.cpp)
 ament_target_dependencies(controlled_descent_action 
   rclcpp 
   px4_msgs 
@@ -70,5 +70,16 @@ ament_target_dependencies(controlled_descent_action
   rclcpp_action
 )
 install(TARGETS controlled_descent_action DESTINATION lib/${PROJECT_NAME})
+
+add_executable(set_offboard_mode_action action/set_offboard_mode_action.cpp)
+ament_target_dependencies(set_offboard_mode_action 
+  rclcpp 
+  px4_msgs 
+  geometry_msgs
+  common_msgs
+  utilities
+  rclcpp_action
+)
+install(TARGETS set_offboard_mode_action DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

@@ -26,9 +26,11 @@ namespace topic_pub {
 }
 
 namespace common_services {
-    constexpr const char* TRANSFORM_GPS_TO_LOCAL        = "/perception/transform_gps_to_local";
-    constexpr const char* NAVIGATE_TO_GPS               = "/control/navigate_to_gps";
-    constexpr const char* FLY_RELATIVE_DIRECTION        = "/control/fly_relative_direction";
+    constexpr const char* TRANSFORM_GPS_TO_LOCAL        = "/perception/srv/transform_gps_to_local";
+    constexpr const char* NAVIGATE_TO_GPS               = "/control/act/navigate_to_gps";
+    constexpr const char* FLY_RELATIVE_DIRECTION        = "/control/act/fly_relative_direction";
+    constexpr const char* CONTROLLED_DESCENT            = "/control/act/controlled_descent";
+    constexpr const char* SET_OFFBOARD_MODE             = "/control/srv/controlled_descent";
 }
 
 namespace topic_srv {

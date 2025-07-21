@@ -1,27 +1,26 @@
-#include "control_interface/fly_relative_direction_api.h"
+#include "control_interface/controlled_descent_api.h"
 #include "utilities/topic_name.hpp"
 
-FlyRelativeDirectionApi::FlyRelativeDirectionApi(){
+ControlledDescentApi::ControlledDescentApi(){
     m_is_busy = false;
 }
 
-FlyRelativeDirectionApi& FlyRelativeDirectionApi::Instance(){
-    static FlyRelativeDirectionApi api;
+ControlledDescentApi& ControlledDescentApi::Instance(){
+    static ControlledDescentApi api;
 
     return api;
 }
 
-void FlyRelativeDirectionApi::send_goal(
-    const rclcpp::Node::SharedPtr &node,
-    float forward, float right, float up,
+void ControlledDescentApi::send_goal(const rclcpp::Node::SharedPtr &node,
+    float speed,
     std::function<void()> succeeded_callback)
 {   
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_is_busy)
         return;
 
-    m_client = rclcpp_action::create_client<FlyRelative>(
-        node->shared_from_this(), topic_cli::FLY_RELATIVE_DIRECTION
+    m_client = rclcpp_action::create_client<ControlledDescent>(
+        node->shared_from_this(), topic_cli::CONTROLLED_DESCENT
     );
 
     m_is_busy = true;
@@ -31,16 +30,14 @@ void FlyRelativeDirectionApi::send_goal(
         return;
     }
 
-    FlyRelative::Goal goal;
-    goal.forward = forward;
-    goal.right = right;
-    goal.up = up;
+    ControlledDescent::Goal goal;
+    goal.speed = speed;
 
     RCLCPP_INFO(node->get_logger(), 
-        "Sending goal: forward=%f right=%f up=%f", 
-        forward, right, up);
+        "Sending goal: speed=%f", 
+        speed);
     
-    rclcpp_action::Client<FlyRelative>::SendGoalOptions options;
+    rclcpp_action::Client<ControlledDescent>::SendGoalOptions options;
     options.goal_response_callback = [node](auto goal_handle) {
         if (!goal_handle) {
             RCLCPP_ERROR(node->get_logger(), "Goal was rejected");
@@ -50,7 +47,7 @@ void FlyRelativeDirectionApi::send_goal(
     };
     options.feedback_callback = [](auto, auto) {};
     options.result_callback = [this, succeeded_callback, node](
-        const rclcpp_action::ClientGoalHandle<FlyRelative>::WrappedResult &result){
+        const rclcpp_action::ClientGoalHandle<ControlledDescent>::WrappedResult &result){
         {   
             std::lock_guard<std::mutex> lock(m_mutex);
             m_is_busy = false;

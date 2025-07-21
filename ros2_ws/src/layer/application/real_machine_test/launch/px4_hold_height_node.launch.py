@@ -16,10 +16,24 @@ def generate_launch_description():
         )
     )
 
-    fly_relative_direction_api = Node(
+    fly_relative_direction_action = Node(
         package='task_executor',
         executable='fly_relative_direction_action',
         name='fly_relative_direction_action',
+        output='screen',
+    )
+
+    controlled_descent_action = Node(
+        package='task_executor',
+        executable='controlled_descent_action',
+        name='controlled_descent_action',
+        output='screen',
+    )
+
+    set_offboard_mode_server = Node(
+        package='task_executor',
+        executable='set_offboard_mode_action',
+        name='set_offboard_mode_action',
         output='screen',
     )
 
@@ -31,6 +45,8 @@ def generate_launch_description():
     )
     return LaunchDescription([
         base_node,
-        fly_relative_direction_api,
+        fly_relative_direction_action,
+        controlled_descent_action,
+        set_offboard_mode_server,
         px4_hold_height_test_node,
     ])

@@ -36,6 +36,8 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/gps_nav_api.cpp
   src/fly_relative_direction_api.cpp
+  src/controlled_descent_api.cpp
+  src/set_offboard_mode_api.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME}

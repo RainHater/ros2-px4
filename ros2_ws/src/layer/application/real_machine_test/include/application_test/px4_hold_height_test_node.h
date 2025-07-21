@@ -1,21 +1,19 @@
 #ifndef _PX4_HOLD_HEIGHT_TEST_NODE_H
 #define _PX4_HOLD_HEIGHT_TEST_NODE_H
 
-#include <cstdint>
 #include <rclcpp/rclcpp.hpp>
 #include <common_msgs/msg/trajectory_set_point.hpp>
 #include <common_msgs/msg/arm_offboard_status.hpp>
 #include <px4_msgs/msg/vehicle_local_position.hpp>
 #include <px4_msgs/msg/vehicle_odometry.hpp>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Matrix3x3.h>
 
 enum TaskInfo{
     TASK1 = 0,
     TASK2,
     TASK3,
     TASK4,
-    TASK5
+    TASK5,
+    TASK6,
 };
 
 class Px4HoldHeightTestNode : public rclcpp::Node {

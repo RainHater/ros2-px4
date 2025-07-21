@@ -15,7 +15,8 @@ public:
     static FlyRelativeDirectionApi& Instance();
     void send_goal(const rclcpp::Node::SharedPtr &node,
         float forward, float right, float up,
-        std::function<void()> succeeded_callback);
+        std::function<void()> succeeded_callback
+    );
 private:
     bool m_is_busy;
     std::mutex m_mutex;

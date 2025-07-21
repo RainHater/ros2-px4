@@ -42,7 +42,7 @@ sudo make install
 
 5. 配置ros humble工具包
 ```bash
-sudo apt install ros-humble-cv-bridge ros-humble-tf2-ros ros-humble-tf-transformations ros-humble-vision-opencv ros-dev-tools -y
+sudo apt install ros-humble-cv-bridge ros-humble-tf2 ros-humble-tf-transformations ros-humble-vision-opencv ros-dev-tools -y
 sudo apt install python3-colcon-common-extensions -y
 ```
 

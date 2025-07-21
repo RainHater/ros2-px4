@@ -1,27 +1,29 @@
-#include "control_interface/fly_relative_direction_api.h"
+#include "control_interface/set_offboard_mode_api.h"
 #include "utilities/topic_name.hpp"
+#include <rclcpp/logging.hpp>
 
-FlyRelativeDirectionApi::FlyRelativeDirectionApi(){
+SetOffboardModeApi::SetOffboardModeApi(){
     m_is_busy = false;
 }
 
-FlyRelativeDirectionApi& FlyRelativeDirectionApi::Instance(){
-    static FlyRelativeDirectionApi api;
+SetOffboardModeApi& SetOffboardModeApi::Instance(){
+    static SetOffboardModeApi api;
 
-    return api;
+    return api; 
 }
 
-void FlyRelativeDirectionApi::send_goal(
+void SetOffboardModeApi::send_goal(
     const rclcpp::Node::SharedPtr &node,
-    float forward, float right, float up,
+    const uint8_t arm_mode, 
+    const uint8_t offboard_mode,
     std::function<void()> succeeded_callback)
 {   
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_is_busy)
         return;
 
-    m_client = rclcpp_action::create_client<FlyRelative>(
-        node->shared_from_this(), topic_cli::FLY_RELATIVE_DIRECTION
+    m_client = rclcpp_action::create_client<SetOffboardMode>(
+        node->shared_from_this(), topic_cli::SET_OFFBOARD_MODE
     );
 
     m_is_busy = true;
@@ -31,16 +33,16 @@ void FlyRelativeDirectionApi::send_goal(
         return;
     }
 
-    FlyRelative::Goal goal;
-    goal.forward = forward;
-    goal.right = right;
-    goal.up = up;
+    SetOffboardMode::Goal goal;
+    goal.mode.arming_state = arm_mode;
+    goal.mode.offboard_mode = offboard_mode;
 
     RCLCPP_INFO(node->get_logger(), 
-        "Sending goal: forward=%f right=%f up=%f", 
-        forward, right, up);
-    
-    rclcpp_action::Client<FlyRelative>::SendGoalOptions options;
+        "请求数据: arm: %d, offbaord: %d", 
+            goal.mode.arming_state,
+            goal.mode.offboard_mode);
+
+    rclcpp_action::Client<SetOffboardMode>::SendGoalOptions options;
     options.goal_response_callback = [node](auto goal_handle) {
         if (!goal_handle) {
             RCLCPP_ERROR(node->get_logger(), "Goal was rejected");
@@ -50,7 +52,7 @@ void FlyRelativeDirectionApi::send_goal(
     };
     options.feedback_callback = [](auto, auto) {};
     options.result_callback = [this, succeeded_callback, node](
-        const rclcpp_action::ClientGoalHandle<FlyRelative>::WrappedResult &result){
+        const rclcpp_action::ClientGoalHandle<SetOffboardMode>::WrappedResult &result){
         {   
             std::lock_guard<std::mutex> lock(m_mutex);
             m_is_busy = false;
@@ -60,16 +62,17 @@ void FlyRelativeDirectionApi::send_goal(
             case rclcpp_action::ResultCode::SUCCEEDED:
                 if (succeeded_callback)
                     succeeded_callback();
-                RCLCPP_INFO(node->get_logger(), "导航成功: %s", result.result->message.c_str());
+                RCLCPP_INFO(node->get_logger(), "任务成功: %s",
+                    result.result->message.c_str());
                 break;
             case rclcpp_action::ResultCode::ABORTED:
-                RCLCPP_ERROR(node->get_logger(), "导航任务被中止");
+                RCLCPP_ERROR(node->get_logger(), "任务被中止");
                 break;
             case rclcpp_action::ResultCode::CANCELED:
-                RCLCPP_WARN(node->get_logger(), "导航任务被取消");
+                RCLCPP_WARN(node->get_logger(), "任务被取消");
                 break;
             default:
-                RCLCPP_ERROR(node->get_logger(), "未知导航结果状态");
+                RCLCPP_ERROR(node->get_logger(), "未知任务状态");
                 break;
         }
     };

@@ -1,5 +1,8 @@
 #include "application_test/px4_hold_height_test_node.h"
 #include "control_interface/fly_relative_direction_api.h"
+#include "control_interface/controlled_descent_api.h"
+#include "control_interface/set_offboard_mode_api.h"
+#include "control_interface/controlled_descent_api.h"
 #include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
 #include "utilities/tf2_tool.hpp"
@@ -7,6 +10,7 @@
 
 constexpr auto ARMING_STATE_ARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
 constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
+constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
 constexpr auto LAND = common_msgs::msg::ArmOffboardStatus::LAND;
 
 using std::placeholders::_1;
@@ -37,8 +41,8 @@ void Px4HoldHeightTestNode::init_publisher(){
     m_trajectory_set_point_pub = create_publisher<common_msgs::msg::TrajectorySetPoint>(
         topic_pub::TRAJECTORY_SETPOINT, 10);
 
-    m_set_offboard_mode_pub = create_publisher<common_msgs::msg::ArmOffboardStatus>(
-        topic_pub::SET_OFFBOARD_MODE, 10);
+    // m_set_offboard_mode_pub = create_publisher<common_msgs::msg::ArmOffboardStatus>(
+    //     topic_pub::SET_OFFBOARD_MODE, 10);
 }
 
 void Px4HoldHeightTestNode::init_subscription(){
@@ -56,24 +60,19 @@ void Px4HoldHeightTestNode::init_subscription(){
 }
 
 void Px4HoldHeightTestNode::timer_callback(){
-    auto &arm_state = m_px4_current_mode.arming_state;
-    auto &offboard_mode = m_px4_current_mode.offboard_mode;
-
     if (m_task_state == TASK1){
-        common_msgs::msg::ArmOffboardStatus msg{};
-        msg.offboard_mode = POSITION;
-        m_set_offboard_mode_pub->publish(msg);
-        if (arm_state == ARMING_STATE_ARMED 
-            && offboard_mode == POSITION)
-        {   
-            m_gobal_1s_timer = 0;
-            m_task_state = TASK2;
-            RCLCPP_INFO(get_logger(), "switch task 2");
-        }
+        SetOffboardModeApi::Instance().send_goal(
+            shared_from_this(), 
+            ARMING_STATE_ARMED, 
+            POSITION, 
+            [this](){
+                m_task_state = TASK2;
+            }
+        );
     }else if (m_task_state == TASK2){
         FlyRelativeDirectionApi::Instance().send_goal(
             shared_from_this(), 
-            0.0, 0.0, 1, 
+            0.0, 0.0, 0.5, 
             [this](){
                 m_task_state = TASK3;
             }
@@ -81,17 +80,25 @@ void Px4HoldHeightTestNode::timer_callback(){
     }else if (m_task_state == TASK3){
         FlyRelativeDirectionApi::Instance().send_goal(
             shared_from_this(), 
-            1, 0.0, 0, 
+            0.5, 0.0, 0, 
             [this](){
                 m_task_state = TASK4;
             }
         );
     }else if (m_task_state == TASK4){
-        FlyRelativeDirectionApi::Instance().send_goal(
+        SetOffboardModeApi::Instance().send_goal(
             shared_from_this(), 
-            0, 0.0, -1, 
+            ARMING_STATE_ARMED, 
+            VELOCITY, 
             [this](){
                 m_task_state = TASK5;
+            }
+        );        
+    }else if (m_task_state == TASK5){
+        ControlledDescentApi::Instance().send_goal(
+            shared_from_this(), 0.5, 
+            [this](){
+                m_task_state = TASK6;
             }
         );
     }

@@ -31,6 +31,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/PrecisionLand.action"
   "action/FlyRelativeDirection.action"
   "action/ControlledDescent.action"
+  "action/SetOffboardMode.action"
   "srv/TransformGpsToLocal.srv"
   DEPENDENCIES std_msgs builtin_interfaces
 )
