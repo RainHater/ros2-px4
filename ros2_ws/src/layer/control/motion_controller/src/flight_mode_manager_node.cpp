@@ -5,8 +5,8 @@ using std::placeholders::_1;
 
 FlightModeManagerNode::FlightModeManagerNode() 
     : Node("flight_mode_manager_node")
-{
-    RCLCPP_INFO(this->get_logger(), "Starting flight_mode_manager_node follower node...");
+{   
+    RCLCPP_INFO(get_logger(), "flight_mode_manager_node 节点启动...");
     
     m_offboard_setpoint_counter = 0;
     m_px4_mode.lock_interval_cnt = 0;

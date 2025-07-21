@@ -60,4 +60,15 @@ ament_target_dependencies(fly_relative_direction_action
 )
 install(TARGETS fly_relative_direction_action DESTINATION lib/${PROJECT_NAME})
 
+add_executable(controlled_descent_action src/controlled_descent_action.cpp)
+ament_target_dependencies(controlled_descent_action 
+  rclcpp 
+  px4_msgs 
+  geometry_msgs
+  common_msgs
+  utilities
+  rclcpp_action
+)
+install(TARGETS controlled_descent_action DESTINATION lib/${PROJECT_NAME})
+
 ament_package()

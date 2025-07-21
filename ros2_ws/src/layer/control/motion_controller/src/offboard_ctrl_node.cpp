@@ -8,7 +8,7 @@
 OffboardCtrlNode::OffboardCtrlNode() 
     : Node("offboard_ctrl_node") 
 {
-    RCLCPP_INFO(get_logger(), "Starting offboard_ctrl_node follower node...");
+    RCLCPP_INFO(get_logger(), "offboard_ctrl_node 节点启动...");
 }
 
 void OffboardCtrlNode::initialize(){

@@ -6,8 +6,8 @@ using std::placeholders::_2;
 
 StateEstimatorService::StateEstimatorService() 
     : rclcpp::Node("state_estimator_service") 
-{
-    RCLCPP_INFO(get_logger(), "Starting state_estimator_service follower node...");
+{   
+    RCLCPP_INFO(get_logger(), "state_estimator_service 节点启动...");
 }
 
 void StateEstimatorService::initialized(){

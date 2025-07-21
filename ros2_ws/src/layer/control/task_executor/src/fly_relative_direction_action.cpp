@@ -1,12 +1,11 @@
 #include "task_executor/fly_relative_direction_action.h"
 #include "utilities/topic_name.hpp"
 #include "utilities/tf2_tool.hpp"
-#include <rclcpp/logging.hpp>
 
 FlyRelativeDirectionAction::FlyRelativeDirectionAction()
     : Node("fly_relative_direction_action")
 {
-    RCLCPP_INFO(get_logger(), "Starting fly_relative_direction_action follower node...");
+    RCLCPP_INFO(get_logger(), "fly_relative_direction_action 节点启动...");
 }
 
 void FlyRelativeDirectionAction::initialize(){
@@ -24,36 +23,35 @@ void FlyRelativeDirectionAction::init_subscription(){
     m_vehicle_odometry_listener.subscribe(
         shared_from_this(), 
     topic_sub::VEHICLE_ODOMETRY, 10);
-    
-    m_vehicle_local_position_listener.subscribe(
-        shared_from_this(), 
-    topic_sub::VEHICLE_LOCAL_POSITION, 10);
 }
 
 void FlyRelativeDirectionAction::init_action(){
     m_action_srv = rclcpp_action::create_server<FlyRelative>(
-        this,
+        shared_from_this(),
         topic_srv::FLY_RELATIVE_DIRECTION, 
         //处理请求
-        [this](const rclcpp_action::GoalUUID &uuid, 
-        std::shared_ptr<const FlyRelative::Goal> goal){
+        [this](
+            const rclcpp_action::GoalUUID &uuid, 
+            std::shared_ptr<const FlyRelative::Goal> goal)
+        {
             m_uuid = rclcpp_action::to_string(uuid);
-            RCLCPP_INFO(get_logger(), "任务id: %s, 接收的目标航点: forward=%f right=%f up=%f, speed=%f", 
+            RCLCPP_INFO(get_logger(), "任务: %s, 接收的数据: forward=%f right=%f up=%f", 
                                     m_uuid.c_str(), 
-                                    goal->forward, goal->right, goal->up, goal->speed);
+                                    goal->forward, goal->right, goal->up);
             return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
         },
         //处理取消请求
         [this](const std::shared_ptr<GoalHandle> goal_handle){
             (void)goal_handle;
-            RCLCPP_INFO(get_logger(), "任务id: %s, 目标航点已取消", m_uuid.c_str());
+            RCLCPP_INFO(get_logger(), "任务: %s, 已取消", m_uuid.c_str());
             return rclcpp_action::CancelResponse::ACCEPT;
         },
         //接收并准备执行任务
         [this](const std::shared_ptr<GoalHandle> goal_handle){
-            while(!m_vehicle_odometry_listener.has_received()){};
+            RCLCPP_INFO(get_logger(), "任务: %s 开始执行", m_uuid.c_str());
             std::thread{std::bind(&FlyRelativeDirectionAction::execute, this, goal_handle)}.detach();
-        });
+        }
+    );
 }
 
 void FlyRelativeDirectionAction::execute(
@@ -64,6 +62,13 @@ void FlyRelativeDirectionAction::execute(
     auto result = std::make_shared<FlyRelative::Result>();
     auto &vehicle_odometry = m_vehicle_odometry_listener.get_msg();
     rclcpp::Rate rate(20);
+
+    while(!m_vehicle_odometry_listener.has_received()){
+        if (!rclcpp::ok()){
+            return;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    };
 
     tf2_tool::EulerAngles angles{};
     tf2_tool::get_euler_angles(vehicle_odometry, angles);
@@ -77,8 +82,7 @@ void FlyRelativeDirectionAction::execute(
       vehicle_odometry.position[1] + dy,
       vehicle_odometry.position[2] + dz
     };
-
-    RCLCPP_INFO(get_logger(), "任务id: %s 开始执行", m_uuid.c_str());
+    
     while(rclcpp::ok()){
         auto current = vehicle_odometry.position;
         float dist = std::sqrt(
@@ -92,6 +96,7 @@ void FlyRelativeDirectionAction::execute(
             result->success = false;
             result->message = "Goal canceled";
             goal_handle->canceled(result);
+            RCLCPP_INFO(get_logger(), "任务: %s 取消", m_uuid.c_str());
             return;
         }
 
@@ -99,7 +104,7 @@ void FlyRelativeDirectionAction::execute(
             result->success = true;
             result->message = "Reached target";
             goal_handle->succeed(result);
-            RCLCPP_INFO(get_logger(), "任务id: %s 已完成", m_uuid.c_str());
+            RCLCPP_INFO(get_logger(), "任务: %s 已完成", m_uuid.c_str());
             return;
         }
 

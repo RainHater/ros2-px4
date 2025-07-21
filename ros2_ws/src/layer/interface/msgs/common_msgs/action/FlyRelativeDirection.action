@@ -2,7 +2,6 @@
 float32 forward       # 正为前进，负为后退（单位：米）
 float32 right         # 正为右移，负为左移
 float32 up            # 正为上升，负为下降
-float32 speed         # 总移动速度（单位：m/s）
 
 ---
 # Result

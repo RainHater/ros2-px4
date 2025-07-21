@@ -13,8 +13,8 @@ using std::placeholders::_1;
 
 Px4HoldHeightTestNode::Px4HoldHeightTestNode()
     : rclcpp::Node("px4_hold_height_test_node") 
-{
-    RCLCPP_INFO(get_logger(), "Starting px4_hold_height_test_node follower node...");
+{   
+    RCLCPP_INFO(get_logger(), "px4_hold_height_test_node 节点启动...");
     m_task_state = TASK1;
 }
 
@@ -83,13 +83,17 @@ void Px4HoldHeightTestNode::timer_callback(){
             shared_from_this(), 
             1, 0.0, 0, 
             [this](){
-                m_task_state = TASK5;
+                m_task_state = TASK4;
             }
         );
     }else if (m_task_state == TASK4){
-        common_msgs::msg::ArmOffboardStatus msg{};
-        msg.offboard_mode = LAND;
-        m_set_offboard_mode_pub->publish(msg);
+        FlyRelativeDirectionApi::Instance().send_goal(
+            shared_from_this(), 
+            0, 0.0, -1, 
+            [this](){
+                m_task_state = TASK5;
+            }
+        );
     }
 }
 

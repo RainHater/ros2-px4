@@ -26,7 +26,6 @@ private:
     rclcpp_action::Server<FlyRelative>::SharedPtr m_action_srv;
     rclcpp::Publisher<common_msgs::msg::TrajectorySetPoint>::SharedPtr m_trajectory_setpoint_pub;
     TopicListener<px4_msgs::msg::VehicleOdometry> m_vehicle_odometry_listener;
-    TopicListener<px4_msgs::msg::VehicleLocalPosition> m_vehicle_local_position_listener;
 };
 
 #endif

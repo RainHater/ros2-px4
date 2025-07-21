@@ -4,8 +4,8 @@
 
 PX4BridgeNode::PX4BridgeNode()
     : rclcpp::Node("px4_bridge_node") 
-{
-    RCLCPP_INFO(get_logger(), "Starting px4_bridge_node follower node...");
+{   
+    RCLCPP_INFO(get_logger(), "px4_bridge_node 节点启动...");
 }
 
 void PX4BridgeNode::initialized(){

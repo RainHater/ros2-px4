@@ -1,0 +1,11 @@
+# Goal
+float32 speed       #下降速度(m/s)
+
+---
+# Result
+bool success
+string message
+
+---
+# Feedback
+float32 ground_distance

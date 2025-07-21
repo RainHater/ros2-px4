@@ -4,7 +4,7 @@
 GpsNavAction::GpsNavAction()
     : Node("gps_nav_action")
 {
-    RCLCPP_INFO(get_logger(), "Starting gps_nav_action follower node...");
+    RCLCPP_INFO(get_logger(), "gps_nav_action 节点启动...");
 }
 
 void GpsNavAction::initialize(){
@@ -20,13 +20,15 @@ void GpsNavAction::init_publisher(){
 
 void GpsNavAction::init_action(){
     m_action_srv = rclcpp_action::create_server<NavigateToGPS>(
-        this,
+        shared_from_this(),
         topic_srv::NAVIGATE_TO_GPS, 
         //处理导航目标请求
-        [this](const rclcpp_action::GoalUUID &uuid, 
-        std::shared_ptr<const NavigateToGPS::Goal> goal){
+        [this](
+            const rclcpp_action::GoalUUID &uuid, 
+            std::shared_ptr<const NavigateToGPS::Goal> goal)
+        {
             m_uuid = rclcpp_action::to_string(uuid);
-            RCLCPP_INFO(get_logger(), "任务id: %s, 接收的目标航点: lat=%f lon=%f alt=%f", 
+            RCLCPP_INFO(get_logger(), "任务: %s, 接收的数据: lat=%f lon=%f alt=%f", 
                                     m_uuid.c_str(), 
                                     goal->lat, goal->lon, goal->alt);
             return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
@@ -34,13 +36,15 @@ void GpsNavAction::init_action(){
         //处理取消导航请求
         [this](const std::shared_ptr<GoalHandleNavigate> goal_handle){
             (void)goal_handle;
-            RCLCPP_INFO(get_logger(), "任务id: %s, 目标航点已取消", m_uuid.c_str());
+            RCLCPP_INFO(get_logger(), "任务: %s, 已取消", m_uuid.c_str());
             return rclcpp_action::CancelResponse::ACCEPT;
         },
         //接收并准备执行导航任务
         [this](const std::shared_ptr<GoalHandleNavigate> goal_handle){
+            RCLCPP_INFO(get_logger(), "任务: %s 开始执行", m_uuid.c_str());
             std::thread{std::bind(&GpsNavAction::execute, this, goal_handle)}.detach();
-        });
+        }
+    );
 }
 
 void GpsNavAction::init_client(){
@@ -54,8 +58,6 @@ void GpsNavAction::execute(
     auto result = std::make_shared<NavigateToGPS::Result>();
     auto feedback = std::make_shared<NavigateToGPS::Feedback>();
     auto goal = goal_handle->get_goal();
-
-    RCLCPP_INFO(get_logger(), "任务id: %s 开始执行", m_uuid.c_str());
 
     while(rclcpp::ok()){
         if (goal_handle->is_canceling()) {
@@ -95,7 +97,7 @@ void GpsNavAction::execute(
     result->success = true;
     result->message = "Arrived at target";
     goal_handle->succeed(result);
-    RCLCPP_INFO(get_logger(), "任务id: %s 已完成", m_uuid.c_str());
+    RCLCPP_INFO(get_logger(), "任务: %s 已完成", m_uuid.c_str());
 }
 
 bool GpsNavAction::request_local_target(
