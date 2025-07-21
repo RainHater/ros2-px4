@@ -15,6 +15,7 @@ enum TaskInfo{
     TASK2,
     TASK3,
     TASK4,
+    TASK5
 };
 
 class Px4HoldHeightTestNode : public rclcpp::Node {

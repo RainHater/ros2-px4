@@ -17,7 +17,6 @@ MissionPlanner::MissionPlanner()
 void MissionPlanner::initialized(){
     init_publisher();  
     init_subscription();
-    init_client();
 
     m_timer = create_wall_timer(
         std::chrono::milliseconds(100), 
@@ -46,29 +45,24 @@ void MissionPlanner::init_subscription(){
         topic_sub::TRACKING_FEEDBACK, 10);
 } 
 
-void MissionPlanner::init_client(){
-    m_nav_client = rclcpp_action::create_client<NavigateToGPS>(
-        this, topic_cli::NAVIGATE_TO_GPS);
-}
-
 void MissionPlanner::timer_callback(){
     auto tracking_feedback = m_tracking_feedback_listener.get_msg();
 
     if (m_current_task_status == FLY_TO_READY_POSITION){
         NavApi::Instance().send_goal(shared_from_this(), 
-        m_nav_client, 0.000004998, 0.0000600, 2.0, 
+        0.000004998, 0.0000600, 2.0, 
         [this](){
             m_current_task_status = FLY_TO_READY_POSITION_AND_LAND;
         });
     }else if (m_current_task_status == FLY_TO_READY_POSITION_AND_LAND){
         NavApi::Instance().send_goal(shared_from_this(), 
-        m_nav_client, 0.000004998, 0.0000600,  0.0, 
+        0.000004998, 0.0000600,  0.0, 
         [this](){
             m_current_task_status = FLY_TO_GPS_TARGET;
         });
     }else if (m_current_task_status == FLY_TO_GPS_TARGET){
         NavApi::Instance().send_goal(shared_from_this(), 
-        m_nav_client, 0.0000047, 0.0000009,  8, 
+        0.0000047, 0.0000009,  8, 
         [this](){
             m_current_task_status = SWITCH_TO_OFFBOARD_VELOCITY_MODE;
         });

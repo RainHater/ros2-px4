@@ -16,6 +16,13 @@ def generate_launch_description():
         )
     )
 
+    fly_relative_direction_api = Node(
+        package='task_executor',
+        executable='fly_relative_direction_action',
+        name='fly_relative_direction_action',
+        output='screen',
+    )
+
     px4_hold_height_test_node = Node(
         package='real_machine_test',
         executable='px4_hold_height_test_node',
@@ -24,5 +31,6 @@ def generate_launch_description():
     )
     return LaunchDescription([
         base_node,
+        fly_relative_direction_api,
         px4_hold_height_test_node,
     ])

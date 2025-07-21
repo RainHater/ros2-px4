@@ -1,4 +1,5 @@
 #include "application_test/px4_hold_height_test_node.h"
+#include "control_interface/fly_relative_direction_api.h"
 #include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
 #include "utilities/tf2_tool.hpp"
@@ -70,33 +71,21 @@ void Px4HoldHeightTestNode::timer_callback(){
             RCLCPP_INFO(get_logger(), "switch task 2");
         }
     }else if (m_task_state == TASK2){
-        tf2_tool::EulerAngles angle{};
-        tf2_tool::get_euler_angles(m_current_setpoint, angle);
-        common_msgs::msg::TrajectorySetPoint msg{};
-        msg.position[0] = 0.0;
-        msg.position[1] = 0.0;
-        msg.position[2] = -0.5;
-        msg.yaw = angle.yaw;
-        m_trajectory_set_point_pub->publish(msg);
-        if (m_gobal_1s_timer >= 10){
-            m_task_state = TASK4;
-            m_gobal_1s_timer = 0;
-            RCLCPP_INFO(get_logger(), "switch task 3");
-        }
+        FlyRelativeDirectionApi::Instance().send_goal(
+            shared_from_this(), 
+            0.0, 0.0, 1, 
+            [this](){
+                m_task_state = TASK3;
+            }
+        );
     }else if (m_task_state == TASK3){
-        tf2_tool::EulerAngles angle{};
-        tf2_tool::get_euler_angles(m_current_setpoint, angle);
-        common_msgs::msg::TrajectorySetPoint msg{};
-        msg.position[0] = 0.0;
-        msg.position[1] = 0.5;
-        msg.position[2] = -0.5;
-        msg.yaw = angle.yaw;
-        m_trajectory_set_point_pub->publish(msg);
-        if (m_gobal_1s_timer >= 5){
-            m_task_state = TASK4;
-            m_gobal_1s_timer = 0;
-            RCLCPP_INFO(get_logger(), "switch task 4");
-        }
+        FlyRelativeDirectionApi::Instance().send_goal(
+            shared_from_this(), 
+            1, 0.0, 0, 
+            [this](){
+                m_task_state = TASK5;
+            }
+        );
     }else if (m_task_state == TASK4){
         common_msgs::msg::ArmOffboardStatus msg{};
         msg.offboard_mode = LAND;

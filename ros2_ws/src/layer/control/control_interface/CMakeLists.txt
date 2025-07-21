@@ -35,12 +35,14 @@ include_directories(
 
 add_library(${PROJECT_NAME}
   src/gps_nav_api.cpp
+  src/fly_relative_direction_api.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   rclcpp_action
   common_msgs
+  utilities
 )
 
 install(

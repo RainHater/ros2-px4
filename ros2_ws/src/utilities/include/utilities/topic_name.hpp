@@ -3,9 +3,9 @@
 //外部话题的话题订阅
 
 namespace common_topics {
-    constexpr const char* TRAJECTORY_SETPOINT       = "/control/trajectory_setpoint";
-    constexpr const char* PX4_MODE_STATUS           = "/control/px4_mode_status_broadcaster";
-    constexpr const char* SET_OFFBOARD_MODE         = "/control/set_offboard_mode";
+    constexpr const char* TRAJECTORY_SETPOINT           = "/control/trajectory_setpoint";
+    constexpr const char* PX4_MODE_STATUS               = "/control/px4_mode_status_broadcaster";
+    constexpr const char* SET_OFFBOARD_MODE             = "/control/set_offboard_mode";
 }
 
 namespace topic_sub {

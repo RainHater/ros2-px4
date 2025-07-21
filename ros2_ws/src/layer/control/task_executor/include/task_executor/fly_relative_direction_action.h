@@ -1,12 +1,10 @@
 #ifndef _FLY_RELATIVE_DIRECTION_ACTION_H
 #define _FLY_RELATIVE_DIRECTION_ACTION_H
 
-#include <common_msgs/msg/detail/trajectory_set_point__struct.hpp>
-#include <rclcpp/publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <px4_msgs/msg/vehicle_odometry.hpp>
-#include <px4_msgs/msg/vehicle_attitude.hpp>
+#include <px4_msgs/msg/vehicle_local_position.hpp>
 #include "common_msgs/action/fly_relative_direction.hpp"
 #include "common_msgs/msg/trajectory_set_point.hpp"
 #include "utilities/topic_tool.hpp"
@@ -28,7 +26,7 @@ private:
     rclcpp_action::Server<FlyRelative>::SharedPtr m_action_srv;
     rclcpp::Publisher<common_msgs::msg::TrajectorySetPoint>::SharedPtr m_trajectory_setpoint_pub;
     TopicListener<px4_msgs::msg::VehicleOdometry> m_vehicle_odometry_listener;
-    TopicListener<px4_msgs::msg::VehicleAttitude> m_vehicle_attitude_listener;
+    TopicListener<px4_msgs::msg::VehicleLocalPosition> m_vehicle_local_position_listener;
 };
 
 #endif

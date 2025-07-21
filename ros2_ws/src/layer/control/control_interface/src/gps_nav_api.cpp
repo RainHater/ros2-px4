@@ -1,7 +1,8 @@
 #include "control_interface/gps_nav_api.h"
+#include "utilities/topic_name.hpp"
 
 NavApi::NavApi(){
-    m_nav_is_busy = false;
+    m_is_busy = false;
 }
 
 NavApi& NavApi::Instance(){
@@ -12,16 +13,19 @@ NavApi& NavApi::Instance(){
 
 void NavApi::send_goal(
     const rclcpp::Node::SharedPtr &node, 
-    rclcpp_action::Client<NavigateToGPS>::SharedPtr &nav_clinet, 
     double lat, double lon, double alt, std::function<void()> succeeded_callback)
-{
-    if (m_nav_is_busy)
+{   
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_is_busy)
         return;
 
-    m_nav_is_busy = true;
-    if (!nav_clinet->wait_for_action_server(std::chrono::seconds(2))) {
+    m_client = rclcpp_action::create_client<NavigateToGPS>(
+        node->shared_from_this(), topic_cli::NAVIGATE_TO_GPS);
+
+    m_is_busy = true;
+    if (!m_client->wait_for_action_server(std::chrono::seconds(2))) {
         RCLCPP_ERROR(node->get_logger(), "Action server not available");
-        m_nav_is_busy = false;
+        m_is_busy = false;
         return;
     }
     NavigateToGPS::Goal goal;
@@ -42,6 +46,11 @@ void NavApi::send_goal(
     options.feedback_callback = [](auto, auto) {};
     options.result_callback = [this, succeeded_callback, node](
         const rclcpp_action::ClientGoalHandle<NavigateToGPS>::WrappedResult &result){
+        {   
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_is_busy = false;
+            m_client.reset();
+        }
         switch (result.code) {
         case rclcpp_action::ResultCode::SUCCEEDED:
             if (succeeded_callback)
@@ -58,7 +67,6 @@ void NavApi::send_goal(
             RCLCPP_ERROR(node->get_logger(), "未知导航结果状态");
             break;
         }
-        m_nav_is_busy = false;
     };
-    nav_clinet->async_send_goal(goal, options);
+    m_client->async_send_goal(goal, options);
 }

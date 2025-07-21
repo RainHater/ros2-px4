@@ -32,7 +32,6 @@ public:
 protected:
     void init_publisher();
     void init_subscription();
-    void init_client();
     void timer_callback();
     //px4模式获取
     void px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus::SharedPtr msg);
@@ -47,8 +46,6 @@ private:
     rclcpp::Publisher<common_msgs::msg::PidDebug>::SharedPtr m_pid_viewer_pub;
     //订阅当前飞控arm和offboard状态
     rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_px4_mode_status_sub;
-    //nav导航客户端
-    rclcpp_action::Client<NavigateToGPS>::SharedPtr m_nav_client;
     //视觉消息监听
     TopicListener<common_msgs::msg::TrackingFeedback> m_tracking_feedback_listener;
 

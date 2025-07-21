@@ -1,6 +1,7 @@
 #include "task_executor/fly_relative_direction_action.h"
 #include "utilities/topic_name.hpp"
 #include "utilities/tf2_tool.hpp"
+#include <rclcpp/logging.hpp>
 
 FlyRelativeDirectionAction::FlyRelativeDirectionAction()
     : Node("fly_relative_direction_action")
@@ -24,9 +25,9 @@ void FlyRelativeDirectionAction::init_subscription(){
         shared_from_this(), 
     topic_sub::VEHICLE_ODOMETRY, 10);
     
-    // m_vehicle_attitude_listener.subscribe(
-    //     shared_from_this(), 
-    // topic_sub::V, 10);
+    m_vehicle_local_position_listener.subscribe(
+        shared_from_this(), 
+    topic_sub::VEHICLE_LOCAL_POSITION, 10);
 }
 
 void FlyRelativeDirectionAction::init_action(){
@@ -50,6 +51,7 @@ void FlyRelativeDirectionAction::init_action(){
         },
         //接收并准备执行任务
         [this](const std::shared_ptr<GoalHandle> goal_handle){
+            while(!m_vehicle_odometry_listener.has_received()){};
             std::thread{std::bind(&FlyRelativeDirectionAction::execute, this, goal_handle)}.detach();
         });
 }
@@ -57,12 +59,10 @@ void FlyRelativeDirectionAction::init_action(){
 void FlyRelativeDirectionAction::execute(
     std::shared_ptr<GoalHandle> goal_handle)
 {       
-    while(!m_vehicle_odometry_listener.has_received()){};
-
     auto goal = goal_handle->get_goal();
     auto feedback = std::make_shared<FlyRelative::Feedback>();
     auto result = std::make_shared<FlyRelative::Result>();
-    auto vehicle_odometry = m_vehicle_odometry_listener.get_msg();
+    auto &vehicle_odometry = m_vehicle_odometry_listener.get_msg();
     rclcpp::Rate rate(20);
 
     tf2_tool::EulerAngles angles{};
@@ -96,7 +96,11 @@ void FlyRelativeDirectionAction::execute(
         }
 
         if (dist < 0.2) {
-            break;
+            result->success = true;
+            result->message = "Reached target";
+            goal_handle->succeed(result);
+            RCLCPP_INFO(get_logger(), "任务id: %s 已完成", m_uuid.c_str());
+            return;
         }
 
         common_msgs::msg::TrajectorySetPoint sp{};
@@ -108,10 +112,6 @@ void FlyRelativeDirectionAction::execute(
         m_trajectory_setpoint_pub->publish(sp);
         rate.sleep();
     }
-    result->success = true;
-    result->message = "Reached target";
-    goal_handle->succeed(result);
-    RCLCPP_INFO(get_logger(), "任务id: %s 已完成", m_uuid.c_str());
 }
 
 int main(int argc, char *argv[]) {
