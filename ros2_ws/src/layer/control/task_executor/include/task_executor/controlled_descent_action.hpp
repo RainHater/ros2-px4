@@ -66,7 +66,7 @@ protected:
                     VELOCITY, 
                     [this, goal_handle](){
                         RCLCPP_INFO(get_logger(), "降落任务: %s 开始执行", m_uuid.c_str());
-                std::thread{std::bind(&ControlledDescentAction::execute, this, goal_handle)}.detach();
+                        std::thread{std::bind(&ControlledDescentAction::execute, this, goal_handle)}.detach();
                     }
                 );
             }

@@ -32,9 +32,17 @@ constexpr auto LOCK_INTERVAL_TIMER = 500;
 
 struct Px4ModeInfo {
     //当前模式
-    common_msgs::msg::ArmOffboardStatus current;
+    struct {
+        common_msgs::msg::ArmOffboardStatus mode;
+        rclcpp::Subscription<px4_msgs::msg::VehicleStatus>::SharedPtr sub;
+    } current;
+
     //目标模式
-    common_msgs::msg::ArmOffboardStatus target;
+    struct {
+        common_msgs::msg::ArmOffboardStatus mode;
+        rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr sub;
+    } target;
+
     //上一次px4模式模式
     common_msgs::msg::ArmOffboardStatus last;
     //arm未解锁间隔
@@ -42,13 +50,13 @@ struct Px4ModeInfo {
 
     //发布模式切换日志
     void state_release(const rclcpp::Node::SharedPtr & node){
-        if (last.offboard_mode != current.offboard_mode){
-            last.offboard_mode = current.offboard_mode;
-            RCLCPP_INFO(node->get_logger(), "offboard 切换: %d", current.offboard_mode);
+        if (last.offboard_mode != current.mode.offboard_mode){
+            last.offboard_mode = current.mode.offboard_mode;
+            RCLCPP_INFO(node->get_logger(), "offboard 切换: %d", current.mode.offboard_mode);
         }
-        if (last.arming_state != current.arming_state){
-            last.arming_state = current.arming_state;
-            std::string release_str = (current.arming_state==ARMING_STATE_ARMED)?"已解锁":"未解锁";
+        if (last.arming_state != current.mode.arming_state){
+            last.arming_state = current.mode.arming_state;
+            std::string release_str = (current.mode.arming_state==ARMING_STATE_ARMED)?"已解锁":"未解锁";
             RCLCPP_INFO(node->get_logger(), "arm: %s", release_str.c_str());
         }
     }
@@ -85,10 +93,6 @@ private:
     rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr m_offboard_control_mode_pub;
     //发布当前Offboard模式消息
     rclcpp::Publisher<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_px4_mode_status_broadcaster_pub;
-    //订阅设置offboard 
-    rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_set_px4_mode_status_sub;
-    //订阅px4飞控当前状态
-    rclcpp::Subscription<px4_msgs::msg::VehicleStatus>::SharedPtr m_px4_mode_status_broadcaster_sub;
     //飞控模式
     Px4ModeInfo m_px4_mode;
     //offboard setpoint 消息的计数器

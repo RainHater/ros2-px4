@@ -10,11 +10,11 @@ FlightModeManagerNode::FlightModeManagerNode()
     
     m_offboard_setpoint_counter = 0;
     m_px4_mode.lock_interval_time = 0;
-    m_px4_mode.current.arming_state = ARMING_STATE_DISARMED;
-    m_px4_mode.current.offboard_mode = OFFBOARD_NOT_ACTIVE;
-    m_px4_mode.target.arming_state = ARMING_STATE_ARMED;
-    m_px4_mode.target.offboard_mode = PX4_OFFBOARD_DEFAULT_MODE;
-    m_px4_mode.last.offboard_mode = m_px4_mode.current.offboard_mode;
+    m_px4_mode.current.mode.arming_state = ARMING_STATE_DISARMED;
+    m_px4_mode.current.mode.offboard_mode = OFFBOARD_NOT_ACTIVE;
+    m_px4_mode.target.mode.arming_state = ARMING_STATE_DISARMED;
+    m_px4_mode.target.mode.offboard_mode = OFFBOARD_NOT_ACTIVE;
+    m_px4_mode.last.offboard_mode = m_px4_mode.current.mode.offboard_mode;
 }
 
 void FlightModeManagerNode::initialize(){
@@ -38,12 +38,12 @@ void FlightModeManagerNode::init_publisher(){
 }
 
 void FlightModeManagerNode::init_subscription(){
-    m_set_px4_mode_status_sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
+    m_px4_mode.target.sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
         topic_sub::SET_OFFBOARD_MODE, 10, 
         std::bind(&FlightModeManagerNode::set_px4_mode_status_callback, this, _1)
     );
 
-    m_px4_mode_status_broadcaster_sub = create_subscription<px4_msgs::msg::VehicleStatus>(
+    m_px4_mode.current.sub = create_subscription<px4_msgs::msg::VehicleStatus>(
         topic_sub::VEHICLE_STATUS, 10, 
         std::bind(&FlightModeManagerNode::px4_mode_status_broadcaster_callback, this, _1)
     );
@@ -70,7 +70,11 @@ void FlightModeManagerNode::timer_callback(){
 }
 
 void FlightModeManagerNode::set_px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus::SharedPtr msg){
-    m_px4_mode.target.offboard_mode = msg->offboard_mode;
+    if (msg->arming_state == ARMING_STATE_DISARMED){
+        disarm();
+    }else {
+        m_px4_mode.target.mode.offboard_mode = msg->offboard_mode;
+    }  
 }
 
 void FlightModeManagerNode::px4_mode_status_broadcaster_callback(
@@ -80,19 +84,21 @@ void FlightModeManagerNode::px4_mode_status_broadcaster_callback(
     auto offboard = msg->nav_state;
     auto now_time = get_clock()->now().nanoseconds() / 1000000;
     auto interval = now_time - m_px4_mode.lock_interval_time;
+    auto target_mode = m_px4_mode.target.mode;
     
-    if ((arm_mode == PX4_ARMING_STATE_DISARMED
+    if (target_mode.arming_state == ARMING_STATE_ARMED
+        && (arm_mode == PX4_ARMING_STATE_DISARMED
         || offboard != NAVIGATION_STATE_OFFBOARD)
         && m_offboard_setpoint_counter == 11
         && interval >= LOCK_INTERVAL_TIMER)
     {
         m_offboard_setpoint_counter = 0;
     }
-
-    m_px4_mode.current.arming_state = (arm_mode==PX4_ARMING_STATE_DISARMED)
+    
+    m_px4_mode.current.mode.arming_state = (arm_mode==PX4_ARMING_STATE_DISARMED)
         ?ARMING_STATE_DISARMED:ARMING_STATE_ARMED;
-    m_px4_mode.current.offboard_mode = (offboard==NAVIGATION_STATE_OFFBOARD)
-        ?m_px4_mode.target.offboard_mode:m_px4_mode.current.offboard_mode;
+    m_px4_mode.current.mode.offboard_mode = (offboard==NAVIGATION_STATE_OFFBOARD)
+        ?m_px4_mode.target.mode.offboard_mode:m_px4_mode.current.mode.offboard_mode;
 
     if (interval >= LOCK_INTERVAL_TIMER){
         m_px4_mode.lock_interval_time = now_time;
@@ -114,7 +120,7 @@ void FlightModeManagerNode::publish_vehicle_command(uint16_t command, float para
 }
 
 void FlightModeManagerNode::publish_px4_offboard_mode() {
-    auto &mode = m_px4_mode.target.offboard_mode;
+    auto &mode = m_px4_mode.target.mode.offboard_mode;
     px4_msgs::msg::OffboardControlMode msg{};
     msg.position = (mode == POSITION);
     msg.velocity = (mode == VELOCITY);
@@ -126,7 +132,7 @@ void FlightModeManagerNode::publish_px4_offboard_mode() {
 }
 
 void FlightModeManagerNode::publish_current_offboard_mode(){
-    m_px4_mode_status_broadcaster_pub->publish(m_px4_mode.current);
+    m_px4_mode_status_broadcaster_pub->publish(m_px4_mode.current.mode);
 }
 
 void FlightModeManagerNode::arm() {
