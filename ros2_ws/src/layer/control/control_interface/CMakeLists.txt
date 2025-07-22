@@ -33,26 +33,16 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include 
 )
 
-add_library(${PROJECT_NAME}
-  src/gps_nav_api.cpp
-  src/fly_relative_direction_api.cpp
-  src/controlled_descent_api.cpp
-  src/set_offboard_mode_api.cpp
+add_library(${PROJECT_NAME} INTERFACE)
+
+target_include_directories(${PROJECT_NAME} INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
 
-ament_target_dependencies(${PROJECT_NAME}
-  rclcpp
-  rclcpp_action
-  common_msgs
-  utilities
-)
-
-install(
-  TARGETS ${PROJECT_NAME}
-  EXPORT export_${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
+target_link_libraries(${PROJECT_NAME} INTERFACE 
+  rclcpp::rclcpp
+  rclcpp_action::rclcpp_action
 )
 
 install(
@@ -60,12 +50,20 @@ install(
   DESTINATION include
 )
 
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
+)
+
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(rclcpp rclcpp_action common_msgs)
 
-target_include_directories(${PROJECT_NAME} PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(
+  rclcpp
+  tf2
+  common_msgs
+  utilities
 )
 
 ament_package()
