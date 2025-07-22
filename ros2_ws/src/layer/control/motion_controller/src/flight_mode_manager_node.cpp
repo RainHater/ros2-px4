@@ -9,7 +9,7 @@ FlightModeManagerNode::FlightModeManagerNode()
     RCLCPP_INFO(get_logger(), "flight_mode_manager_node 节点启动...");
     
     m_offboard_setpoint_counter = 0;
-    m_px4_mode.lock_interval_cnt = 0;
+    m_px4_mode.lock_interval_time = 0;
     m_px4_mode.current.arming_state = ARMING_STATE_DISARMED;
     m_px4_mode.current.offboard_mode = OFFBOARD_NOT_ACTIVE;
     m_px4_mode.target.arming_state = ARMING_STATE_ARMED;
@@ -50,16 +50,7 @@ void FlightModeManagerNode::init_subscription(){
 }
 
 void FlightModeManagerNode::timer_callback(){
-    auto &mode = m_px4_mode.target.offboard_mode;
-    const auto &LAND = common_msgs::msg::ArmOffboardStatus::LAND;
-
     m_px4_mode.state_release(shared_from_this());
-
-    if (mode == LAND){
-        publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_NAV_LAND, 0, 0);
-        m_px4_mode.current.offboard_mode = LAND;
-        return;
-    }
 
     if (m_offboard_setpoint_counter == 10) {
         // Change to Offboard mode after 10 setpoints
@@ -82,22 +73,29 @@ void FlightModeManagerNode::set_px4_mode_status_callback(const common_msgs::msg:
     m_px4_mode.target.offboard_mode = msg->offboard_mode;
 }
 
-void FlightModeManagerNode::px4_mode_status_broadcaster_callback(const px4_msgs::msg::VehicleStatus::SharedPtr msg){
-    if (msg->arming_state == 1){
-        m_px4_mode.current.arming_state = ARMING_STATE_DISARMED;
-        if (m_offboard_setpoint_counter == 11 || msg->nav_state != 14){
-            m_px4_mode.lock_interval_cnt ++;
-        }
-        if (m_px4_mode.lock_interval_cnt >= LOCK_INTERVAL_TIME){
-            m_offboard_setpoint_counter = 0;
-            m_px4_mode.lock_interval_cnt = 0;
-        }
-    }else if (msg->arming_state == 2){
-        m_px4_mode.current.arming_state = ARMING_STATE_ARMED;
-    }
+void FlightModeManagerNode::px4_mode_status_broadcaster_callback(
+    const px4_msgs::msg::VehicleStatus::SharedPtr msg)
+{
+    auto arm_mode = msg->arming_state;
+    auto offboard = msg->nav_state;
+    auto now_time = get_clock()->now().nanoseconds() / 1000000;
+    auto interval = now_time - m_px4_mode.lock_interval_time;
     
-    if (msg->nav_state == 14){
-        m_px4_mode.current.offboard_mode = m_px4_mode.target.offboard_mode;
+    if ((arm_mode == PX4_ARMING_STATE_DISARMED
+        || offboard != NAVIGATION_STATE_OFFBOARD)
+        && m_offboard_setpoint_counter == 11
+        && interval >= LOCK_INTERVAL_TIMER)
+    {
+        m_offboard_setpoint_counter = 0;
+    }
+
+    m_px4_mode.current.arming_state = (arm_mode==PX4_ARMING_STATE_DISARMED)
+        ?ARMING_STATE_DISARMED:ARMING_STATE_ARMED;
+    m_px4_mode.current.offboard_mode = (offboard==NAVIGATION_STATE_OFFBOARD)
+        ?m_px4_mode.target.offboard_mode:m_px4_mode.current.offboard_mode;
+
+    if (interval >= LOCK_INTERVAL_TIMER){
+        m_px4_mode.lock_interval_time = now_time;
     }
 }
 
@@ -123,7 +121,7 @@ void FlightModeManagerNode::publish_px4_offboard_mode() {
     msg.attitude = (mode == ATTITUDE);
     msg.acceleration = false;
     msg.body_rate = false;
-    msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
+    msg.timestamp = get_clock()->now().nanoseconds() / 1000;
     m_offboard_control_mode_pub->publish(msg);
 }
 

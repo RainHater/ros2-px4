@@ -47,7 +47,7 @@ protected:
                 std::shared_ptr<const SetOffboardMode::Goal> goal)
             {
                 m_uuid = rclcpp_action::to_string(uuid);
-                RCLCPP_INFO(get_logger(), "任务: %s, 接收的数据: arm=%d offboard=%d", 
+                RCLCPP_INFO(get_logger(), "切换Offboard模式任务: %s, 接收的数据: arm=%d offboard=%d", 
                                         m_uuid.c_str(), 
                                         goal->mode.arming_state, goal->mode.offboard_mode);
                 return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
@@ -55,12 +55,12 @@ protected:
             //处理取消请求
             [this](const std::shared_ptr<GoalHandle> goal_handle){
                 (void)goal_handle;
-                RCLCPP_INFO(get_logger(), "任务: %s, 已取消", m_uuid.c_str());
+                RCLCPP_INFO(get_logger(), "切换Offboard模式任务: %s, 已取消", m_uuid.c_str());
                 return rclcpp_action::CancelResponse::ACCEPT;
             },
             //接收并准备执行任务
             [this](const std::shared_ptr<GoalHandle> goal_handle){
-                RCLCPP_INFO(get_logger(), "任务: %s 开始执行", m_uuid.c_str());
+                RCLCPP_INFO(get_logger(), "切换Offboard模式任务: %s 开始执行", m_uuid.c_str());
                 std::thread{std::bind(&SetOffboardModeAction::execute, this, goal_handle)}.detach();
             }
         );
@@ -96,7 +96,7 @@ protected:
                 result->success = false;
                 result->message = "Goal canceled";
                 goal_handle->canceled(result);
-                RCLCPP_INFO(get_logger(), "任务: %s 取消", m_uuid.c_str());
+                RCLCPP_INFO(get_logger(), "切换Offboard模式任务: %s 取消", m_uuid.c_str());
                 return;
             }
 

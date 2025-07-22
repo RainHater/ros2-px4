@@ -50,13 +50,13 @@ protected:
                 std::shared_ptr<const ControlledDescent::Goal> goal)
             {   
                 m_uuid = rclcpp_action::to_string(uuid);
-                RCLCPP_INFO(get_logger(), "任务: %s, 接收的数据: speed=%f",
+                RCLCPP_INFO(get_logger(), "降落任务: %s, 接收的数据: speed=%f",
                                         m_uuid.c_str(), goal->speed);
                 return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
             },
             [this](const std::shared_ptr<GoalHandle> goal_handle){
                 (void)goal_handle;
-                RCLCPP_INFO(get_logger(), "任务: %s, 已取消", m_uuid.c_str());
+                RCLCPP_INFO(get_logger(), "降落任务: %s, 已取消", m_uuid.c_str());
                 return rclcpp_action::CancelResponse::ACCEPT;
             },
             [this](const std::shared_ptr<GoalHandle> goal_handle){
@@ -65,7 +65,7 @@ protected:
                     ARMING_STATE_ARMED, 
                     VELOCITY, 
                     [this, goal_handle](){
-                        RCLCPP_INFO(get_logger(), "任务: %s 开始执行", m_uuid.c_str());
+                        RCLCPP_INFO(get_logger(), "降落任务: %s 开始执行", m_uuid.c_str());
                 std::thread{std::bind(&ControlledDescentAction::execute, this, goal_handle)}.detach();
                     }
                 );
@@ -82,18 +82,21 @@ protected:
         rclcpp::Rate rate(20);
 
         while(rclcpp::ok()){
-            float dist_bottom = local_position.dist_bottom;
-            RCLCPP_INFO(get_logger(), "dist_bottom: %f", dist_bottom);
+            auto vz = local_position.vz;
+            auto dist_bottom = local_position.dist_bottom;
+            auto dist_bottom_valid = local_position.dist_bottom_valid;
+            // RCLCPP_INFO(get_logger(), "vz %f, dist_bottom: %f, dist_bottom_valid: %d", 
+            //     vz, dist_bottom, dist_bottom_valid);
 
             if (goal_handle->is_canceling()) {
                 result->success = false;
                 result->message = "Goal canceled";
                 goal_handle->canceled(result);
-                RCLCPP_INFO(get_logger(), "任务: %s 取消", m_uuid.c_str());
+                RCLCPP_INFO(get_logger(), "降落任务: %s 取消", m_uuid.c_str());
                 return;
             }
 
-            if (dist_bottom < 0.01f){
+            if (dist_bottom_valid && dist_bottom < 0.1f && std::abs(vz) < 0.2f) {
                 result->success = true;
                 result->message = "Reached target";
                 goal_handle->succeed(result);
@@ -103,7 +106,7 @@ protected:
                 msg.velocity[2] = 0.0;
                 msg.yawspeed = 0.0;
                 m_trajectory_setpoint_pub->publish(msg);
-                RCLCPP_INFO(get_logger(), "任务: %s 已完成", m_uuid.c_str());
+                RCLCPP_INFO(get_logger(), "降落任务: %s 已完成", m_uuid.c_str());
                 return;
             }
 

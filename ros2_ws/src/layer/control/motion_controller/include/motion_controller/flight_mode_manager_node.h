@@ -9,13 +9,17 @@
 #include <px4_msgs/msg/vehicle_status.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
-#include <common_msgs/msg/arm_offboard_status.hpp>
+
+#include "common_msgs/msg/arm_offboard_status.hpp"
 #include "utilities/topic_tool.hpp"
 
 #include <stdint.h>
 #include <chrono>
 #include <iostream>
 
+constexpr auto NAVIGATION_STATE_OFFBOARD = px4_msgs::msg::VehicleStatus::NAVIGATION_STATE_OFFBOARD;
+constexpr auto PX4_ARMING_STATE_ARMED = px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED;
+constexpr auto PX4_ARMING_STATE_DISARMED = px4_msgs::msg::VehicleStatus::ARMING_STATE_DISARMED;
 constexpr auto ARMING_STATE_ARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
 constexpr auto ARMING_STATE_DISARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_DISARMED;
 constexpr auto OFFBOARD_NOT_ACTIVE = common_msgs::msg::ArmOffboardStatus::OFFBOARD_NOT_ACTIVE;
@@ -24,7 +28,7 @@ constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
 constexpr auto ATTITUDE = common_msgs::msg::ArmOffboardStatus::ATTITUDE;
 constexpr auto PX4_OFFBOARD_DEFAULT_MODE = POSITION;
 constexpr auto PX4_CUSTOM_MAIN_MODE_OFFBOARD = 6;
-constexpr auto LOCK_INTERVAL_TIME = 10;
+constexpr auto LOCK_INTERVAL_TIMER = 500;
 
 struct Px4ModeInfo {
     //当前模式
@@ -34,7 +38,7 @@ struct Px4ModeInfo {
     //上一次px4模式模式
     common_msgs::msg::ArmOffboardStatus last;
     //arm未解锁间隔
-    int lock_interval_cnt;
+    int64_t lock_interval_time;
 
     //发布模式切换日志
     void state_release(const rclcpp::Node::SharedPtr & node){
@@ -62,6 +66,7 @@ protected:
     void set_px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus::SharedPtr msg);
     //获取飞控当前状态
     void px4_mode_status_broadcaster_callback(const px4_msgs::msg::VehicleStatus::SharedPtr msg);
+    void px4_mode_detection();
     //发布一个 PX4 的 VehicleCommand 指令
     void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0);
     //向PX4发布Offboard模式
@@ -73,7 +78,6 @@ protected:
     //Arm上锁
     void disarm();
 private:
-    //定时器，用于周期性发布消息
     rclcpp::TimerBase::SharedPtr m_timer;
     //发布 vehicle_command 消息
     rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr m_vehicle_command_pub;
