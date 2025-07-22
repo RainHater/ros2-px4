@@ -42,4 +42,6 @@ ament_target_dependencies(state_estimator_service
 )
 install(TARGETS state_estimator_service DESTINATION lib/${PROJECT_NAME})
 
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+
 ament_package()

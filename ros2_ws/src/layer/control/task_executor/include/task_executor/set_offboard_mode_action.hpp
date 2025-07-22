@@ -9,15 +9,15 @@
 #include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
 
-class SetOffboardModeService : public rclcpp::Node {
+class SetOffboardModeAction : public rclcpp::Node {
 public:
     using SetOffboardMode = common_msgs::action::SetOffboardMode;
     using GoalHandle = rclcpp_action::ServerGoalHandle<SetOffboardMode>;
 public:
-    SetOffboardModeService() 
-        : rclcpp::Node("set_offboard_mode_server")
+    SetOffboardModeAction() 
+        : rclcpp::Node("set_offboard_mode_action")
     {
-        RCLCPP_INFO(get_logger(), "set_offboard_mode_server 节点启动...");
+        RCLCPP_INFO(get_logger(), "set_offboard_mode_action 节点启动...");
     }
     void initialize(){
         init_publisher();
@@ -61,7 +61,7 @@ protected:
             //接收并准备执行任务
             [this](const std::shared_ptr<GoalHandle> goal_handle){
                 RCLCPP_INFO(get_logger(), "任务: %s 开始执行", m_uuid.c_str());
-                std::thread{std::bind(&SetOffboardModeService::execute, this, goal_handle)}.detach();
+                std::thread{std::bind(&SetOffboardModeAction::execute, this, goal_handle)}.detach();
             }
         );
     }

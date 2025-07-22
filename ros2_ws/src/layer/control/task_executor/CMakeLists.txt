@@ -82,4 +82,6 @@ ament_target_dependencies(set_offboard_mode_action
 )
 install(TARGETS set_offboard_mode_action DESTINATION lib/${PROJECT_NAME})
 
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+
 ament_package()

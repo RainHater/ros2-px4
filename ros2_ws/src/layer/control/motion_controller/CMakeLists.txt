@@ -52,4 +52,6 @@ ament_target_dependencies(offboard_ctrl_node
 )
 install(TARGETS offboard_ctrl_node DESTINATION lib/${PROJECT_NAME})
 
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+
 ament_package()

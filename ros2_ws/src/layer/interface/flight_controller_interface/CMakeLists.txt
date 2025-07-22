@@ -40,4 +40,6 @@ ament_target_dependencies(px4_bridge_node
 )
 install(TARGETS px4_bridge_node DESTINATION lib/${PROJECT_NAME})
 
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+
 ament_package()

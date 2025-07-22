@@ -6,35 +6,34 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 
 def generate_launch_description():
-    base_node = IncludeLaunchDescription(
+    flight_controller_interface = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
-                FindPackageShare('mission_planner'),
+                FindPackageShare('flight_controller_interface'),
                 'launch',
-                'base_node.launch.py'
+                'flight_controller_interface.launch.py'
             ])
         )
     )
 
-    fly_relative_direction_action = Node(
-        package='task_executor',
-        executable='fly_relative_direction_action',
-        name='fly_relative_direction_action',
-        output='screen',
+    motion_controller = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('motion_controller'),
+                'launch',
+                'motion_controller.launch.py'
+            ])
+        )
     )
 
-    controlled_descent_action = Node(
-        package='task_executor',
-        executable='controlled_descent_action',
-        name='controlled_descent_action',
-        output='screen',
-    )
-
-    set_offboard_mode_server = Node(
-        package='task_executor',
-        executable='set_offboard_mode_action',
-        name='set_offboard_mode_action',
-        output='screen',
+    task_executor = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('task_executor'),
+                'launch',
+                'task_executor.launch.py'
+            ])
+        )
     )
 
     px4_hold_height_test_node = Node(
@@ -43,10 +42,10 @@ def generate_launch_description():
         name='px4_hold_height_test_node',
         output='screen',
     )
+
     return LaunchDescription([
-        base_node,
-        fly_relative_direction_action,
-        controlled_descent_action,
-        set_offboard_mode_server,
+        flight_controller_interface,
+        motion_controller,
+        task_executor,
         px4_hold_height_test_node,
     ])

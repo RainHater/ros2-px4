@@ -6,22 +6,34 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 
 def generate_launch_description():
-    
-    base_node = IncludeLaunchDescription(
+    flight_controller_interface = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
-                FindPackageShare('mission_planner'),
+                FindPackageShare('flight_controller_interface'),
                 'launch',
-                'base_node.launch.py'
+                'flight_controller_interface.launch.py'
             ])
         )
     )
 
-    rect_detect_node = Node(
-        package='vision_pipeline',
-        executable='rect_detect_node',
-        name='rect_detect_node',
-        output='screen',
+    motion_controller = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('motion_controller'),
+                'launch',
+                'motion_controller.launch.py'
+            ])
+        )
+    )
+
+    task_executor = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('task_executor'),
+                'launch',
+                'task_executor.launch.py'
+            ])
+        )
     )
 
     mission_planner_node = Node(
@@ -31,16 +43,9 @@ def generate_launch_description():
         output='screen',
     )
 
-    pid_viewer_node = Node(
-        package='debug',
-        executable='pid_viewer_node',
-        name='pid_viewer_node',
-        output='screen',
-    )
-
     return LaunchDescription([
-        base_node,
-        rect_detect_node,
+        flight_controller_interface,
+        motion_controller,
+        task_executor,
         mission_planner_node,
-        pid_viewer_node,
     ])
