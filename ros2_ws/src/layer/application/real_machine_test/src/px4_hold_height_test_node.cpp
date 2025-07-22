@@ -86,21 +86,14 @@ void Px4HoldHeightTestNode::timer_callback(){
             }
         );
     }else if (m_task_state == TASK4){
-        SetOffboardModeApi::Instance().send_goal(
-            shared_from_this(), 
-            ARMING_STATE_ARMED, 
-            VELOCITY, 
-            [this](){
-                m_task_state = TASK5;
-            }
-        );        
-    }else if (m_task_state == TASK5){
         ControlledDescentApi::Instance().send_goal(
             shared_from_this(), 0.5, 
             [this](){
-                m_task_state = TASK6;
+                m_task_state = TASK5;
             }
-        );
+        );    
+    }else if (m_task_state == TASK5){
+        
     }
 }
 

@@ -48,4 +48,16 @@ ament_target_dependencies(mission_planner_node
 )
 install(TARGETS mission_planner_node DESTINATION lib/${PROJECT_NAME})
 
+add_executable(simple_indoor_control_task src/simple_indoor_control_task.cpp)
+ament_target_dependencies(simple_indoor_control_task 
+  rclcpp
+  rclcpp_action
+  px4_msgs 
+  geometry_msgs
+  common_msgs
+  control_interface
+  utilities
+)
+install(TARGETS simple_indoor_control_task DESTINATION lib/${PROJECT_NAME})
+
 ament_package()

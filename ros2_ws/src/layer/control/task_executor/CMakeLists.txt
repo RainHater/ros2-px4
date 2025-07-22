@@ -17,6 +17,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
 find_package(utilities REQUIRED)
 find_package(rclcpp_action REQUIRED)
+find_package(control_interface REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -57,6 +58,7 @@ ament_target_dependencies(fly_relative_direction_action
   common_msgs
   utilities
   rclcpp_action
+  control_interface
 )
 install(TARGETS fly_relative_direction_action DESTINATION lib/${PROJECT_NAME})
 
@@ -68,6 +70,7 @@ ament_target_dependencies(controlled_descent_action
   common_msgs
   utilities
   rclcpp_action
+  control_interface
 )
 install(TARGETS controlled_descent_action DESTINATION lib/${PROJECT_NAME})
 

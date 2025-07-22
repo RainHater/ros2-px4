@@ -8,9 +8,13 @@
 
 #include "common_msgs/action/fly_relative_direction.hpp"
 #include "common_msgs/msg/trajectory_set_point.hpp"
+#include "control_interface/set_offboard_mode_api.hpp"
 #include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
 #include "utilities/tf2_tool.hpp"
+
+constexpr auto ARMING_STATE_ARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
+constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
 
 class FlyRelativeDirectionAction : public rclcpp::Node{
 public:
@@ -63,8 +67,15 @@ protected:
             },
             //接收并准备执行任务
             [this](const std::shared_ptr<GoalHandle> goal_handle){
-                RCLCPP_INFO(get_logger(), "任务: %s 开始执行", m_uuid.c_str());
+                SetOffboardModeApi::Instance().send_goal(
+                    shared_from_this(), 
+                    ARMING_STATE_ARMED, 
+                    POSITION, 
+                    [this, goal_handle](){
+                        RCLCPP_INFO(get_logger(), "任务: %s 开始执行", m_uuid.c_str());
                 std::thread{std::bind(&FlyRelativeDirectionAction::execute, this, goal_handle)}.detach();
+                    }
+                );
             }
         );
     }

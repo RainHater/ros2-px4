@@ -8,8 +8,12 @@
 
 #include "common_msgs/action/controlled_descent.hpp"
 #include "common_msgs/msg/trajectory_set_point.hpp"
+#include "control_interface/set_offboard_mode_api.hpp"
 #include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
+
+constexpr auto ARMING_STATE_ARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
+constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
 
 class ControlledDescentAction : public rclcpp::Node{
 public:
@@ -56,8 +60,15 @@ protected:
                 return rclcpp_action::CancelResponse::ACCEPT;
             },
             [this](const std::shared_ptr<GoalHandle> goal_handle){
-                RCLCPP_INFO(get_logger(), "任务: %s 开始执行", m_uuid.c_str());
+                SetOffboardModeApi::Instance().send_goal(
+                    shared_from_this(), 
+                    ARMING_STATE_ARMED, 
+                    VELOCITY, 
+                    [this, goal_handle](){
+                        RCLCPP_INFO(get_logger(), "任务: %s 开始执行", m_uuid.c_str());
                 std::thread{std::bind(&ControlledDescentAction::execute, this, goal_handle)}.detach();
+                    }
+                );
             }
         );
     }
