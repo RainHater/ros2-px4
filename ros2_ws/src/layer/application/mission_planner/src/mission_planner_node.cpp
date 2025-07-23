@@ -1,6 +1,6 @@
 #include "mission_planner/mission_planner_node.h"
 #include "utilities/topic_name.hpp"
-#include "control_interface/gps_nav_api.hpp"
+#include "gps_nav_api.hpp"
 #include <cmath>
 #include <optional>
 

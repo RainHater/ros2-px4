@@ -5,9 +5,9 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "utilities/task_scheduler.hpp"
-#include "control_interface/fly_relative_direction_api.hpp"
-#include "control_interface/set_offboard_mode_api.hpp"
-#include "control_interface/controlled_descent_api.hpp"
+#include "fly_relative_direction_api.hpp"
+#include "set_offboard_mode_api.hpp"
+#include "controlled_descent_api.hpp"
 
 constexpr auto ARMING_STATE_ARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
 constexpr auto ARMING_STATE_DISARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_DISARMED;

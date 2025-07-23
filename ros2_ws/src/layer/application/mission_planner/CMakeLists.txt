@@ -16,7 +16,7 @@ find_package(px4_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
 find_package(utilities REQUIRED)
-find_package(control_interface REQUIRED)
+find_package(task_executor REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -45,9 +45,9 @@ function(register_node target_name)
     geometry_msgs
     common_msgs
     utilities
-    control_interface
   )
   install(TARGETS ${target_name} DESTINATION lib/${PROJECT_NAME})
+  target_link_libraries(${target_name} task_executor::api)
 endfunction()
 
 register_node(mission_planner_node)

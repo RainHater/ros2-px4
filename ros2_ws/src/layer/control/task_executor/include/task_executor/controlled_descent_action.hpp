@@ -8,7 +8,7 @@
 
 #include "common_msgs/action/controlled_descent.hpp"
 #include "common_msgs/msg/trajectory_set_point.hpp"
-#include "control_interface/set_offboard_mode_api.hpp"
+#include "api/set_offboard_mode_api.hpp"
 #include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
 

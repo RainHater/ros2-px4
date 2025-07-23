@@ -17,7 +17,6 @@ find_package(geometry_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
 find_package(utilities REQUIRED)
 find_package(rclcpp_action REQUIRED)
-find_package(control_interface REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -46,7 +45,6 @@ function(register_node target_name)
     common_msgs
     utilities
     rclcpp_action
-    control_interface
   )
   install(TARGETS ${target_name} DESTINATION lib/${PROJECT_NAME})
 endfunction()
@@ -55,5 +53,31 @@ register_node(gps_nav_action)
 register_node(fly_relative_direction_action)
 register_node(controlled_descent_action)
 register_node(set_offboard_mode_action)
+
+set(API_NAME "api")
+add_library(${API_NAME} INTERFACE)
+
+target_include_directories(${API_NAME} INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/${API_NAME}>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}/${API_NAME}>
+)
+
+target_link_libraries(${API_NAME} INTERFACE 
+  rclcpp::rclcpp
+  rclcpp_action::rclcpp_action
+)
+
+install(
+  DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION include/${PROJECT_NAME}
+)
+
+install(
+  TARGETS ${API_NAME}
+  EXPORT export_${API_NAME}
+)
+
+ament_export_targets(export_${API_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(rclcpp rclcpp_action common_msgs)
 
 ament_package()
