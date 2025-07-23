@@ -58,12 +58,4 @@ install(
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(rclcpp rclcpp_action common_msgs)
 
-ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
-ament_export_dependencies(
-  rclcpp
-  tf2
-  common_msgs
-  utilities
-)
-
 ament_package()

@@ -68,7 +68,7 @@ public:
         m_scheduler.add_task(
             [this](auto &flag){
                 ControlledDescentApi::Instance().send_goal(
-                    shared_from_this(), 0.5, 
+                    shared_from_this(), 0.25, 
                     [this, flag](){
                         *flag = true;
                         RCLCPP_INFO(get_logger(), "任务已完成!");

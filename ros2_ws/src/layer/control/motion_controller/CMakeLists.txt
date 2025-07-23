@@ -32,26 +32,21 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include 
 )
 
-add_executable(flight_mode_manager_node src/flight_mode_manager_node.cpp)
-ament_target_dependencies(flight_mode_manager_node 
-  rclcpp 
-  px4_msgs 
-  geometry_msgs
-  common_msgs
-  utilities
-)
-install(TARGETS flight_mode_manager_node DESTINATION lib/${PROJECT_NAME})
-
-add_executable(offboard_ctrl_node src/offboard_ctrl_node.cpp)
-ament_target_dependencies(offboard_ctrl_node 
-  rclcpp 
-  px4_msgs 
-  geometry_msgs
-  common_msgs
-  utilities
-)
-install(TARGETS offboard_ctrl_node DESTINATION lib/${PROJECT_NAME})
-
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+
+function(register_node target_name)
+  add_executable(${target_name} src/${target_name}.cpp)
+  ament_target_dependencies(${target_name}
+    rclcpp 
+    px4_msgs 
+    geometry_msgs
+    common_msgs
+    utilities
+  )
+  install(TARGETS ${target_name} DESTINATION lib/${PROJECT_NAME})
+endfunction()
+
+register_node(flight_mode_manager_node)
+register_node(offboard_ctrl_node)
 
 ament_package()

@@ -21,24 +21,37 @@ public:
             [this](const MsgPtr msg){
                 std::lock_guard<std::mutex> lock(m_mutex);
                 m_msg = *msg;
+                if (!m_first_flag){
+                    m_first_msg = m_msg;
+                    m_first_flag = true;
+                }
                 m_received = true;
             }
         );
     }
 
-    const MsgT& get_msg(){
+    const MsgT& get_msg() const{
         std::lock_guard<std::mutex> lock(m_mutex);
         return m_msg;
     }
 
+    //获取第一次接收的数据
+    const MsgT& get_first_msg() const{
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_first_msg;
+    }
+
+    //监听数据是否有效
     bool has_received() const {
         std::lock_guard<std::mutex> lock(m_mutex);
         return m_received;
     }
 
 private:
-    mutable std::mutex m_mutex;
-    SubscriptionPtr m_sub;
     MsgT m_msg;
+    MsgT m_first_msg;
+    bool m_first_flag = false;
     bool m_received = false;
+    SubscriptionPtr m_sub;
+    mutable std::mutex m_mutex;
 };

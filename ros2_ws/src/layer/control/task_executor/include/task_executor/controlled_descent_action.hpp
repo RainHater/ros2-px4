@@ -85,8 +85,8 @@ protected:
             auto vz = local_position.vz;
             auto dist_bottom = local_position.dist_bottom;
             auto dist_bottom_valid = local_position.dist_bottom_valid;
-            // RCLCPP_INFO(get_logger(), "vz %f, dist_bottom: %f, dist_bottom_valid: %d", 
-            //     vz, dist_bottom, dist_bottom_valid);
+            RCLCPP_INFO(get_logger(), "vz %f, dist_bottom: %f, dist_bottom_valid: %d", 
+                vz, dist_bottom, dist_bottom_valid);
 
             if (goal_handle->is_canceling()) {
                 result->success = false;
@@ -100,24 +100,24 @@ protected:
                 result->success = true;
                 result->message = "Reached target";
                 goal_handle->succeed(result);
-                common_msgs::msg::TrajectorySetPoint msg{};
-                msg.velocity[0] = 0.0;
-                msg.velocity[1] = 0.0;
-                msg.velocity[2] = 0.0;
-                msg.yawspeed = 0.0;
-                m_trajectory_setpoint_pub->publish(msg);
+                drop_send(0.0);
                 RCLCPP_INFO(get_logger(), "降落任务: %s 已完成", m_uuid.c_str());
                 return;
             }
 
-            common_msgs::msg::TrajectorySetPoint msg{};
-            msg.velocity[0] = 0.0;
-            msg.velocity[1] = 0.0;
-            msg.velocity[2] = goal->speed;
-            msg.yawspeed = 0.0;
-            m_trajectory_setpoint_pub->publish(msg);
+            drop_send(goal->speed);
             rate.sleep();
         }
+    }
+protected:
+    //发送下降消息
+    void drop_send(float speed){
+        common_msgs::msg::TrajectorySetPoint msg{};
+        msg.velocity[0] = 0.0;
+        msg.velocity[1] = 0.0;
+        msg.velocity[2] = speed;
+        msg.yawspeed = 0.0;
+        m_trajectory_setpoint_pub->publish(msg);
     }
 private:
     std::string m_uuid;

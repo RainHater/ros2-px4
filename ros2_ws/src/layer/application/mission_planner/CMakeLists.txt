@@ -36,28 +36,21 @@ include_directories(
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 
-add_executable(mission_planner_node src/mission_planner_node.cpp)
-ament_target_dependencies(mission_planner_node 
-  rclcpp
-  rclcpp_action
-  px4_msgs 
-  geometry_msgs
-  common_msgs
-  control_interface
-  utilities
-)
-install(TARGETS mission_planner_node DESTINATION lib/${PROJECT_NAME})
+function(register_node target_name)
+  add_executable(${target_name} src/${target_name}.cpp)
+  ament_target_dependencies(${target_name}
+    rclcpp
+    rclcpp_action
+    px4_msgs 
+    geometry_msgs
+    common_msgs
+    utilities
+    control_interface
+  )
+  install(TARGETS ${target_name} DESTINATION lib/${PROJECT_NAME})
+endfunction()
 
-add_executable(simple_indoor_control_task src/simple_indoor_control_task.cpp)
-ament_target_dependencies(simple_indoor_control_task 
-  rclcpp
-  rclcpp_action
-  px4_msgs 
-  geometry_msgs
-  common_msgs
-  control_interface
-  utilities
-)
-install(TARGETS simple_indoor_control_task DESTINATION lib/${PROJECT_NAME})
+register_node(mission_planner_node)
+register_node(simple_indoor_control_task)
 
 ament_package()
