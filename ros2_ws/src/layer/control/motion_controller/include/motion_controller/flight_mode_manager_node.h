@@ -17,50 +17,24 @@
 #include <chrono>
 #include <iostream>
 
+constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
+constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
+constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD_DISABLED;
+constexpr auto ARMING_STATE_ARMED = px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED;
+constexpr auto ARMING_STATE_DISARMED = px4_msgs::msg::VehicleStatus::ARMING_STATE_DISARMED;
 constexpr auto NAVIGATION_STATE_OFFBOARD = px4_msgs::msg::VehicleStatus::NAVIGATION_STATE_OFFBOARD;
-constexpr auto PX4_ARMING_STATE_ARMED = px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED;
-constexpr auto PX4_ARMING_STATE_DISARMED = px4_msgs::msg::VehicleStatus::ARMING_STATE_DISARMED;
-constexpr auto ARMING_STATE_ARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
-constexpr auto ARMING_STATE_DISARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_DISARMED;
-constexpr auto OFFBOARD_NOT_ACTIVE = common_msgs::msg::ArmOffboardStatus::OFFBOARD_NOT_ACTIVE;
-constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
-constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
-constexpr auto ATTITUDE = common_msgs::msg::ArmOffboardStatus::ATTITUDE;
-constexpr auto PX4_OFFBOARD_DEFAULT_MODE = POSITION;
 constexpr auto PX4_CUSTOM_MAIN_MODE_OFFBOARD = 6;
-constexpr auto LOCK_INTERVAL_TIMER = 500;
 
-struct Px4ModeInfo {
-    //当前模式
-    struct {
-        common_msgs::msg::ArmOffboardStatus mode;
-        rclcpp::Subscription<px4_msgs::msg::VehicleStatus>::SharedPtr sub;
-    } current;
-
-    //目标模式
-    struct {
-        common_msgs::msg::ArmOffboardStatus mode;
-        rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr sub;
-    } target;
-
-    //上一次px4模式模式
-    common_msgs::msg::ArmOffboardStatus last;
-    //arm未解锁间隔
-    int64_t lock_interval_time;
-
-    //发布模式切换日志
-    void state_release(const rclcpp::Node::SharedPtr & node){
-        if (last.offboard_mode != current.mode.offboard_mode){
-            last.offboard_mode = current.mode.offboard_mode;
-            RCLCPP_INFO(node->get_logger(), "offboard 切换: %d", current.mode.offboard_mode);
-        }
-        if (last.arming_state != current.mode.arming_state){
-            last.arming_state = current.mode.arming_state;
-            std::string release_str = (current.mode.arming_state==ARMING_STATE_ARMED)?"已解锁":"未解锁";
-            RCLCPP_INFO(node->get_logger(), "arm: %s", release_str.c_str());
-        }
-    }
-};
+typedef enum {
+    IDLE,                       // 空闲状态，未开始初始化流程
+    SENDING_SETPOINT,           // 发送初始 setpoint（位置/速度等）给飞控，准备进入 Offboard 模式
+    SETTING_OFFBOARD,           // 发送切换到 Offboard 模式的命令
+    WAITING_OFFBOARD_CONFIRM,   // 等待飞控确认已成功切换到 Offboard 模式
+    ARMING,                     // 发送解锁（解锁电机）命令，准备起飞
+    WAITING_ARM_CONFIRM,        // 等待飞控确认已成功解锁
+    READY,                      // 已解锁且处于 Offboard 模式，准备执行飞行任务
+    FAILED                      // 初始化失败，可能需要重试或错误处理
+} FlightInitState;
 
 class FlightModeManagerNode : public rclcpp::Node {
 public:
@@ -69,35 +43,37 @@ public:
 protected:
     void init_publisher();
     void init_subscription();
-    void timer_callback();
-    //设置offboard模式
-    void set_px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus::SharedPtr msg);
-    //获取飞控当前状态
-    void px4_mode_status_broadcaster_callback(const px4_msgs::msg::VehicleStatus::SharedPtr msg);
-    void px4_mode_detection();
-    //发布一个 PX4 的 VehicleCommand 指令
-    void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0);
+protected:
+    //解锁状态机
+    void arm_and_set_offboard();
     //向PX4发布Offboard模式
     void publish_px4_offboard_mode();
     //向全局发布当前Offboard模式
-    void publish_current_offboard_mode();
+    void publish_current_mode();
+//工具函数
+private:
     //Arm解锁
-    void arm();    
+    void arm();  
     //Arm上锁
-    void disarm();
+    void disarm();  
+    //发布一个 PX4 的 VehicleCommand 指令
+    void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0);
 private:
     rclcpp::TimerBase::SharedPtr m_timer;
-    //发布 vehicle_command 消息
-    rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr m_vehicle_command_pub;
-    //发布 offboard_control_mode 消息
-    rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr m_offboard_control_mode_pub;
-    //发布当前Offboard模式消息
-    rclcpp::Publisher<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_px4_mode_status_broadcaster_pub;
-    //飞控模式
-    Px4ModeInfo m_px4_mode;
-    //offboard setpoint 消息的计数器
-    uint64_t m_offboard_setpoint_counter;
+    FlightInitState m_flight_state;
+
+    struct {
+        rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command;
+        rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_control_mode;
+        rclcpp::Publisher<common_msgs::msg::ArmOffboardStatus>::SharedPtr px4_mode_status_broadcaster;
+    } m_pub;
+
+    struct {
+        TopicListener<common_msgs::msg::ArmOffboardStatus> target;
+        TopicListener<px4_msgs::msg::VehicleStatus> px4_mode;
+        common_msgs::msg::ArmOffboardStatus current;
+        uint64_t setpoint_counter;
+    } m_arm_offboard_mode;
 };
 
 #endif
-

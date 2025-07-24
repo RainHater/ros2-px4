@@ -68,7 +68,7 @@ void MissionPlanner::timer_callback(){
         });
     }else if (m_current_task_status == SWITCH_TO_OFFBOARD_VELOCITY_MODE){
         common_msgs::msg::ArmOffboardStatus msgs{};
-        msgs.offboard_mode = msgs.VELOCITY;
+        msgs.offboard = msgs.VELOCITY;
         m_set_offboard_mode_pub->publish(msgs);
     }else if (m_current_task_status == VISUAL_TRACKING){
         float pixel_threshold = 10.0f;
@@ -107,11 +107,11 @@ void MissionPlanner::timer_callback(){
 void MissionPlanner::px4_mode_status_callback(
     const common_msgs::msg::ArmOffboardStatus::SharedPtr msg)
 {
-    if (msg->offboard_mode == common_msgs::msg::ArmOffboardStatus::POSITION){
+    if (msg->offboard == common_msgs::msg::ArmOffboardStatus::POSITION){
         if (m_current_task_status==WAIT_FOR_ARM_AND_OFFBOARD){
             m_current_task_status = FLY_TO_READY_POSITION;
         }
-    }else if (msg->offboard_mode == common_msgs::msg::ArmOffboardStatus::VELOCITY){
+    }else if (msg->offboard == common_msgs::msg::ArmOffboardStatus::VELOCITY){
         if (m_current_task_status==SWITCH_TO_OFFBOARD_VELOCITY_MODE){
             m_current_task_status = VISUAL_TRACKING;
         }

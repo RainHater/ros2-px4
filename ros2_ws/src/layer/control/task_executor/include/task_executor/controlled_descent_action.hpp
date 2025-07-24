@@ -12,7 +12,7 @@
 #include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
 
-constexpr auto ARMING_STATE_ARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
+constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
 
 class ControlledDescentAction : public rclcpp::Node{
@@ -62,7 +62,7 @@ protected:
             [this](const std::shared_ptr<GoalHandle> goal_handle){
                 SetOffboardModeApi::Instance().send_goal(
                     shared_from_this(), 
-                    ARMING_STATE_ARMED, 
+                    ARM_ENABLE, 
                     VELOCITY, 
                     [this, goal_handle](){
                         RCLCPP_INFO(get_logger(), "降落任务: %s 开始执行", m_uuid.c_str());

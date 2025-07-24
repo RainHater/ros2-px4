@@ -20,9 +20,9 @@ public:
     }
     void send_goal(
         const rclcpp::Node::SharedPtr &node,
-        const uint8_t arm_mode, 
         const uint8_t offboard_mode,
-        std::function<void()> succeeded_callback)
+        const uint8_t arm_mode,
+        std::function<void()> succeeded_callback = nullptr)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         if (m_is_busy)
@@ -40,13 +40,13 @@ public:
         }
 
         SetOffboardMode::Goal goal;
-        goal.mode.arming_state = arm_mode;
-        goal.mode.offboard_mode = offboard_mode;
+        goal.mode.arm = arm_mode;
+        goal.mode.offboard = offboard_mode;
 
         RCLCPP_INFO(node->get_logger(), 
-            "请求数据: arm: %d, offbaord: %d", 
-                goal.mode.arming_state,
-                goal.mode.offboard_mode);
+            "请求数据: arm: %d, offboard: %d", 
+                goal.mode.arm, 
+                goal.mode.offboard);
 
         rclcpp_action::Client<SetOffboardMode>::SendGoalOptions options;
         options.goal_response_callback = [node](auto goal_handle) {

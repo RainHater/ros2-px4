@@ -2,7 +2,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <string>
-#include <mutex>
 
 //话题消息监听可直接获取话题的消息
 template<typename MsgT>
@@ -19,7 +18,6 @@ public:
         m_sub = node->create_subscription<MsgT>(
             topic_name, qos, 
             [this](const MsgPtr msg){
-                std::lock_guard<std::mutex> lock(m_mutex);
                 m_msg = *msg;
                 if (!m_first_flag){
                     m_first_msg = m_msg;
@@ -31,27 +29,32 @@ public:
     }
 
     const MsgT& get_msg() const{
-        std::lock_guard<std::mutex> lock(m_mutex);
         return m_msg;
     }
 
     //获取第一次接收的数据
     const MsgT& get_first_msg() const{
-        std::lock_guard<std::mutex> lock(m_mutex);
         return m_first_msg;
     }
 
     //监听数据是否有效
     bool has_received() const {
-        std::lock_guard<std::mutex> lock(m_mutex);
         return m_received;
+    }
+
+    bool has_change() {
+        if (m_change_flag){
+            m_change_flag = false;
+            return true;
+        }
+        return false;
     }
 
 private:
     MsgT m_msg;
     MsgT m_first_msg;
     bool m_first_flag = false;
+    bool m_change_flag = false;
     bool m_received = false;
     SubscriptionPtr m_sub;
-    mutable std::mutex m_mutex;
 };

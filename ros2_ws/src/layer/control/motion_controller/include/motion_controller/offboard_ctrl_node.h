@@ -9,24 +9,32 @@
 #include <common_msgs/msg/arm_offboard_status.hpp>
 #include "utilities/topic_tool.hpp"
 
+constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
+constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
+
 class OffboardCtrlNode : public rclcpp::Node {
 public:
     OffboardCtrlNode();
     void initialize();
+//初始化
 protected:
     void init_publisher();
     void init_subscription();
+protected:
     void timer_callback();
     //发布offboard控制消息
     void publish_trajectory_setpoint();
 private:
     rclcpp::TimerBase::SharedPtr m_timer;
-    //发布器：发布 trajectory_setpoint 消息
-    rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr m_trajectory_setpoint_pub;
 
-    //消息监听
-    TopicListener<common_msgs::msg::TrajectorySetPoint> m_target_setpoint_listener;
-    TopicListener<common_msgs::msg::ArmOffboardStatus> m_current_offboard_mode_listener;
+    struct{
+        rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr trajectory_setpoint;
+    } m_pub;
+
+    struct{
+        TopicListener<px4_msgs::msg::TrajectorySetpoint> target_setpoint;
+        TopicListener<common_msgs::msg::ArmOffboardStatus> current_offboard_mode;
+    } m_listener;
 };
 
 #endif
