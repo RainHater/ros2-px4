@@ -96,7 +96,7 @@ protected:
                 return;
             }
 
-            if (dist_bottom_valid && dist_bottom < 0.1f && std::abs(vz) < 0.2f) {
+            if (dist_bottom_valid && dist_bottom < 0.038f && std::abs(vz) > 0.15f) {
                 result->success = true;
                 result->message = "Reached target";
                 goal_handle->succeed(result);

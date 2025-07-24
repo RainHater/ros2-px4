@@ -33,7 +33,7 @@ public:
                     POSITION, 
                     [this, flag](){
                         *flag = true;
-                        RCLCPP_INFO(get_logger(), "任务已完成!");
+                        RCLCPP_INFO(get_logger(), "任务1已完成!");
                     }
                 );
             }
@@ -46,7 +46,7 @@ public:
                     0.0, 0.0, 0.5, 
                     [this, flag](){
                         *flag = true;
-                        RCLCPP_INFO(get_logger(), "任务已完成!");
+                        RCLCPP_INFO(get_logger(), "任务2已完成!");
                     }
                 );
             }
@@ -59,7 +59,7 @@ public:
                     0.5, 0.0, 0, 
                     [this, flag](){
                         *flag = true;
-                        RCLCPP_INFO(get_logger(), "任务已完成!");
+                        RCLCPP_INFO(get_logger(), "任务3已完成!");
                     }
                 );
             }
@@ -71,7 +71,7 @@ public:
                     shared_from_this(), 0.25, 
                     [this, flag](){
                         *flag = true;
-                        RCLCPP_INFO(get_logger(), "任务已完成!");
+                        RCLCPP_INFO(get_logger(), "任务4已完成!");
                     }
                 );    
             }

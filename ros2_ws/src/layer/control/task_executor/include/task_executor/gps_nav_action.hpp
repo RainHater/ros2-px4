@@ -96,10 +96,10 @@ protected:
             
             common_msgs::msg::TrajectorySetPoint msg{};
 
-            msg.position[0] = static_cast<float>(response->x);
-            msg.position[1] = static_cast<float>(response->y);
-            msg.position[2] = static_cast<float>(response->z);
-            msg.yaw = static_cast<float>(response->yaw);
+            msg.position[0] = response->x;
+            msg.position[1] = response->y;
+            msg.position[2] = response->z;
+            msg.yaw = response->yaw;
             m_target_setpoint_pub->publish(msg);
 
             feedback->current_latitude = response->lat;
