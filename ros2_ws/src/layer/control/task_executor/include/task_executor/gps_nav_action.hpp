@@ -7,7 +7,6 @@
 #include <px4_msgs/msg/vehicle_odometry.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
-#include "common_msgs/msg/trajectory_set_point.hpp"
 #include "common_msgs/msg/arm_offboard_status.hpp"
 #include "common_msgs/action/navigate_to_gps.hpp"
 #include "common_msgs/srv/transform_gps_to_local.hpp"
@@ -32,7 +31,7 @@ public:
     }
 protected:
     void init_publisher(){
-        m_target_setpoint_pub = create_publisher<common_msgs::msg::TrajectorySetPoint>(
+        m_target_setpoint_pub = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
         topic_pub::TRAJECTORY_SETPOINT, 10);
     }
 
@@ -94,7 +93,7 @@ protected:
             if (!request_local_target(request, response))
                 continue;
             
-            common_msgs::msg::TrajectorySetPoint msg{};
+            px4_msgs::msg::TrajectorySetpoint msg{};
 
             msg.position[0] = response->x;
             msg.position[1] = response->y;
@@ -135,7 +134,7 @@ protected:
 private:
     std::string m_uuid;
     //订阅目标位置的消息
-    rclcpp::Publisher<common_msgs::msg::TrajectorySetPoint>::SharedPtr m_target_setpoint_pub;
+    rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr m_target_setpoint_pub;
     //飞到目标经纬度动作
     rclcpp_action::Server<NavigateToGPS>::SharedPtr m_action_srv;
     //请求坐标转换客户端

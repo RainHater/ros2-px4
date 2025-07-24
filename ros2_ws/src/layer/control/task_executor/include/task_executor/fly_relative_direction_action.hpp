@@ -1,14 +1,16 @@
 #ifndef _FLY_RELATIVE_DIRECTION_ACTION_H
 #define _FLY_RELATIVE_DIRECTION_ACTION_H
 
+#include <px4_msgs/msg/detail/trajectory_setpoint__struct.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <px4_msgs/msg/vehicle_odometry.hpp>
 #include <px4_msgs/msg/vehicle_local_position.hpp>
+#include <px4_msgs/msg/trajectory_setpoint.hpp>
 
 #include "common_msgs/action/fly_relative_direction.hpp"
-#include "common_msgs/msg/trajectory_set_point.hpp"
+
 #include "api/set_offboard_mode_api.hpp"
 #include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
@@ -35,8 +37,8 @@ public:
     }
 protected:
     void init_publisher(){
-        m_trajectory_setpoint_pub = create_publisher<common_msgs::msg::TrajectorySetPoint>(
-        topic_sub::TRAJECTORY_SETPOINT, 10);
+        m_trajectory_setpoint_pub = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
+        topic_pub::TRAJECTORY_SETPOINT, 10);
     }
 
     void init_subscription(){
@@ -135,8 +137,8 @@ protected:
                 return;
             }
 
-            RCLCPP_INFO(get_logger(), "horizontal_dist: %f, vertical_dist: %f", 
-                                        horizontal_dist, vertical_dist);
+            // RCLCPP_INFO(get_logger(), "horizontal_dist: %f, vertical_dist: %f", 
+            //                             horizontal_dist, vertical_dist);
             
             bool arrive = (horizontal_dist < HORIZONTAL_DIST_THRESHOLD) && (vertical_dist < VERTICAL_DIST_THRESHOLD);
             if (arrive){
@@ -147,11 +149,15 @@ protected:
                 return;
             }
 
-            common_msgs::msg::TrajectorySetPoint sp{};
+            px4_msgs::msg::TrajectorySetpoint sp{};
             sp.position[0] = target[0];
             sp.position[1] = target[1];
             sp.position[2] = target[2];
+            sp.velocity[0] = NAN;
+            sp.velocity[1] = NAN;
+            sp.velocity[2] = NAN;
             sp.yaw = yaw;
+            sp.yawspeed = 0.0;
 
             // RCLCPP_INFO(get_logger(), "position[0]: %f, position[1]: %f, position[2]: %f", 
             //                             sp.position[0], sp.position[1], sp.position[2]);
@@ -162,7 +168,7 @@ protected:
 private:
     std::string m_uuid;
     rclcpp_action::Server<FlyRelative>::SharedPtr m_action_srv;
-    rclcpp::Publisher<common_msgs::msg::TrajectorySetPoint>::SharedPtr m_trajectory_setpoint_pub;
+    rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr m_trajectory_setpoint_pub;
     TopicListener<px4_msgs::msg::VehicleOdometry> m_vehicle_odometry_listener;
 };
 

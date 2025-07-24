@@ -24,7 +24,6 @@ if(BUILD_TESTING)
 endif()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/TrajectorySetPoint.msg"
   "msg/ArmOffboardStatus.msg"
   "msg/TrackingFeedback.msg"
   "msg/PidDebug.msg"

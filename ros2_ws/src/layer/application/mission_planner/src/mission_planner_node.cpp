@@ -27,7 +27,7 @@ void MissionPlanner::init_publisher(){
     m_set_offboard_mode_pub = create_publisher<common_msgs::msg::ArmOffboardStatus>(
         topic_pub::SET_OFFBOARD_MODE, 10);
 
-    m_trajectory_set_point_pub = create_publisher<common_msgs::msg::TrajectorySetPoint>(
+    m_trajectory_set_point_pub = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
         topic_pub::TRAJECTORY_SETPOINT, 10);
 
     m_pid_viewer_pub = create_publisher<common_msgs::msg::PidDebug>(
@@ -72,7 +72,7 @@ void MissionPlanner::timer_callback(){
         m_set_offboard_mode_pub->publish(msgs);
     }else if (m_current_task_status == VISUAL_TRACKING){
         float pixel_threshold = 10.0f;
-        common_msgs::msg::TrajectorySetPoint msgs{};
+        px4_msgs::msg::TrajectorySetpoint msgs{};
         
         float vx = -m_pid_y.update(tracking_feedback.angle_y);     //正值向后，负值向前
         float vy = m_pid_x.update(tracking_feedback.angle_x);    //正值向左，负值向右
@@ -95,7 +95,7 @@ void MissionPlanner::timer_callback(){
                     msgs.yawspeed,
                     tracking_feedback.pixel_dist);
     }else if (m_current_task_status == LANDING){
-        common_msgs::msg::TrajectorySetPoint msgs{};
+        px4_msgs::msg::TrajectorySetpoint msgs{};
         msgs.velocity[0] = 0.0f;
         msgs.velocity[1] = 0.0f;
         msgs.velocity[2] = 2.0f;

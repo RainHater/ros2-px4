@@ -20,8 +20,8 @@ public:
     }
     void send_goal(
         const rclcpp::Node::SharedPtr &node,
-        const uint8_t offboard_mode,
         const uint8_t arm_mode,
+        const uint8_t offboard_mode,
         std::function<void()> succeeded_callback = nullptr)
     {
         std::lock_guard<std::mutex> lock(m_mutex);

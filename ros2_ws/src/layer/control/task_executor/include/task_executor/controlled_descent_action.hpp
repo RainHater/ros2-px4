@@ -5,9 +5,10 @@
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <px4_msgs/msg/vehicle_odometry.hpp>
 #include <px4_msgs/msg/vehicle_local_position.hpp>
+#include <px4_msgs/msg/trajectory_setpoint.hpp>
 
 #include "common_msgs/action/controlled_descent.hpp"
-#include "common_msgs/msg/trajectory_set_point.hpp"
+
 #include "api/set_offboard_mode_api.hpp"
 #include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
@@ -32,8 +33,8 @@ public:
     }
 protected:
     void init_publisher(){
-        m_trajectory_setpoint_pub = create_publisher<common_msgs::msg::TrajectorySetPoint>(
-        topic_sub::TRAJECTORY_SETPOINT, 10);
+        m_trajectory_setpoint_pub = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
+        topic_pub::TRAJECTORY_SETPOINT, 10);
     }
     void init_subscription(){
         m_vehicle_local_position_listener.subscribe(
@@ -82,11 +83,10 @@ protected:
         rclcpp::Rate rate(20);
 
         while(rclcpp::ok()){
-            auto vz = local_position.vz;
             auto dist_bottom = local_position.dist_bottom;
             auto dist_bottom_valid = local_position.dist_bottom_valid;
-            RCLCPP_INFO(get_logger(), "vz %f, dist_bottom: %f, dist_bottom_valid: %d", 
-                vz, dist_bottom, dist_bottom_valid);
+            RCLCPP_INFO(get_logger(), "dist_bottom: %f, dist_bottom_valid: %d", 
+                dist_bottom, dist_bottom_valid);
 
             if (goal_handle->is_canceling()) {
                 result->success = false;
@@ -96,7 +96,7 @@ protected:
                 return;
             }
 
-            if (dist_bottom_valid && dist_bottom < 0.038f && std::abs(vz) > 0.15f) {
+            if (dist_bottom_valid && dist_bottom < 0.038f) {
                 result->success = true;
                 result->message = "Reached target";
                 goal_handle->succeed(result);
@@ -112,17 +112,21 @@ protected:
 protected:
     //发送下降消息
     void drop_send(float speed){
-        common_msgs::msg::TrajectorySetPoint msg{};
+        px4_msgs::msg::TrajectorySetpoint msg{};
+        msg.position[0] = NAN;
+        msg.position[1] = NAN;
+        msg.position[2] = NAN;
         msg.velocity[0] = 0.0;
         msg.velocity[1] = 0.0;
         msg.velocity[2] = speed;
         msg.yawspeed = 0.0;
+        msg.yaw = NAN;
         m_trajectory_setpoint_pub->publish(msg);
     }
 private:
     std::string m_uuid;
     rclcpp_action::Server<ControlledDescent>::SharedPtr m_action_srv;
-    rclcpp::Publisher<common_msgs::msg::TrajectorySetPoint>::SharedPtr m_trajectory_setpoint_pub;
+    rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr m_trajectory_setpoint_pub;
     TopicListener<px4_msgs::msg::VehicleLocalPosition> m_vehicle_local_position_listener;
 };
 

@@ -23,6 +23,7 @@ public:
                     m_first_msg = m_msg;
                     m_first_flag = true;
                 }
+                m_change_flag = true;
                 m_received = true;
             }
         );

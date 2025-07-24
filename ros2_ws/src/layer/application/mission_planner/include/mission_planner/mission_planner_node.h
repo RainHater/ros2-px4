@@ -5,7 +5,7 @@
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <common_msgs/msg/arm_offboard_status.hpp>
-#include <common_msgs/msg/trajectory_set_point.hpp>
+#include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <common_msgs/action/navigate_to_gps.hpp>
 #include <common_msgs/msg/tracking_feedback.hpp>
 #include <common_msgs/msg/pid_debug.hpp>
@@ -41,7 +41,7 @@ private:
     //设置offboard模式
     rclcpp::Publisher<common_msgs::msg::ArmOffboardStatus>::SharedPtr m_set_offboard_mode_pub;
     //发布目标
-    rclcpp::Publisher<common_msgs::msg::TrajectorySetPoint>::SharedPtr m_trajectory_set_point_pub;
+    rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr m_trajectory_set_point_pub;
     //发布PIDdebug波形显示
     rclcpp::Publisher<common_msgs::msg::PidDebug>::SharedPtr m_pid_viewer_pub;
     //订阅当前飞控arm和offboard状态

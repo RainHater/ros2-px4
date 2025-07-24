@@ -52,6 +52,8 @@ void FlightModeManagerNode::arm_and_set_offboard() {
     auto &mode = m_arm_offboard_mode;
     const auto &target_mode = mode.target.get_msg();
 
+    publish_current_mode();
+
     switch (m_flight_state) {
         case IDLE: {
             if (!mode.target.has_change()) 
@@ -109,6 +111,7 @@ void FlightModeManagerNode::arm_and_set_offboard() {
         }
 
         case READY: {
+            publish_px4_offboard_mode();
             // 可执行飞行任务，或者等待任务触发
             if (!mode.target.has_change()) 
                 return;
@@ -120,7 +123,6 @@ void FlightModeManagerNode::arm_and_set_offboard() {
             }else {
                 mode.current = target_mode;
             }
-            publish_px4_offboard_mode();
             break;
         }
 
@@ -146,13 +148,13 @@ void FlightModeManagerNode::publish_px4_offboard_mode() {
     auto mode = m_arm_offboard_mode.target.get_msg().offboard;
     
     px4_msgs::msg::OffboardControlMode msg{};
-    msg.position = (mode & POSITION);
-    msg.velocity = (mode & VELOCITY);
-    msg.acceleration = (mode & ACCELERATION);
-    msg.attitude = (mode & ATTITUDE);
-    msg.body_rate = (mode & BODY_RATE);
-    msg.thrust_and_torque = (mode & THRUST_AND_TORQUE);
-    msg.direct_actuator = (mode & DIRECT_ACTUATOR);
+    msg.position = (mode & POSITION) != 0;
+    msg.velocity = (mode & VELOCITY) != 0;
+    msg.acceleration = (mode & ACCELERATION) != 0;
+    msg.attitude = (mode & ATTITUDE) != 0;
+    msg.body_rate = (mode & BODY_RATE) != 0;
+    msg.thrust_and_torque = (mode & THRUST_AND_TORQUE) != 0;
+    msg.direct_actuator = (mode & DIRECT_ACTUATOR) != 0;
     msg.timestamp = get_clock()->now().nanoseconds() / 1000;
     m_pub.offboard_control_mode->publish(msg);
 }
