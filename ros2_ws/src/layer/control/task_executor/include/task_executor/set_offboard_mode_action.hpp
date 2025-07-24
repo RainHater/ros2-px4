@@ -47,9 +47,10 @@ protected:
                 std::shared_ptr<const SetOffboardMode::Goal> goal)
             {
                 m_uuid = rclcpp_action::to_string(uuid);
-                RCLCPP_INFO(get_logger(), "切换Offboard模式任务: %s, 接收的数据: arm=%d offboard=%d", 
+                RCLCPP_INFO(get_logger(), "切换Offboard模式任务: %s, 接收的数据: arm=%d, offboard=%d", 
                                         m_uuid.c_str(), 
-                                        goal->mode.arming_state, goal->mode.offboard_mode);
+                                        goal->mode.arm,
+                                        goal->mode.offboard);
                 return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
             },
             //处理取消请求
@@ -87,8 +88,8 @@ protected:
         RCLCPP_INFO(get_logger(), "切换offboard模式服务开始执行: "
             "目标arm: %d, 目标offboard: %d, "
             "当前arm: %d, 当前offboard: %d", 
-            target.arming_state, target.offboard_mode,
-            current.arming_state, current.offboard_mode
+            target.arm, target.offboard,
+            current.arm, current.offboard
         );   
 
         while(rclcpp::ok()){
@@ -99,10 +100,8 @@ protected:
                 RCLCPP_INFO(get_logger(), "切换Offboard模式任务: %s 取消", m_uuid.c_str());
                 return;
             }
-
-            if (target.arming_state == current.arming_state
-                && target.offboard_mode == current.offboard_mode)
-            {   
+            
+            if (target.arm == current.arm && target.offboard == current.offboard) {   
                 result->success = true;
                 result->message = "成功切换模式";
                 goal_handle->succeed(result);
@@ -110,8 +109,8 @@ protected:
                 return;
             }
             common_msgs::msg::ArmOffboardStatus msg{};
-            msg.offboard_mode = target.offboard_mode;
-            msg.arming_state = target.arming_state;
+            msg.offboard = target.offboard;
+            msg.arm = target.arm;
             m_set_offboard_mode_pub->publish(msg);
             rate.sleep();
         }

@@ -1,5 +1,6 @@
 #include "motion_controller/flight_mode_manager_node.h"
 #include "utilities/topic_name.hpp"
+#include <common_msgs/msg/detail/arm_offboard_status__struct.hpp>
 
 using std::placeholders::_1;
 
@@ -7,14 +8,12 @@ FlightModeManagerNode::FlightModeManagerNode()
     : Node("flight_mode_manager_node")
 {   
     RCLCPP_INFO(get_logger(), "flight_mode_manager_node 节点启动...");
+
+    m_arm_offboard_mode.current.arm = ARM_DISABLED;
+    m_arm_offboard_mode.current.offboard = OFFBOARD_DISABLED;
+    m_arm_offboard_mode.setpoint_counter = 0;
     
-    m_offboard_setpoint_counter = 0;
-    m_px4_mode.lock_interval_time = 0;
-    m_px4_mode.current.mode.arming_state = ARMING_STATE_DISARMED;
-    m_px4_mode.current.mode.offboard_mode = OFFBOARD_NOT_ACTIVE;
-    m_px4_mode.target.mode.arming_state = ARMING_STATE_DISARMED;
-    m_px4_mode.target.mode.offboard_mode = OFFBOARD_NOT_ACTIVE;
-    m_px4_mode.last.offboard_mode = m_px4_mode.current.mode.offboard_mode;
+    m_flight_state = IDLE;
 }
 
 void FlightModeManagerNode::initialize(){
@@ -23,86 +22,144 @@ void FlightModeManagerNode::initialize(){
 
     m_timer = this->create_wall_timer(
         std::chrono::milliseconds(100), 
-        std::bind(&FlightModeManagerNode::timer_callback, this));
+        std::bind(&FlightModeManagerNode::arm_and_set_offboard, this));
 }
 
 void FlightModeManagerNode::init_publisher(){
-    m_offboard_control_mode_pub = create_publisher<px4_msgs::msg::OffboardControlMode>(
+    m_pub.offboard_control_mode = create_publisher<px4_msgs::msg::OffboardControlMode>(
         topic_pub::OFFBOARD_CONTROL_MODE, 10);
 
-    m_vehicle_command_pub = create_publisher<px4_msgs::msg::VehicleCommand>(
+    m_pub.vehicle_command = create_publisher<px4_msgs::msg::VehicleCommand>(
         topic_pub::VEHICLE_COMMAND, 10);
 
-    m_px4_mode_status_broadcaster_pub = create_publisher<common_msgs::msg::ArmOffboardStatus>(
+    m_pub.px4_mode_status_broadcaster = create_publisher<common_msgs::msg::ArmOffboardStatus>(
         topic_pub::PX4_MODE_STATUS, 10);
 }
 
 void FlightModeManagerNode::init_subscription(){
-    m_px4_mode.target.sub = create_subscription<common_msgs::msg::ArmOffboardStatus>(
-        topic_sub::SET_OFFBOARD_MODE, 10, 
-        std::bind(&FlightModeManagerNode::set_px4_mode_status_callback, this, _1)
+    m_arm_offboard_mode.target.subscribe(
+        shared_from_this(), 
+        topic_sub::SET_OFFBOARD_MODE, 10
     );
 
-    m_px4_mode.current.sub = create_subscription<px4_msgs::msg::VehicleStatus>(
-        topic_sub::VEHICLE_STATUS, 10, 
-        std::bind(&FlightModeManagerNode::px4_mode_status_broadcaster_callback, this, _1)
+    m_arm_offboard_mode.px4_mode.subscribe(
+        shared_from_this(), 
+        topic_sub::VEHICLE_STATUS, 10
     );
 }
 
-void FlightModeManagerNode::timer_callback(){
-    m_px4_mode.state_release(shared_from_this());
+void FlightModeManagerNode::arm_and_set_offboard() {
+    auto &mode = m_arm_offboard_mode;
+    const auto &target_mode = mode.target.get_msg();
 
-    if (m_offboard_setpoint_counter == 10) {
-        // Change to Offboard mode after 10 setpoints
-        publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_OFFBOARD);
-        
-        // Arm the vehicle
-        arm();
-    }
+    switch (m_flight_state) {
+        case IDLE: {
+            if (!mode.target.has_change()) 
+                return;
+            if (target_mode.arm == ARM_ENABLE) {
+                mode.setpoint_counter = 0;
+                m_flight_state = SENDING_SETPOINT;
+                RCLCPP_INFO(get_logger(), "开始解锁offboard和arm");
+            }
+            break;
+        }
 
-    publish_px4_offboard_mode();
-    publish_current_offboard_mode();
+        case SENDING_SETPOINT: {
+            publish_px4_offboard_mode();
+            mode.setpoint_counter++;
+            if (mode.setpoint_counter >= 10) {
+                publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_OFFBOARD);
+                m_flight_state = WAITING_OFFBOARD_CONFIRM;
+                RCLCPP_INFO(get_logger(), "已发送10次 setpoint");
+            }
+            break;
+        }
 
-    // stop the counter after reaching 11
-    if (m_offboard_setpoint_counter < 11){
-        m_offboard_setpoint_counter++;
+        case WAITING_OFFBOARD_CONFIRM: {
+            if (!mode.px4_mode.has_change()) 
+                return;
+            const auto &px4_mode = mode.px4_mode.get_msg();
+            if (px4_mode.nav_state == NAVIGATION_STATE_OFFBOARD) {
+                m_flight_state = ARMING;
+                RCLCPP_INFO(get_logger(), "已进入 offboard 模式");
+            } else {
+                // 若未成功进入 Offboard，可尝试重新发送 setpoint
+                mode.setpoint_counter = 0;
+                m_flight_state = SENDING_SETPOINT;
+                RCLCPP_INFO(get_logger(), "进入 offboard 模式失败");
+            }
+            break;
+        }
+
+        case ARMING: {
+            publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
+            m_flight_state = WAITING_ARM_CONFIRM;
+            break;
+        }
+
+        case WAITING_ARM_CONFIRM: {
+            if (!mode.px4_mode.has_change()) 
+                return;
+            const auto &px4_mode = mode.px4_mode.get_msg();
+            if (px4_mode.arming_state == ARMING_STATE_ARMED) {
+                m_flight_state = READY;
+                RCLCPP_INFO(get_logger(), "已解锁 arm");
+            }
+            break;
+        }
+
+        case READY: {
+            // 可执行飞行任务，或者等待任务触发
+            if (!mode.target.has_change()) 
+                return;
+            if (target_mode.arm == ARM_DISABLED){
+                disarm();
+                m_flight_state = IDLE;
+                RCLCPP_INFO(get_logger(), "已上锁 arm");
+                return;
+            }else {
+                mode.current = target_mode;
+            }
+            publish_px4_offboard_mode();
+            break;
+        }
+
+        case FAILED: {
+            // 错误处理逻辑，可重置状态机等
+            break;
+        }
+
+        default:
+            break;
     }
 }
 
-void FlightModeManagerNode::set_px4_mode_status_callback(const common_msgs::msg::ArmOffboardStatus::SharedPtr msg){
-    if (msg->arming_state == ARMING_STATE_DISARMED){
-        disarm();
-    }else {
-        m_px4_mode.target.mode.offboard_mode = msg->offboard_mode;
-    }  
+void FlightModeManagerNode::publish_px4_offboard_mode() {
+    using ArmOffboardStatus = common_msgs::msg::ArmOffboardStatus;
+    auto POSITION = ArmOffboardStatus::POSITION;
+    auto VELOCITY = ArmOffboardStatus::VELOCITY;
+    auto ACCELERATION = ArmOffboardStatus::ACCELERATION;
+    auto ATTITUDE = ArmOffboardStatus::ATTITUDE;
+    auto BODY_RATE = ArmOffboardStatus::BODY_RATE;
+    auto THRUST_AND_TORQUE = ArmOffboardStatus::THRUST_AND_TORQUE;
+    auto DIRECT_ACTUATOR = ArmOffboardStatus::DIRECT_ACTUATOR;
+    auto mode = m_arm_offboard_mode.target.get_msg().offboard;
+    
+    px4_msgs::msg::OffboardControlMode msg{};
+    msg.position = (mode & POSITION);
+    msg.velocity = (mode & VELOCITY);
+    msg.acceleration = (mode & ACCELERATION);
+    msg.attitude = (mode & ATTITUDE);
+    msg.body_rate = (mode & BODY_RATE);
+    msg.thrust_and_torque = (mode & THRUST_AND_TORQUE);
+    msg.direct_actuator = (mode & DIRECT_ACTUATOR);
+    msg.timestamp = get_clock()->now().nanoseconds() / 1000;
+    m_pub.offboard_control_mode->publish(msg);
 }
 
-void FlightModeManagerNode::px4_mode_status_broadcaster_callback(
-    const px4_msgs::msg::VehicleStatus::SharedPtr msg)
-{
-    auto arm_mode = msg->arming_state;
-    auto offboard = msg->nav_state;
-    auto now_time = get_clock()->now().nanoseconds() / 1000000;
-    auto interval = now_time - m_px4_mode.lock_interval_time;
-    auto target_mode = m_px4_mode.target.mode;
-    
-    if (target_mode.arming_state == ARMING_STATE_ARMED
-        && (arm_mode == PX4_ARMING_STATE_DISARMED
-        || offboard != NAVIGATION_STATE_OFFBOARD)
-        && m_offboard_setpoint_counter == 11
-        && interval >= LOCK_INTERVAL_TIMER)
-    {
-        m_offboard_setpoint_counter = 0;
-    }
-    
-    m_px4_mode.current.mode.arming_state = (arm_mode==PX4_ARMING_STATE_DISARMED)
-        ?ARMING_STATE_DISARMED:ARMING_STATE_ARMED;
-    m_px4_mode.current.mode.offboard_mode = (offboard==NAVIGATION_STATE_OFFBOARD)
-        ?m_px4_mode.target.mode.offboard_mode:m_px4_mode.current.mode.offboard_mode;
-
-    if (interval >= LOCK_INTERVAL_TIMER){
-        m_px4_mode.lock_interval_time = now_time;
-    }
+void FlightModeManagerNode::publish_current_mode(){
+    auto msg = m_arm_offboard_mode.current;
+    m_pub.px4_mode_status_broadcaster->publish(msg);
 }
 
 void FlightModeManagerNode::publish_vehicle_command(uint16_t command, float param1, float param2){
@@ -116,23 +173,7 @@ void FlightModeManagerNode::publish_vehicle_command(uint16_t command, float para
     msg.source_component = 1;
     msg.from_external = true;
     msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
-    m_vehicle_command_pub->publish(msg);
-}
-
-void FlightModeManagerNode::publish_px4_offboard_mode() {
-    auto &mode = m_px4_mode.target.mode.offboard_mode;
-    px4_msgs::msg::OffboardControlMode msg{};
-    msg.position = (mode == POSITION);
-    msg.velocity = (mode == VELOCITY);
-    msg.attitude = (mode == ATTITUDE);
-    msg.acceleration = false;
-    msg.body_rate = false;
-    msg.timestamp = get_clock()->now().nanoseconds() / 1000;
-    m_offboard_control_mode_pub->publish(msg);
-}
-
-void FlightModeManagerNode::publish_current_offboard_mode(){
-    m_px4_mode_status_broadcaster_pub->publish(m_px4_mode.current.mode);
+    m_pub.vehicle_command->publish(msg);
 }
 
 void FlightModeManagerNode::arm() {

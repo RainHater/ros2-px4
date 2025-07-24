@@ -21,16 +21,16 @@ void OffboardCtrlNode::initialize(){
 }
 
 void OffboardCtrlNode::init_publisher(){
-    m_trajectory_setpoint_pub = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
+    m_pub.trajectory_setpoint = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
         topic_pub::PX4_TRAJECTORY_SETPOINT, 10);
 }
 
 void OffboardCtrlNode::init_subscription(){
-    m_target_setpoint_listener.subscribe(
+    m_listener.target_setpoint.subscribe(
         shared_from_this(), 
         topic_sub::TRAJECTORY_SETPOINT, 10
     );
-    m_current_offboard_mode_listener.subscribe(
+    m_listener.current_offboard_mode.subscribe(
         shared_from_this(), 
         topic_sub::PX4_MODE_STATUS, 10
     );
@@ -41,30 +41,14 @@ void OffboardCtrlNode::timer_callback(){
 }
 
 void OffboardCtrlNode::publish_trajectory_setpoint() {
-    const auto target = m_target_setpoint_listener.get_msg();
-    const auto offboard_mode = m_current_offboard_mode_listener.get_msg();
-    const auto armed = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
-    const auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
-    const auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
-    auto use_if_mode = [&](auto& target_mode, float value) {
-        return (offboard_mode.offboard_mode == target_mode) ? value : NAN;
-    };
+    auto &target_setpoint= m_listener.target_setpoint.get_msg();
+    auto &current_offboard_mode= m_listener.current_offboard_mode.get_msg();
 
-    if (offboard_mode.arming_state != armed)
+    if (current_offboard_mode.arm == ARM_DISABLED)
         return;
-
-    px4_msgs::msg::TrajectorySetpoint msg{};   
-    
-    msg.position[0] = use_if_mode(POSITION, target.position[0]);
-    msg.position[1] = use_if_mode(POSITION, target.position[1]);
-    msg.position[2] = use_if_mode(POSITION, target.position[2]);
-    msg.velocity[0] = use_if_mode(VELOCITY, target.velocity[0]);
-    msg.velocity[1] = use_if_mode(VELOCITY, target.velocity[1]);
-    msg.velocity[2] = use_if_mode(VELOCITY, target.velocity[2]);
-    msg.yaw = use_if_mode(POSITION, target.yaw);
-    msg.yawspeed = use_if_mode(VELOCITY, target.yawspeed);
+    auto msg = target_setpoint;
     msg.timestamp = get_clock()->now().nanoseconds() / 1000;
-    m_trajectory_setpoint_pub->publish(msg); 
+    m_pub.trajectory_setpoint->publish(msg);
 }
 
 int main(int argc, char *argv[]) {

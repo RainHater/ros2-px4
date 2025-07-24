@@ -9,10 +9,10 @@
 #include "set_offboard_mode_api.hpp"
 #include "controlled_descent_api.hpp"
 
-constexpr auto ARMING_STATE_ARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_ARMED;
-constexpr auto ARMING_STATE_DISARMED = common_msgs::msg::ArmOffboardStatus::ARMING_STATE_DISARMED;
+constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
+constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
 constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
-constexpr auto OFFBOARD_NOT_ACTIVE = common_msgs::msg::ArmOffboardStatus::OFFBOARD_NOT_ACTIVE;
+constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD_DISABLED;
 
 class SimpleIndoorControlTask : public rclcpp::Node{
 public:
@@ -29,7 +29,7 @@ public:
             [this](auto &flag){
                 SetOffboardModeApi::Instance().send_goal(
                     shared_from_this(), 
-                    ARMING_STATE_ARMED, 
+                    ARM_ENABLE, 
                     POSITION, 
                     [this, flag](){
                         *flag = true;
@@ -81,8 +81,8 @@ public:
             [this](auto &flag){
                 SetOffboardModeApi::Instance().send_goal(
                     shared_from_this(), 
-                    ARMING_STATE_DISARMED, 
-                    OFFBOARD_NOT_ACTIVE, 
+                    ARM_DISABLED, 
+                    OFFBOARD_DISABLED, 
                     [this, flag](){
                         *flag = true;
                         RCLCPP_INFO(get_logger(), "任务已完成!");
