@@ -1,6 +1,7 @@
 #ifndef _FLY_RELATIVE_DIRECTION_ACTION_H
 #define _FLY_RELATIVE_DIRECTION_ACTION_H
 
+#include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <px4_msgs/msg/vehicle_odometry.hpp>
@@ -111,11 +112,19 @@ protected:
         
         while(rclcpp::ok()){
             auto current = vehicle_odometry.position;
-            float dist = std::sqrt(
-                std::pow(current[0] - target[0], 2) +
-                std::pow(current[1] - target[1], 2) +
-                std::pow(current[2] - target[2], 2));
-            feedback->traveled_distance = dist;
+            const float HORIZONTAL_DIST_THRESHOLD = 0.25f;
+            const float VERTICAL_DIST_THRESHOLD = 0.26f;
+            float dx = target[0] - current[0];
+            float dy = target[1] - current[1];
+            float dz = target[2] - current[2];
+            float horizontal_dist = std::hypot(dx, dy);
+            float vertical_dist = std::abs(dz);
+
+            // float dist = std::sqrt(
+            //     std::pow(current[0] - target[0], 2) +
+            //     std::pow(current[1] - target[1], 2) +
+            //     std::pow(current[2] - target[2], 2));
+            feedback->traveled_distance = 0;
             goal_handle->publish_feedback(feedback);
 
             if (goal_handle->is_canceling()) {
@@ -126,7 +135,11 @@ protected:
                 return;
             }
 
-            if (dist < 0.2) {
+            RCLCPP_INFO(get_logger(), "horizontal_dist: %f, vertical_dist: %f", 
+                                        horizontal_dist, vertical_dist);
+            
+            bool arrive = (horizontal_dist < HORIZONTAL_DIST_THRESHOLD) && (vertical_dist < VERTICAL_DIST_THRESHOLD);
+            if (arrive){
                 result->success = true;
                 result->message = "Reached target";
                 goal_handle->succeed(result);
@@ -140,6 +153,8 @@ protected:
             sp.position[2] = target[2];
             sp.yaw = yaw;
 
+            // RCLCPP_INFO(get_logger(), "position[0]: %f, position[1]: %f, position[2]: %f", 
+            //                             sp.position[0], sp.position[1], sp.position[2]);
             m_trajectory_setpoint_pub->publish(sp);
             rate.sleep();
         }

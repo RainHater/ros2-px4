@@ -62,8 +62,8 @@ void StateEstimatorService::current_gps_callback(
 }
 
 void StateEstimatorService::handle_gps_to_local(
-        const std::shared_ptr<TransformGpsToLocal::Request> request,
-        std::shared_ptr<TransformGpsToLocal::Response> response)
+    const std::shared_ptr<TransformGpsToLocal::Request> request,
+    std::shared_ptr<TransformGpsToLocal::Response> response)
 {
     if (!m_geo_ref_status.reference_initialized) {
         // RCLCPP_WARN(this->get_logger(), "Reference origin not initialized, cannot transform.");
