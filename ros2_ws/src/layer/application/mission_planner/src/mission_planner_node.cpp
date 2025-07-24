@@ -2,7 +2,6 @@
 #include "utilities/topic_name.hpp"
 #include "gps_nav_api.hpp"
 #include <cmath>
-#include <optional>
 
 using std::placeholders::_1;
 

@@ -52,5 +52,6 @@ endfunction()
 
 register_node(mission_planner_node)
 register_node(simple_indoor_control_task)
+register_node(vision_test_task)
 
 ament_package()

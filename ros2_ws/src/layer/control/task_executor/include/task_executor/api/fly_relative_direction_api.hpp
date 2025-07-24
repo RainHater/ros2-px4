@@ -21,7 +21,7 @@ public:
         return api;
     }
     void send_goal(const rclcpp::Node::SharedPtr &node,
-        float forward, float right, float up,
+        float forward, float right, float up, float angle,
         std::function<void()> succeeded_callback)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -43,10 +43,11 @@ public:
         goal.forward = forward;
         goal.right = right;
         goal.up = up;
+        goal.angle = angle;
 
         RCLCPP_INFO(node->get_logger(), 
-            "Sending goal: forward=%f right=%f up=%f", 
-            forward, right, up);
+            "Sending goal: forward=%f right=%f up=%f angle=%f", 
+            forward, right, up, angle);
         
         rclcpp_action::Client<FlyRelative>::SendGoalOptions options;
         options.goal_response_callback = [node](auto goal_handle) {

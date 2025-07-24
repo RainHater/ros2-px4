@@ -14,9 +14,9 @@ constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
 constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
 constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD_DISABLED;
 
-class SimpleIndoorControlTask : public rclcpp::Node{
+class VisionTestTask : public rclcpp::Node{
 public:
-    SimpleIndoorControlTask()
+    VisionTestTask()
         : rclcpp::Node("simple_indoor_control_task")
     {
         RCLCPP_INFO(get_logger(), "simple_indoor_control_task 节点启动...");
@@ -56,7 +56,7 @@ public:
             [this](auto &flag){
                 FlyRelativeDirectionApi::Instance().send_goal(
                     shared_from_this(), 
-                    0.5, 0.0, 0, 0.0,
+                    0.0, 0.0, 0, 45, 
                     [this, flag](){
                         *flag = true;
                         RCLCPP_INFO(get_logger(), "任务3已完成!");
@@ -67,11 +67,50 @@ public:
 
         m_scheduler.add_task(
             [this](auto &flag){
-                ControlledDescentApi::Instance().send_goal(
-                    shared_from_this(), 0.25, 
+                FlyRelativeDirectionApi::Instance().send_goal(
+                    shared_from_this(), 
+                    0.0, 0.0, 0, -90, 
                     [this, flag](){
                         *flag = true;
                         RCLCPP_INFO(get_logger(), "任务4已完成!");
+                    }
+                );
+            }
+        );
+
+        m_scheduler.add_task(
+            [this](auto &flag){
+                FlyRelativeDirectionApi::Instance().send_goal(
+                    shared_from_this(), 
+                    0.0, 0.0, 0, 90, 
+                    [this, flag](){
+                        *flag = true;
+                        RCLCPP_INFO(get_logger(), "任务5已完成!");
+                    }
+                );
+            }
+        );
+
+        m_scheduler.add_task(
+            [this](auto &flag){
+                FlyRelativeDirectionApi::Instance().send_goal(
+                    shared_from_this(), 
+                    0.0, 0.0, 0, -90, 
+                    [this, flag](){
+                        *flag = true;
+                        RCLCPP_INFO(get_logger(), "任务6已完成!");
+                    }
+                );
+            }
+        );
+
+        m_scheduler.add_task(
+            [this](auto &flag){
+                ControlledDescentApi::Instance().send_goal(
+                    shared_from_this(), 0.3, 
+                    [this, flag](){
+                        *flag = true;
+                        RCLCPP_INFO(get_logger(), "任务7已完成!");
                     }
                 );    
             }
@@ -92,8 +131,8 @@ public:
         );
 
         m_timer = create_wall_timer(
-            std::chrono::milliseconds(100),
-            std::bind(&SimpleIndoorControlTask::timer_callback, this));
+            std::chrono::milliseconds(1000),
+            std::bind(&VisionTestTask::timer_callback, this));
     }
 
     void timer_callback(){

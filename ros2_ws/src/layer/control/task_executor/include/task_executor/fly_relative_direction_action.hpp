@@ -15,6 +15,7 @@
 #include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
 #include "utilities/tf2_tool.hpp"
+#include "utilities/geo_tool.hpp"
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
@@ -57,9 +58,12 @@ protected:
                 std::shared_ptr<const FlyRelative::Goal> goal)
             {
                 m_uuid = rclcpp_action::to_string(uuid);
-                RCLCPP_INFO(get_logger(), "任务: %s, 接收的数据: forward=%f right=%f up=%f", 
+                RCLCPP_INFO(get_logger(), "任务: %s, 接收的数据: forward=%f right=%f up=%f angle=%f", 
                                         m_uuid.c_str(), 
-                                        goal->forward, goal->right, goal->up);
+                                        goal->forward, 
+                                        goal->right, 
+                                        goal->up,
+                                        goal->angle);
                 return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
             },
             //处理取消请求
@@ -101,7 +105,7 @@ protected:
 
         tf2_tool::EulerAngles angles{};
         tf2_tool::get_euler_angles(vehicle_odometry, angles);
-        float yaw = angles.yaw;
+        float yaw = geo_tool::normalize_angle(angles.yaw + geo_tool::deg2rad(goal->angle));
         float dx = goal->forward * std::cos(yaw) - goal->right * std::sin(yaw);
         float dy = goal->forward * std::sin(yaw) + goal->right * std::cos(yaw);
         float dz = -goal->up;
@@ -114,18 +118,17 @@ protected:
         
         while(rclcpp::ok()){
             auto current = vehicle_odometry.position;
-            const float HORIZONTAL_DIST_THRESHOLD = 0.25f;
-            const float VERTICAL_DIST_THRESHOLD = 0.26f;
+            tf2_tool::get_euler_angles(vehicle_odometry, angles);
+            auto current_yaw = angles.yaw;
+            const float HORIZONTAL_DIST_THRESHOLD = 0.3f;
+            const float VERTICAL_DIST_THRESHOLD = 0.3f;
             float dx = target[0] - current[0];
             float dy = target[1] - current[1];
             float dz = target[2] - current[2];
             float horizontal_dist = std::hypot(dx, dy);
             float vertical_dist = std::abs(dz);
+            float yaw_error = geo_tool::normalize_angle(yaw - current_yaw);
 
-            // float dist = std::sqrt(
-            //     std::pow(current[0] - target[0], 2) +
-            //     std::pow(current[1] - target[1], 2) +
-            //     std::pow(current[2] - target[2], 2));
             feedback->traveled_distance = 0;
             goal_handle->publish_feedback(feedback);
 
@@ -140,7 +143,8 @@ protected:
             // RCLCPP_INFO(get_logger(), "horizontal_dist: %f, vertical_dist: %f", 
             //                             horizontal_dist, vertical_dist);
             
-            bool arrive = (horizontal_dist < HORIZONTAL_DIST_THRESHOLD) && (vertical_dist < VERTICAL_DIST_THRESHOLD);
+            bool arrive = (horizontal_dist < HORIZONTAL_DIST_THRESHOLD) && (vertical_dist < VERTICAL_DIST_THRESHOLD)
+                            && std::abs(yaw_error) < geo_tool::deg2rad(5.0f);
             if (arrive){
                 result->success = true;
                 result->message = "Reached target";
