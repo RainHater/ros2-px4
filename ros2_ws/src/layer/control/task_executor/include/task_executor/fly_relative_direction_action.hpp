@@ -120,8 +120,8 @@ protected:
             auto current = vehicle_odometry.position;
             tf2_tool::get_euler_angles(vehicle_odometry, angles);
             auto current_yaw = angles.yaw;
-            const float HORIZONTAL_DIST_THRESHOLD = 0.3f;
-            const float VERTICAL_DIST_THRESHOLD = 0.3f;
+            const float HORIZONTAL_DIST_THRESHOLD = 0.24f;
+            const float VERTICAL_DIST_THRESHOLD = 0.26f;
             float dx = target[0] - current[0];
             float dy = target[1] - current[1];
             float dz = target[2] - current[2];

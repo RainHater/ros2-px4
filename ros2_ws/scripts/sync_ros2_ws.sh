@@ -23,6 +23,8 @@ sudo rsync -aAXv \
     --exclude="/log/" \
     --exclude="/tmp/" \
     --exclude="/scripts/" \
+    --exclude="/arm64/" \
+    --exclude="/x86/" \
     --exclude="/src/simulation" \
     "$SOURCE_PATH" \
     "$TARGET_USER@$TARGET_IP:$TARGET_PATH"

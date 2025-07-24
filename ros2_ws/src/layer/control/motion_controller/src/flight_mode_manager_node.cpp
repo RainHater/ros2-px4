@@ -106,6 +106,10 @@ void FlightModeManagerNode::arm_and_set_offboard() {
             if (px4_mode.arming_state == ARMING_STATE_ARMED) {
                 m_flight_state = READY;
                 RCLCPP_INFO(get_logger(), "已解锁 arm");
+            }else {
+                mode.setpoint_counter = 0;
+                m_flight_state = SENDING_SETPOINT;
+                RCLCPP_INFO(get_logger(), "解锁 arm 失败");
             }
             break;
         }
