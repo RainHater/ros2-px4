@@ -1,9 +1,12 @@
-#include "motion_controller/offboard_ctrl_node.h"
+#include "control_motion/offboard_ctrl_node.h"
 #include "utilities/topic_name.hpp"
 #include <cmath>
 #include <functional>
 #include <sstream>
 #include <iomanip>
+
+constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
+constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
 
 OffboardCtrlNode::OffboardCtrlNode() 
     : Node("offboard_ctrl_node") 
@@ -51,12 +54,12 @@ void OffboardCtrlNode::publish_trajectory_setpoint() {
     m_pub.trajectory_setpoint->publish(msg);
 }
 
-int main(int argc, char *argv[]) {
-    setvbuf(stdout, NULL, _IONBF, BUFSIZ);
-    rclcpp::init(argc, argv);
-    auto node = std::make_shared<OffboardCtrlNode>();
-    node->initialize();
-    rclcpp::spin(node);
-    rclcpp::shutdown();
-    return 0;
-}
+// int main(int argc, char *argv[]) {
+//     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+//     rclcpp::init(argc, argv);
+//     auto node = std::make_shared<OffboardCtrlNode>();
+//     node->initialize();
+//     rclcpp::spin(node);
+//     rclcpp::shutdown();
+//     return 0;
+// }

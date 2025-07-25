@@ -1,8 +1,13 @@
-#include "motion_controller/flight_mode_manager_node.h"
+#include "control_motion/flight_mode_manager_node.h"
 #include "utilities/topic_name.hpp"
-#include <common_msgs/msg/detail/arm_offboard_status__struct.hpp>
 
-using std::placeholders::_1;
+constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
+constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
+constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD_DISABLED;
+constexpr auto ARMING_STATE_ARMED = px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED;
+constexpr auto ARMING_STATE_DISARMED = px4_msgs::msg::VehicleStatus::ARMING_STATE_DISARMED;
+constexpr auto NAVIGATION_STATE_OFFBOARD = px4_msgs::msg::VehicleStatus::NAVIGATION_STATE_OFFBOARD;
+constexpr auto PX4_CUSTOM_MAIN_MODE_OFFBOARD = 6;
 
 FlightModeManagerNode::FlightModeManagerNode() 
     : Node("flight_mode_manager_node")
@@ -192,13 +197,13 @@ void FlightModeManagerNode::disarm() {
     RCLCPP_DEBUG(get_logger(), "Disarm command send");
 }
 
-int main(int argc, char *argv[]) {
-    setvbuf(stdout, NULL, _IONBF, BUFSIZ);
-    rclcpp::init(argc, argv);
-    auto node = std::make_shared<FlightModeManagerNode>();
-    node->initialize();
-    rclcpp::spin(node);
+// int main(int argc, char *argv[]) {
+//     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+//     rclcpp::init(argc, argv);
+//     auto node = std::make_shared<FlightModeManagerNode>();
+//     node->initialize();
+//     rclcpp::spin(node);
 
-    rclcpp::shutdown();
-    return 0;
-}
+//     rclcpp::shutdown();
+//     return 0;
+// }

@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 3.8)
-project(attitude_controller)
+project(control_interface)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
-
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -16,7 +15,6 @@ find_package(px4_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
 find_package(utilities REQUIRED)
-find_package(rclcpp_action REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -30,19 +28,47 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+set(ALL_DEPENDENCIES 
+  rclcpp
+  px4_msgs
+  geometry_msgs
+  common_msgs
+  utilities
+)
+
+set(ALL_SRC
+  src/movement.cpp
+  src/mode_control.cpp
+)
+
 include_directories(
   ${PROJECT_SOURCE_DIR}/include 
 )
 
-# add_executable(gps_nav_node src/gps_nav_node.cpp)
-# ament_target_dependencies(gps_nav_node 
-#   rclcpp 
-#   px4_msgs 
-#   geometry_msgs
-#   common_msgs
-#   utilities
-#   rclcpp_action
-# )
-# install(TARGETS gps_nav_node DESTINATION lib/${PROJECT_NAME})
+add_library(${PROJECT_NAME} ${ALL_SRC})
+
+ament_target_dependencies(${PROJECT_NAME} ${ALL_DEPENDENCIES})
+
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
+
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(${ALL_DEPENDENCIES})
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
 
 ament_package()
+\

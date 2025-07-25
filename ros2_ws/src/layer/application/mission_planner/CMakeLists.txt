@@ -50,8 +50,6 @@ function(register_node target_name)
   target_link_libraries(${target_name} task_executor::api)
 endfunction()
 
-register_node(mission_planner_node)
-register_node(simple_indoor_control_task)
-register_node(vision_test_task)
+register_node(vision_test_node)
 
 ament_package()

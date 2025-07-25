@@ -2,15 +2,16 @@
 #define _OFFBOARD_CTRL_NODE_H
 
 #include <rclcpp/rclcpp.hpp>
+
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_odometry.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
-#include <common_msgs/msg/arm_offboard_status.hpp>
-#include "utilities/topic_tool.hpp"
 
-constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
-constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
+#include <geometry_msgs/msg/pose_stamped.hpp>
+
+#include "common_msgs/msg/arm_offboard_status.hpp"
+
+#include "utilities/topic_tool.hpp"
 
 class OffboardCtrlNode : public rclcpp::Node {
 public:

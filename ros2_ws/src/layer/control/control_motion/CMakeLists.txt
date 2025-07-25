@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(motion_controller)
+project(control_motion)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -34,19 +34,18 @@ include_directories(
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 
-function(register_node target_name)
-  add_executable(${target_name} src/${target_name}.cpp)
-  ament_target_dependencies(${target_name}
-    rclcpp 
-    px4_msgs 
-    geometry_msgs
-    common_msgs
-    utilities
-  )
-  install(TARGETS ${target_name} DESTINATION lib/${PROJECT_NAME})
-endfunction()
-
-register_node(flight_mode_manager_node)
-register_node(offboard_ctrl_node)
+add_executable(${PROJECT_NAME} 
+  src/motion_controller.cpp
+  src/flight_mode_manager_node.cpp
+  src/offboard_ctrl_node.cpp
+)
+ament_target_dependencies(${PROJECT_NAME}
+  rclcpp 
+  px4_msgs 
+  geometry_msgs
+  common_msgs
+  utilities
+)
+install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

@@ -1,8 +1,6 @@
 #ifndef _FLY_RELATIVE_DIRECTION_ACTION_H
 #define _FLY_RELATIVE_DIRECTION_ACTION_H
 
-#include <px4_msgs/msg/detail/trajectory_setpoint__struct.hpp>
-#include <rclcpp/logging.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <px4_msgs/msg/vehicle_odometry.hpp>

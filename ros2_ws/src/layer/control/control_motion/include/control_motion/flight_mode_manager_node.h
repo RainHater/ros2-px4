@@ -2,28 +2,23 @@
 #define _FLIGHT_MODE_MANAGER_NODE_H
 
 #include <rclcpp/rclcpp.hpp>
+
 #include <px4_msgs/msg/offboard_control_mode.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_command.hpp>
 #include <px4_msgs/msg/vehicle_control_mode.hpp>
 #include <px4_msgs/msg/vehicle_status.hpp>
+
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include "common_msgs/msg/arm_offboard_status.hpp"
+
 #include "utilities/topic_tool.hpp"
 
 #include <stdint.h>
 #include <chrono>
 #include <iostream>
-
-constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
-constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
-constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD_DISABLED;
-constexpr auto ARMING_STATE_ARMED = px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED;
-constexpr auto ARMING_STATE_DISARMED = px4_msgs::msg::VehicleStatus::ARMING_STATE_DISARMED;
-constexpr auto NAVIGATION_STATE_OFFBOARD = px4_msgs::msg::VehicleStatus::NAVIGATION_STATE_OFFBOARD;
-constexpr auto PX4_CUSTOM_MAIN_MODE_OFFBOARD = 6;
 
 typedef enum {
     IDLE,                       // 空闲状态，未开始初始化流程

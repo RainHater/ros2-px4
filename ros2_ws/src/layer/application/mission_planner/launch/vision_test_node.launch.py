@@ -16,12 +16,12 @@ def generate_launch_description():
         )
     )
 
-    motion_controller = IncludeLaunchDescription(
+    control_motion = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
-                FindPackageShare('motion_controller'),
+                FindPackageShare('control_motion'),
                 'launch',
-                'motion_controller.launch.py'
+                'control_motion.launch.py'
             ])
         )
     )
@@ -45,7 +45,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         flight_controller_interface,
-        motion_controller,
+        control_motion,
         task_executor,
         vision_test_task,
     ])
