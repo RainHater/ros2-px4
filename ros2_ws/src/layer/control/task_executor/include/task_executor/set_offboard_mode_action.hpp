@@ -27,13 +27,13 @@ public:
 protected:
     void init_publisher(){
         m_set_offboard_mode_pub = create_publisher<common_msgs::msg::ArmOffboardStatus>(
-        topic_pub::OFFBOARD_MODE, 10);
+        topic_pub::PX4_MODE, 10);
     }
 
     void init_subscription(){
         m_arm_offboard_status_listener.subscribe(
             shared_from_this(), 
-            topic_sub::OFFBOARD_MODE, 10
+            topic_sub::PX4_MODE, 10
         );
     }
 

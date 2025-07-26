@@ -8,7 +8,7 @@ namespace common_topics {
 
 namespace topic_sub {
     using namespace common_topics;
-    constexpr const char* OFFBOARD_MODE               = "/control/out/offboard_mode";
+    constexpr const char* PX4_MODE                      = "/control/out/offboard_mode";
     constexpr const char* VEHICLE_STATUS                = "/interface/out/vehicle_status";
     constexpr const char* VEHICLE_LOCAL_POSITION        = "/interface/out/vehicle_local_position";
     constexpr const char* VEHICLE_ODOMETRY              = "/interface/out/vehicle_odometry";
@@ -18,7 +18,7 @@ namespace topic_sub {
 
 namespace topic_pub {
     using namespace common_topics;
-    constexpr const char* OFFBOARD_MODE                 = "/control/in/offboard_mode";
+    constexpr const char* PX4_MODE                      = "/control/in/offboard_mode";
     constexpr const char* VEHICLE_COMMAND               = "/interface/in/vehicle_command";
     constexpr const char* OFFBOARD_CONTROL_MODE         = "/interface/in/offboard_control_mode";
     constexpr const char* PX4_TRAJECTORY_SETPOINT       = "/interface/in/trajectory_setpoint";

@@ -3,17 +3,16 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <px4_msgs/msg/trajectory_setpoint.hpp>
+#include <px4_msgs/msg/vehicle_odometry.hpp>
+
 #include "common_msgs/msg/arm_offboard_status.hpp"
 
 #include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
 
 #include "control_interface/mode_control.h"
-
-constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
-constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
-constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
-constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD_DISABLED;
+#include "control_interface/movement.h"
 
 class VisionTestNode : public rclcpp::Node{
 public:
@@ -29,22 +28,27 @@ private:
     enum FlyStep{
         IDLE,
         TO2Hover,
+        Hover,
     }; 
 
     struct PubInfo{
-        rclcpp::Publisher<common_msgs::msg::ArmOffboardStatus>::SharedPtr arm_offboard_status;
+        rclcpp::Publisher<common_msgs::msg::ArmOffboardStatus>::SharedPtr offboard_mode;
+        rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr trajectory_setpoint;
     };
 
     struct SubInfo{
-        TopicListener<common_msgs::msg::ArmOffboardStatus> arm_offboard_status;
+        TopicListener<common_msgs::msg::ArmOffboardStatus> offboard_mode;
+        TopicListener<px4_msgs::msg::VehicleOdometry> vehicle_odometry;
     };
 
     struct PubMsgInfo{
-        common_msgs::msg::ArmOffboardStatus arm_offboard_status;
+        common_msgs::msg::ArmOffboardStatus offboard_mode;
+        px4_msgs::msg::TrajectorySetpoint trajectory_setpoint;
     };
 
     struct InterfaceInfo{
         ModeControl mode_control;
+        Movement movement;
     };
 private:
     rclcpp::TimerBase::SharedPtr m_timer;
