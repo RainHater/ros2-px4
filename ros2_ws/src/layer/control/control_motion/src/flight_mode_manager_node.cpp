@@ -38,13 +38,13 @@ void FlightModeManagerNode::init_publisher(){
         topic_pub::VEHICLE_COMMAND, 10);
 
     m_pub.px4_mode_status_broadcaster = create_publisher<common_msgs::msg::ArmOffboardStatus>(
-        topic_pub::PX4_MODE_STATUS, 10);
+        topic_pub::OFFBOARD_MODE, 10);
 }
 
 void FlightModeManagerNode::init_subscription(){
     m_arm_offboard_mode.target.subscribe(
         shared_from_this(), 
-        topic_sub::SET_OFFBOARD_MODE, 10
+        topic_sub::OFFBOARD_MODE, 10
     );
 
     m_arm_offboard_mode.px4_mode.subscribe(

@@ -17,7 +17,7 @@ def generate_launch_description():
                 PathJoinSubstitution([
                     FindPackageShare('mission_planner'),
                     'launch',
-                    'vision_test_task.launch.py'
+                    'vision_test_node.launch.py'
                 ])
             )
 

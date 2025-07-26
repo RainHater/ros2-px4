@@ -26,26 +26,15 @@ def generate_launch_description():
         )
     )
 
-    task_executor = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            PathJoinSubstitution([
-                FindPackageShare('task_executor'),
-                'launch',
-                'task_executor.launch.py'
-            ])
-        )
-    )
-
-    vision_test_task = Node(
+    vision_test_node = Node(
         package='mission_planner',
-        executable='vision_test_task',
-        name='vision_test_task',
+        executable='vision_test_node',
+        name='vision_test_node',
         output='screen',
     )
 
     return LaunchDescription([
         flight_controller_interface,
         control_motion,
-        task_executor,
-        vision_test_task,
+        vision_test_node,
     ])

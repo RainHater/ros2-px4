@@ -15,7 +15,7 @@
   <depend>common_msgs</depend>
   <depend>utilities</depend>
   <depend>rclcpp_action</depend>
-  <depend>control_api</depend>
+  <depend>control_interface</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

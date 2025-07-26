@@ -1,6 +1,7 @@
 #include "control_interface/mode_control.h"
 #include <rclcpp/logger.hpp>
 
+
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
 constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD_DISABLED;
 
@@ -34,6 +35,29 @@ void ModeControl::locked(
         pub_msg, 
         "上锁"
     );
+}
+
+void ModeControl::set_mode(
+    uint8_t target_arm,
+    uint8_t target_offboard,
+    const common_msgs::msg::ArmOffboardStatus &current,
+    common_msgs::msg::ArmOffboardStatus &pub_msg,
+    const std::string &action_desc)
+{
+    if (!m_states.is_busy) {
+        pub_msg.arm = target_arm;
+        pub_msg.offboard = target_offboard;
+        RCLCPP_INFO(rclcpp::get_logger(m_log_name), 
+            "[%s] 目标 arm: %d, offboard: %d，当前 arm: %d, offboard: %d",
+            action_desc.c_str(), target_arm, target_offboard,
+            current.arm, current.offboard);
+        m_states.is_busy = true;
+    }
+
+    if (current.arm == target_arm && current.offboard == target_offboard) {
+        m_states.is_busy = false;
+        RCLCPP_INFO(rclcpp::get_logger(m_log_name), "[%s] 模式切换成功!", action_desc.c_str());
+    }
 }
 
 bool ModeControl::wait_busy(){

@@ -35,7 +35,7 @@ void OffboardCtrlNode::init_subscription(){
     );
     m_listener.current_offboard_mode.subscribe(
         shared_from_this(), 
-        topic_sub::PX4_MODE_STATUS, 10
+        topic_sub::OFFBOARD_MODE, 10
     );
 }
 
