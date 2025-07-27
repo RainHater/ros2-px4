@@ -58,15 +58,12 @@ void VisionTestNode::task_loop(){
             break;
         }
         case TO2Hover:{
-            Waypts start = {0, 0, 0};
-            Waypts end = {0, 0, -3};
-
-            m_interface.movement.justmove(
+            m_interface.movement.change_height(
                 m_sub.vehicle_odometry.get_msg(),
                 m_pub_msgs.trajectory_setpoint,
                 get_clock()->now(),
-                start, end,
-                0.25, 25
+                3,
+                0.25
             );
             if (m_interface.movement.wait_busy()){
                 m_fly = Hover;
@@ -76,15 +73,12 @@ void VisionTestNode::task_loop(){
         }
 
         case Hover:{
-            Waypts start = {0, 0, 0};
-            Waypts end = {4, 1, -3};
-
             m_interface.movement.justmove(
                 m_sub.vehicle_odometry.get_msg(),
                 m_pub_msgs.trajectory_setpoint,
                 get_clock()->now(),
-                start, end,
-                0.25, 25
+                {4, 1, -3},
+                0.25, true
             );
             if (m_interface.movement.wait_busy()){
                 m_fly = Hover;

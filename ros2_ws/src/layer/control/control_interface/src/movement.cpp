@@ -1,7 +1,5 @@
 #include "control_interface/movement.h"
-#include "utilities/topic_name.hpp"
-#include <rclcpp/logger.hpp>
-#include <rclcpp/logging.hpp>
+#include <utilities/tf2_tool.hpp>
 
 Movement::Movement()
 {
@@ -37,27 +35,30 @@ void Movement::justmove(
     px4_msgs::msg::VehicleOdometry current, 
     px4_msgs::msg::TrajectorySetpoint &pose,
     rclcpp::Time instant_time,
-    Waypts start, Waypts end,
-    double v = 0.5, double angle = 0.25)
+    Waypts target,
+    double v = 0.5, bool auto_angle = false)
 {
-    if(m_states.indicator == 0)
-    {       
+    if(m_states.indicator == 0) {       
         m_local.start.x = current.position[0];
         m_local.start.y = current.position[1];
         m_local.start.z = current.position[2];
 
-        double distancex = end.x - m_local.start.x;
-        double distancey = end.y - m_local.start.y;
-        double distancez = end.z - m_local.start.z;
+        m_local.destination = target;
+
+        tf2_tool::EulerAngles angle;
+        tf2_tool::get_euler_angles(current, angle);
+        
+        double distancex = m_local.destination.x - m_local.start.x;
+        double distancey = m_local.destination.y - m_local.start.y;
+        double distancez = m_local.destination.z - m_local.start.z;
         double distance  = sqrt(pow(distancex,2) + pow(distancey,2) + pow(distancez,2));
-        (void)angle;
 
         m_time.total = distance / v;
         m_velocity.vx = distancex / m_time.total;
         m_velocity.vy = distancey / m_time.total;
         m_velocity.vz = distancez / m_time.total;
-
-        m_local.destination = end;
+        m_velocity.dw = angle.yaw;
+        
         m_time.start = instant_time.seconds();
         m_states.indicator = 1;
         RCLCPP_INFO(rclcpp::get_logger(
@@ -84,10 +85,14 @@ void Movement::justmove(
         out_x = limit_to_destination(out_x, m_velocity.vx, m_local.destination.x);
         out_y = limit_to_destination(out_y, m_velocity.vy, m_local.destination.y);
         out_z = limit_to_destination(out_z, m_velocity.vz, m_local.destination.z);
-
+        if (auto_angle){
+            m_velocity.dw = atan2(out_y, out_x);
+        }
+        
         pose.position[0] = out_x;
         pose.position[1] = out_y;
         pose.position[2] = out_z;
+        pose.yaw = m_velocity.dw;
 
         RCLCPP_INFO(rclcpp::get_logger(
             m_log_name), 
@@ -107,4 +112,16 @@ void Movement::justmove(
     }else {
         m_states.indicator = 0;
     }
+}
+
+void Movement::change_height(
+    px4_msgs::msg::VehicleOdometry current, 
+    px4_msgs::msg::TrajectorySetpoint &pose,
+    rclcpp::Time instant_time,
+    double high,
+    double v = 0.5)
+{
+    Waypts target = {0, 0, -high};
+
+    justmove(current, pose, instant_time, target, v, false);
 }

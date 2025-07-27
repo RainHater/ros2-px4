@@ -15,6 +15,8 @@
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 
 #include "utilities/topic_tool.hpp"
+#include "utilities/topic_name.hpp"
+#include "utilities/tf2_tool.hpp"
 
 typedef struct {
     double x;
@@ -36,12 +38,29 @@ class Movement{
 public:
     Movement();
     bool wait_busy() const;
+
     void justmove(
         px4_msgs::msg::VehicleOdometry current, 
         px4_msgs::msg::TrajectorySetpoint &pose,
         rclcpp::Time instant_time,
-        Waypts start, Waypts end,
-        double v, double angle
+        Waypts target,
+        double v, bool auto_angle
+    );
+
+    void move_by_offset(
+        px4_msgs::msg::VehicleOdometry current, 
+        px4_msgs::msg::TrajectorySetpoint &pose,
+        rclcpp::Time instant_time,
+        Waypts target,
+        double v, bool auto_angle
+    );
+
+    void change_height(
+        px4_msgs::msg::VehicleOdometry current, 
+        px4_msgs::msg::TrajectorySetpoint &pose,
+        rclcpp::Time instant_time,
+        double high,
+        double v
     );
 protected:
     void switchflymode(
@@ -63,12 +82,11 @@ private:
     };
 
     struct VelocityProfile{
-        double dw = 0.25;       // m_dw
+        double dw = 0.0;
         double vx = 0.0;
         double vy = 0.0;
         double vz = 0.0;
         double dt = 0.0;
-
     };
 
     struct StatusBits{
