@@ -5,6 +5,7 @@ namespace topic_px4_out {
     constexpr const char* VEHICLE_STATUS                = "/fmu/out/vehicle_status";
     constexpr const char* VEHICLE_GLOBAL_POSITION       = "/fmu/out/vehicle_global_position";
     constexpr const char* VEHICLE_LOCAL_POSITION        = "/fmu/out/vehicle_local_position";
+    constexpr const char* BATTERY_STATUS                = "/fmu/out/battery_status";
 }
 
 namespace topic_px4_in {

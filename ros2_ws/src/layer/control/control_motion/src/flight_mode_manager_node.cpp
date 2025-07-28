@@ -31,24 +31,29 @@ void FlightModeManagerNode::initialize(){
 
 void FlightModeManagerNode::init_publisher(){
     m_pub.offboard_control_mode = create_publisher<px4_msgs::msg::OffboardControlMode>(
-        topic_pub::OFFBOARD_CONTROL_MODE, 10);
+        topic_in::OFFBOARD_CONTROL_MODE, 10);
 
     m_pub.vehicle_command = create_publisher<px4_msgs::msg::VehicleCommand>(
-        topic_pub::VEHICLE_COMMAND, 10);
+        topic_in::VEHICLE_COMMAND, 10);
 
     m_pub.px4_mode_status_broadcaster = create_publisher<common_msgs::msg::ArmOffboardStatus>(
-        topic_sub::PX4_MODE, 10);
+        topic_out::PX4_MODE, 10);
 }
 
 void FlightModeManagerNode::init_subscription(){
     m_arm_offboard_mode.target.subscribe(
         shared_from_this(), 
-        topic_pub::PX4_MODE, 10
+        topic_in::PX4_MODE, 10
     );
 
     m_arm_offboard_mode.px4_mode.subscribe(
         shared_from_this(), 
-        topic_sub::VEHICLE_STATUS, 10
+        topic_out::VEHICLE_STATUS, 10
+    );
+
+    m_sub.battery_status.subscribe(
+        shared_from_this(), 
+        topic_out::BATTERY_STATUS, 10
     );
 }
 
@@ -60,6 +65,8 @@ void FlightModeManagerNode::arm_and_set_offboard() {
 
     switch (m_flight_state) {
         case IDLE: {
+            m_arm_offboard_mode.current.arm = ARM_DISABLED;
+            m_arm_offboard_mode.current.offboard = OFFBOARD_DISABLED;       
             if (!mode.target.has_change()) 
                 return;
             if (target_mode.arm == ARM_ENABLE) {
@@ -108,8 +115,14 @@ void FlightModeManagerNode::arm_and_set_offboard() {
                 return;
             const auto &px4_mode = mode.px4_mode.get_msg();
             if (px4_mode.arming_state == ARMING_STATE_ARMED) {
+                auto battery_status = m_sub.battery_status.get_first_msg();
+                float remaining  = battery_status.remaining;
                 m_flight_state = READY;
-                RCLCPP_INFO(get_logger(), "已解锁 arm");
+                RCLCPP_INFO(
+                    get_logger(), 
+                    "已解锁 arm, 当前电量 %.0f %%",
+                    (remaining * 100.0)  
+                );
             }else {
                 mode.setpoint_counter = 0;
                 m_flight_state = SENDING_SETPOINT;

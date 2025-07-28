@@ -23,28 +23,28 @@ void VisionTestNode::initialize(){
 
 void VisionTestNode::init_pub(){
     m_pub.offboard_mode = create_publisher<common_msgs::msg::ArmOffboardStatus>(
-        topic_pub::PX4_MODE, 10
+        topic_in::PX4_MODE, 10
     );
 
     m_pub.trajectory_setpoint = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
-        topic_pub::PX4_TRAJECTORY_SETPOINT, 10
+        topic_in::PX4_TRAJECTORY_SETPOINT, 10
     );
 }
 
 void VisionTestNode::init_sub(){
     m_sub.offboard_mode.subscribe(
         shared_from_this(), 
-        topic_sub::PX4_MODE, 10
+        topic_out::PX4_MODE, 10
     );
 
     m_sub.vehicle_odometry.subscribe(
         shared_from_this(), 
-        topic_sub::VEHICLE_ODOMETRY, 10
+        topic_out::VEHICLE_ODOMETRY, 10
     );
 
     m_sub.local_position.subscribe(
         shared_from_this(),
-        topic_sub::VEHICLE_LOCAL_POSITION, 10
+        topic_out::VEHICLE_LOCAL_POSITION, 10
     );
 }
 

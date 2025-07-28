@@ -6,17 +6,18 @@ namespace common_topics {
     constexpr const char* TRAJECTORY_SETPOINT           = "/control/trajectory_setpoint";
 }
 
-namespace topic_sub {
+namespace topic_out {
     using namespace common_topics;
     constexpr const char* PX4_MODE                      = "/control/out/offboard_mode";
     constexpr const char* VEHICLE_STATUS                = "/interface/out/vehicle_status";
     constexpr const char* VEHICLE_LOCAL_POSITION        = "/interface/out/vehicle_local_position";
     constexpr const char* VEHICLE_ODOMETRY              = "/interface/out/vehicle_odometry";
     constexpr const char* VEHICLE_GLOBAL_POSITION       = "/interface/out/vehicle_global_position";
+    constexpr const char* BATTERY_STATUS                = "/interface/out/battery_status";
     constexpr const char* TRACKING_FEEDBACK             = "/vision_pipeline/tracking_feedback";
 }
 
-namespace topic_pub {
+namespace topic_in {
     using namespace common_topics;
     constexpr const char* PX4_MODE                      = "/control/in/offboard_mode";
     constexpr const char* VEHICLE_COMMAND               = "/interface/in/vehicle_command";

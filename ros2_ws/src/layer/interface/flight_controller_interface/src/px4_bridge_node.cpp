@@ -1,6 +1,4 @@
 #include "flight_controller_interface/px4_bridge_node.h"
-#include "flight_controller_interface/px4_topic_name.hpp"
-#include "utilities/topic_name.hpp"
 
 PX4BridgeNode::PX4BridgeNode()
     : rclcpp::Node("px4_bridge_node") 
@@ -20,28 +18,35 @@ void PX4BridgeNode::init_forwarder(){
     m_vehicle_odometry_pair.create_forwarding_subscription(
         shared_from_this(), 
         topic_px4_out::VEHICLE_ODOMETRY,
-        topic_sub::VEHICLE_ODOMETRY,
+        topic_out::VEHICLE_ODOMETRY,
         qos
     );
 
     m_vehicle_status_pair.create_forwarding_subscription(
         shared_from_this(), 
         topic_px4_out::VEHICLE_STATUS,
-        topic_sub::VEHICLE_STATUS,
+        topic_out::VEHICLE_STATUS,
         qos
     );
 
     m_vehicle_global_position_pair.create_forwarding_subscription(
         shared_from_this(), 
         topic_px4_out::VEHICLE_GLOBAL_POSITION,
-        topic_sub::VEHICLE_GLOBAL_POSITION,
+        topic_out::VEHICLE_GLOBAL_POSITION,
         qos
     );
 
     m_vehicle_local_position_pair.create_forwarding_subscription(
         shared_from_this(), 
         topic_px4_out::VEHICLE_LOCAL_POSITION,
-        topic_sub::VEHICLE_LOCAL_POSITION,
+        topic_out::VEHICLE_LOCAL_POSITION,
+        qos
+    );
+
+    m_battery_status_pair.create_forwarding_subscription(
+        shared_from_this(), 
+        topic_px4_out::BATTERY_STATUS,
+        topic_out::BATTERY_STATUS,
         qos
     );
 }
@@ -49,21 +54,21 @@ void PX4BridgeNode::init_forwarder(){
 void PX4BridgeNode::init_forwarder_px4(){
     m_vehicle_command_px4.create_forwarding_subscription(
         shared_from_this(), 
-        topic_pub::VEHICLE_COMMAND, 
+        topic_in::VEHICLE_COMMAND, 
         topic_px4_in::VEHICLE_COMMAND,
         10
     );
 
     m_trajectory_setpoint_px4.create_forwarding_subscription(
         shared_from_this(), 
-        topic_pub::PX4_TRAJECTORY_SETPOINT, 
+        topic_in::PX4_TRAJECTORY_SETPOINT, 
         topic_px4_in::TRAJECTORY_SETPOINT,
         10
     );
 
     m_offboard_control_mode_px4.create_forwarding_subscription(
         shared_from_this(), 
-        topic_pub::OFFBOARD_CONTROL_MODE, 
+        topic_in::OFFBOARD_CONTROL_MODE, 
         topic_px4_in::OFFBOARD_CONTROL_MODE,
         10
     );

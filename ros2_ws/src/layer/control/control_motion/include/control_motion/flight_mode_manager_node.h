@@ -1,6 +1,7 @@
 #ifndef _FLIGHT_MODE_MANAGER_NODE_H
 #define _FLIGHT_MODE_MANAGER_NODE_H
 
+#include <px4_msgs/msg/detail/battery_status__struct.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <px4_msgs/msg/offboard_control_mode.hpp>
@@ -8,6 +9,7 @@
 #include <px4_msgs/msg/vehicle_command.hpp>
 #include <px4_msgs/msg/vehicle_control_mode.hpp>
 #include <px4_msgs/msg/vehicle_status.hpp>
+#include <px4_msgs/msg/battery_status.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -54,22 +56,30 @@ private:
     void disarm();  
     //发布一个 PX4 的 VehicleCommand 指令
     void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0);
-private:
-    rclcpp::TimerBase::SharedPtr m_timer;
-    FlightInitState m_flight_state;
-
-    struct {
+protected:
+    struct PubInfo{
         rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command;
         rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_control_mode;
         rclcpp::Publisher<common_msgs::msg::ArmOffboardStatus>::SharedPtr px4_mode_status_broadcaster;
-    } m_pub;
+    };
 
-    struct {
+    struct SubInfo{
+        TopicListener<px4_msgs::msg::BatteryStatus> battery_status; 
+    };
+
+    struct ModeInfo{
         TopicListener<common_msgs::msg::ArmOffboardStatus> target;
         TopicListener<px4_msgs::msg::VehicleStatus> px4_mode;
         common_msgs::msg::ArmOffboardStatus current;
         uint64_t setpoint_counter;
-    } m_arm_offboard_mode;
+    };
+
+private:
+    rclcpp::TimerBase::SharedPtr m_timer;
+    FlightInitState m_flight_state;
+    PubInfo m_pub;  
+    SubInfo m_sub;
+    ModeInfo m_arm_offboard_mode;
 };
 
 #endif
