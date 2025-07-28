@@ -8,6 +8,7 @@
 - **飞控型号**：[H743V2_AIO（微空科技）](https://micoair.cn/docs/MicoAir743v2AIO45A-yi-ti-fei-kong-yong-hu-shou-ce)
 - **飞控机架**：[MDV30（微空科技）](https://micoair.cn/docs/wei-kong-MVD30-3-cun-quan-quan-ji-jia)
 - **通信中间件**：[Micro XRCE-DDS Agent](https://docs.px4.io/main/zh/middleware/uxrce_dds.html)
+- **板载计算机**：[RDK X5](https://developer.d-robotics.cc/rdkx5)
 
 ## 安装与配置步骤
 
@@ -146,5 +147,5 @@ sudo systemctl restart serial-getty@ttyS1.service
 sudo apt install --reinstall libstdc++-12-dev
 ```
 
-> _日期：2025-07-18_  
+> _日期：2025-07-28_  
 > _作者：xuguocai_  
