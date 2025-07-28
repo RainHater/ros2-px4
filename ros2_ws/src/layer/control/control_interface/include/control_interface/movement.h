@@ -48,6 +48,7 @@ struct Offset{
 class Movement{
 public:
     Movement();
+
     bool wait_busy() const;
 
     //根据局部整体坐标移动
@@ -77,14 +78,15 @@ public:
         double v
     );
 
-    void land_mode(
+    bool land_mode(
+        double v,
         ModeControl mode_control,
+        rclcpp::Time instant_time,
         common_msgs::msg::ArmOffboardStatus px4_mode,
         px4_msgs::msg::VehicleOdometry current_pose,
-        px4_msgs::msg::VehicleLocalPosition local_position,
         px4_msgs::msg::TrajectorySetpoint &pose,
         common_msgs::msg::ArmOffboardStatus &px4_mode_pub,
-        double v
+        TopicListener<px4_msgs::msg::VehicleLocalPosition> local_position
     );
 
 protected:
@@ -129,6 +131,7 @@ private:
         Waypts start_position;
         double dw;
         int state;
+        uint64_t start_time;
     };
 private:
     std::string m_log_name;

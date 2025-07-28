@@ -43,7 +43,7 @@ void Movement::justmove(
     Waypts target,
     double v = 0.5, bool auto_angle = false)
 {
-    if(m_states.indicator == 0) {       
+    if(m_states.indicator == 0) { 
         m_local.start.x = current.position[0];
         m_local.start.y = current.position[1];
         m_local.start.z = current.position[2];
@@ -126,10 +126,6 @@ void Movement::move_by_offset(
     Offset target,
     double v = 0.5, double angle = 0.0)
 {
-    // Waypts end;
-    // end.x = current.position[0] + target.x;
-    // end.y = current.position[1] + target.y;
-    // end.z = current.position[2] + target.z;
     tf2_tool::EulerAngles angles;
     tf2_tool::get_euler_angles(current, angles);
     float yaw = geo_tool::normalize_angle(angles.yaw + geo_tool::deg2rad(angle));
@@ -156,15 +152,18 @@ void Movement::change_height(
     justmove(current, pose, instant_time, target, v, false);
 }
 
-void Movement::land_mode(
+bool Movement::land_mode(
+    double v,
     ModeControl mode_control,
+    rclcpp::Time instant_time,
     common_msgs::msg::ArmOffboardStatus px4_mode,
     px4_msgs::msg::VehicleOdometry current_pose,
-    px4_msgs::msg::VehicleLocalPosition local_position,
     px4_msgs::msg::TrajectorySetpoint &pose,
     common_msgs::msg::ArmOffboardStatus &px4_mode_pub,
-    double v = 0.5)
-{
+    TopicListener<px4_msgs::msg::VehicleLocalPosition> local_position)
+{   
+    bool finish = false;
+
     switch(m_land.state){
         case 0:{
             m_land.start_state = px4_mode;
@@ -186,14 +185,16 @@ void Movement::land_mode(
                 m_land.state = 2;
                 RCLCPP_INFO(rclcpp::get_logger(
                     m_log_name), 
-                    "切换模式成功, 开始降落"
+                    "切换模式成功, 开始降落, 起始 dist_bottom: %f",
+                    local_position.get_first_msg().dist_bottom
                 );
             }
             break;
         }
         case 2:{
-            auto dist_bottom = local_position.dist_bottom;
-            auto dist_bottom_valid = local_position.dist_bottom_valid;
+            auto dist_bottom = local_position.get_msg().dist_bottom;
+            auto dist_bottom_valid = local_position.get_msg().dist_bottom_valid;
+            auto start_dist_bottom = local_position.get_first_msg().dist_bottom;
 
             pose.position[0] = m_land.start_position.x;
             pose.position[1] = m_land.start_position.y;
@@ -202,19 +203,33 @@ void Movement::land_mode(
             pose.velocity[1] = NAN;
             pose.velocity[2] = v;
             pose.yaw = m_land.dw;
-            if (dist_bottom_valid && dist_bottom < 0.038f){
+            if (dist_bottom_valid && dist_bottom < (start_dist_bottom-0.05)){
+                m_land.start_time = instant_time.seconds();
                 m_land.state = 3;
+                RCLCPP_INFO(rclcpp::get_logger(
+                    m_log_name), 
+                    "降落完成!"
+                );
             }
+            RCLCPP_INFO(rclcpp::get_logger(
+                m_log_name), 
+                "当前位置 dist_bottom: %f",
+                dist_bottom
+            );
             break;
         }
         case 3:{
-            // mode_control.unlock(
-            //     ARM_ENABLE,
-            //     (POSITION | VELOCITY),
-            //     px4_mode, px4_mode_pub
-            // );
-            px4_mode_pub.offboard = m_land.start_state.offboard;
+            if (instant_time.seconds() - m_land.start_time >= 3){
+                px4_mode_pub.offboard = m_land.start_state.offboard;
+                m_land.state = 4;
+            }
             break;
         }
-    }   
+        case 4:{
+            finish = true;
+            m_land.state = 0;
+            break;
+        }
+    }
+    return finish;
 }

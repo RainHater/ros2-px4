@@ -1,5 +1,4 @@
 #include "mission_planner/vision_test_node.h"
-#include <utilities/topic_name.hpp>
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
@@ -93,23 +92,27 @@ void VisionTestNode::task_loop(){
             break;
         }
         case LAND:{
-            m_interface.movement.land_mode(
+            bool finish = m_interface.movement.land_mode(
+                0.3,
                 m_interface.mode_control,
+                get_clock()->now(),
                 m_sub.offboard_mode.get_msg(),
                 m_sub.vehicle_odometry.get_msg(),
-                m_sub.local_position.get_msg(),
                 m_pub_msgs.trajectory_setpoint,
                 m_pub_msgs.offboard_mode,
-                0.3
+                m_sub.local_position
             );
-            // if (m_interface.movement.wait_busy()){
-            //     m_fly = END;
-            //     RCLCPP_INFO(get_logger(), "降落完成!");
-            // }
+            if (finish){
+                m_fly = END;
+                RCLCPP_INFO(get_logger(), "降落完成!");
+            }
             break;
         }
         case END:{
-            
+            m_interface.mode_control.locked(
+                m_sub.offboard_mode.get_msg(), 
+                m_pub_msgs.offboard_mode
+            );
             break;
         }
     }
@@ -119,7 +122,9 @@ void VisionTestNode::task_loop(){
     m_pub_msgs.trajectory_setpoint.timestamp = timestamp;
 
     m_pub.offboard_mode->publish(m_pub_msgs.offboard_mode);
-    m_pub.trajectory_setpoint->publish(m_pub_msgs.trajectory_setpoint);
+    if (m_sub.offboard_mode.get_msg().arm == ARM_ENABLE){
+        m_pub.trajectory_setpoint->publish(m_pub_msgs.trajectory_setpoint);
+    }
 }
 
 int main(int argc, char *argv[]) {

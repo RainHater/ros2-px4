@@ -125,6 +125,7 @@ void FlightModeManagerNode::arm_and_set_offboard() {
                 return;
             if (target_mode.arm == ARM_DISABLED){
                 disarm();
+                publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1, px4_msgs::msg::VehicleCommand::VEHICLE_CMD_NAV_LAND);
                 m_flight_state = IDLE;
                 RCLCPP_INFO(get_logger(), "已上锁 arm");
                 return;
@@ -195,14 +196,3 @@ void FlightModeManagerNode::disarm() {
     publish_vehicle_command(px4_msgs::msg::VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
     RCLCPP_DEBUG(get_logger(), "Disarm command send");
 }
-
-// int main(int argc, char *argv[]) {
-//     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
-//     rclcpp::init(argc, argv);
-//     auto node = std::make_shared<FlightModeManagerNode>();
-//     node->initialize();
-//     rclcpp::spin(node);
-
-//     rclcpp::shutdown();
-//     return 0;
-// }
