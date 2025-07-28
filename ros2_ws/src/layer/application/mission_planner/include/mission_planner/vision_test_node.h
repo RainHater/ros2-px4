@@ -27,8 +27,10 @@ protected:
 private:
     enum FlyStep{
         IDLE,
-        TO2Hover,
+        RISE,
         Hover,
+        LAND,
+        END,
     }; 
 
     struct PubInfo{
@@ -39,6 +41,7 @@ private:
     struct SubInfo{
         TopicListener<common_msgs::msg::ArmOffboardStatus> offboard_mode;
         TopicListener<px4_msgs::msg::VehicleOdometry> vehicle_odometry;
+        TopicListener<px4_msgs::msg::VehicleLocalPosition> local_position;
     };
 
     struct PubMsgInfo{

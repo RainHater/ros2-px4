@@ -37,7 +37,6 @@ install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 add_executable(${PROJECT_NAME} 
   src/motion_controller.cpp
   src/flight_mode_manager_node.cpp
-  src/offboard_ctrl_node.cpp
 )
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp 

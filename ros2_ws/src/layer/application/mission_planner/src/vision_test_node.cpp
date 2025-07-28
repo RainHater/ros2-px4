@@ -1,4 +1,5 @@
 #include "mission_planner/vision_test_node.h"
+#include <utilities/topic_name.hpp>
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
@@ -41,6 +42,11 @@ void VisionTestNode::init_sub(){
         shared_from_this(), 
         topic_sub::VEHICLE_ODOMETRY, 10
     );
+
+    m_sub.local_position.subscribe(
+        shared_from_this(),
+        topic_sub::VEHICLE_LOCAL_POSITION, 10
+    );
 }
 
 void VisionTestNode::task_loop(){
@@ -52,17 +58,17 @@ void VisionTestNode::task_loop(){
                 m_pub_msgs.offboard_mode
             );
             if (m_interface.mode_control.wait_busy()){
-                m_fly = TO2Hover;
+                m_fly = RISE;
                 RCLCPP_INFO(get_logger(), "初始化完成!");
             }
             break;
         }
-        case TO2Hover:{
+        case RISE:{
             m_interface.movement.change_height(
                 m_sub.vehicle_odometry.get_msg(),
                 m_pub_msgs.trajectory_setpoint,
                 get_clock()->now(),
-                3,
+                0.5,
                 0.25
             );
             if (m_interface.movement.wait_busy()){
@@ -73,17 +79,37 @@ void VisionTestNode::task_loop(){
         }
 
         case Hover:{
-            m_interface.movement.justmove(
+            m_interface.movement.move_by_offset(
                 m_sub.vehicle_odometry.get_msg(),
                 m_pub_msgs.trajectory_setpoint,
                 get_clock()->now(),
-                {4, 1, -3},
+                {0, 0.5, 0},
                 0.25, true
             );
             if (m_interface.movement.wait_busy()){
-                m_fly = Hover;
-                RCLCPP_INFO(get_logger(), "飞行完成!");
+                m_fly = LAND;
+                RCLCPP_INFO(get_logger(), "徘徊完成!");
             }
+            break;
+        }
+        case LAND:{
+            m_interface.movement.land_mode(
+                m_interface.mode_control,
+                m_sub.offboard_mode.get_msg(),
+                m_sub.vehicle_odometry.get_msg(),
+                m_sub.local_position.get_msg(),
+                m_pub_msgs.trajectory_setpoint,
+                m_pub_msgs.offboard_mode,
+                0.3
+            );
+            // if (m_interface.movement.wait_busy()){
+            //     m_fly = END;
+            //     RCLCPP_INFO(get_logger(), "降落完成!");
+            // }
+            break;
+        }
+        case END:{
+            
             break;
         }
     }

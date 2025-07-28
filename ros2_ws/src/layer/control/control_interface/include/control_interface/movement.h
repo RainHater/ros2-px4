@@ -14,11 +14,16 @@
 #include <px4_msgs/msg/vehicle_local_position.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 
+#include "common_msgs/msg/arm_offboard_status.hpp"
+
 #include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
 #include "utilities/tf2_tool.hpp"
+#include  "utilities/geo_tool.hpp"
 
-typedef struct {
+#include "control_interface/mode_control.h"
+
+struct UAVpose{
     double x;
     double y;
     double z;
@@ -26,19 +31,26 @@ typedef struct {
     double ox;
     double oy;
     double oz;
-}UAVpose;
+};
 
-typedef struct {
+struct Waypts{
     double x;
     double y;
     double z;
-}Waypts;
+};
+
+struct Offset{
+    double up;
+    double forward;
+    double right;
+};
 
 class Movement{
 public:
     Movement();
     bool wait_busy() const;
 
+    //根据局部整体坐标移动
     void justmove(
         px4_msgs::msg::VehicleOdometry current, 
         px4_msgs::msg::TrajectorySetpoint &pose,
@@ -47,14 +59,16 @@ public:
         double v, bool auto_angle
     );
 
+    //根据当前坐标进行移动
     void move_by_offset(
         px4_msgs::msg::VehicleOdometry current, 
         px4_msgs::msg::TrajectorySetpoint &pose,
         rclcpp::Time instant_time,
-        Waypts target,
-        double v, bool auto_angle
+        Offset target,
+        double v, double angle
     );
 
+    //起飞高度
     void change_height(
         px4_msgs::msg::VehicleOdometry current, 
         px4_msgs::msg::TrajectorySetpoint &pose,
@@ -62,6 +76,17 @@ public:
         double high,
         double v
     );
+
+    void land_mode(
+        ModeControl mode_control,
+        common_msgs::msg::ArmOffboardStatus px4_mode,
+        px4_msgs::msg::VehicleOdometry current_pose,
+        px4_msgs::msg::VehicleLocalPosition local_position,
+        px4_msgs::msg::TrajectorySetpoint &pose,
+        common_msgs::msg::ArmOffboardStatus &px4_mode_pub,
+        double v
+    );
+
 protected:
     void switchflymode(
         rclcpp::Time now, 
@@ -99,13 +124,19 @@ private:
         Waypts destination;
     };
 
+    struct LandInfo{
+        common_msgs::msg::ArmOffboardStatus start_state;
+        Waypts start_position;
+        double dw;
+        int state;
+    };
 private:
     std::string m_log_name;
     StatusBits m_states;
     TimeInfo m_time;
     VelocityProfile m_velocity;
-    
     LocationInfo m_local;
+    LandInfo m_land;
 };
 
 #endif

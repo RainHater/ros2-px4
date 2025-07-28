@@ -1,5 +1,4 @@
 #include "control_motion/flight_mode_manager_node.h"
-#include "utilities/topic_name.hpp"
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;

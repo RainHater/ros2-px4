@@ -1,5 +1,4 @@
 #include "control_motion/flight_mode_manager_node.h"
-#include "control_motion/offboard_ctrl_node.h"
 
 int main(int argc, char *argv[]) {
     setvbuf(stdout, NULL, _IONBF, BUFSIZ);

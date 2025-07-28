@@ -1,9 +1,14 @@
 #include "control_interface/movement.h"
 #include <utilities/tf2_tool.hpp>
 
+constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
+constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
+constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
+
 Movement::Movement()
 {
     m_log_name = "控制无人机(movement.cpp)";
+    m_land.state = 0;
 }
 
 bool Movement::wait_busy() const{
@@ -44,10 +49,7 @@ void Movement::justmove(
         m_local.start.z = current.position[2];
 
         m_local.destination = target;
-
-        tf2_tool::EulerAngles angle;
-        tf2_tool::get_euler_angles(current, angle);
-        
+   
         double distancex = m_local.destination.x - m_local.start.x;
         double distancey = m_local.destination.y - m_local.start.y;
         double distancez = m_local.destination.z - m_local.start.z;
@@ -57,8 +59,14 @@ void Movement::justmove(
         m_velocity.vx = distancex / m_time.total;
         m_velocity.vy = distancey / m_time.total;
         m_velocity.vz = distancez / m_time.total;
-        m_velocity.dw = angle.yaw;
-        
+        if (auto_angle){
+            m_velocity.dw = atan2(m_velocity.vy, m_velocity.vx);
+        }else {
+            tf2_tool::EulerAngles angle;
+            tf2_tool::get_euler_angles(current, angle);
+            m_velocity.dw = angle.yaw;
+        }
+     
         m_time.start = instant_time.seconds();
         m_states.indicator = 1;
         RCLCPP_INFO(rclcpp::get_logger(
@@ -85,9 +93,6 @@ void Movement::justmove(
         out_x = limit_to_destination(out_x, m_velocity.vx, m_local.destination.x);
         out_y = limit_to_destination(out_y, m_velocity.vy, m_local.destination.y);
         out_z = limit_to_destination(out_z, m_velocity.vz, m_local.destination.z);
-        if (auto_angle){
-            m_velocity.dw = atan2(out_y, out_x);
-        }
         
         pose.position[0] = out_x;
         pose.position[1] = out_y;
@@ -114,6 +119,31 @@ void Movement::justmove(
     }
 }
 
+void Movement::move_by_offset(
+    px4_msgs::msg::VehicleOdometry current, 
+    px4_msgs::msg::TrajectorySetpoint &pose,
+    rclcpp::Time instant_time,
+    Offset target,
+    double v = 0.5, double angle = 0.0)
+{
+    // Waypts end;
+    // end.x = current.position[0] + target.x;
+    // end.y = current.position[1] + target.y;
+    // end.z = current.position[2] + target.z;
+    tf2_tool::EulerAngles angles;
+    tf2_tool::get_euler_angles(current, angles);
+    float yaw = geo_tool::normalize_angle(angles.yaw + geo_tool::deg2rad(angle));
+    float dx = target.forward * std::cos(yaw) - target.right * std::sin(yaw);
+    float dy = target.forward * std::sin(yaw) + target.right * std::cos(yaw);
+    float dz = -target.up;
+
+    Waypts end;
+    end.x = (current.position[0] + dx);
+    end.y = (current.position[1] + dy);
+    end.z = (current.position[2] + dz);
+    justmove(current, pose, instant_time, end, v, true);
+}
+
 void Movement::change_height(
     px4_msgs::msg::VehicleOdometry current, 
     px4_msgs::msg::TrajectorySetpoint &pose,
@@ -124,4 +154,67 @@ void Movement::change_height(
     Waypts target = {0, 0, -high};
 
     justmove(current, pose, instant_time, target, v, false);
+}
+
+void Movement::land_mode(
+    ModeControl mode_control,
+    common_msgs::msg::ArmOffboardStatus px4_mode,
+    px4_msgs::msg::VehicleOdometry current_pose,
+    px4_msgs::msg::VehicleLocalPosition local_position,
+    px4_msgs::msg::TrajectorySetpoint &pose,
+    common_msgs::msg::ArmOffboardStatus &px4_mode_pub,
+    double v = 0.5)
+{
+    switch(m_land.state){
+        case 0:{
+            m_land.start_state = px4_mode;
+            m_land.state = 1;
+            break;
+        }
+        case 1:{
+            mode_control.unlock(
+                ARM_ENABLE,
+                (POSITION | VELOCITY),
+                px4_mode, px4_mode_pub
+            );
+            if (mode_control.wait_busy()){
+                tf2_tool::EulerAngles angle;
+                tf2_tool::get_euler_angles(current_pose, angle);
+                m_land.start_position.x = current_pose.position[0];
+                m_land.start_position.y = current_pose.position[1];
+                m_land.dw = angle.yaw;
+                m_land.state = 2;
+                RCLCPP_INFO(rclcpp::get_logger(
+                    m_log_name), 
+                    "切换模式成功, 开始降落"
+                );
+            }
+            break;
+        }
+        case 2:{
+            auto dist_bottom = local_position.dist_bottom;
+            auto dist_bottom_valid = local_position.dist_bottom_valid;
+
+            pose.position[0] = m_land.start_position.x;
+            pose.position[1] = m_land.start_position.y;
+            pose.position[2] = NAN;
+            pose.velocity[0] = NAN;
+            pose.velocity[1] = NAN;
+            pose.velocity[2] = v;
+            pose.yaw = m_land.dw;
+            if (dist_bottom_valid && dist_bottom < 0.038f){
+                m_land.state = 3;
+            }
+            break;
+        }
+        case 3:{
+            // mode_control.unlock(
+            //     ARM_ENABLE,
+            //     (POSITION | VELOCITY),
+            //     px4_mode, px4_mode_pub
+            // );
+            px4_mode_pub.offboard = m_land.start_state.offboard;
+            break;
+        }
+    }   
 }
