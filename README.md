@@ -19,12 +19,12 @@
 
 1. 拉取源代码
 ```
-git clone https://github.com/3519610554/ros2-px4.git
+git clone https://github.com/3519610554/ros2-px4.git --depth 1
 ```
 
 2. 更新子模块仓库
 ```bash
-cd ros2-px4/ && git submodule update --init --recursive
+cd ros2-px4/ && git submodule update --init --recursive --depth 1
 ```
 
 3. 配置PX4的环境
