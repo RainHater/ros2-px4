@@ -68,7 +68,7 @@ void VisionTestNode::task_loop(){
                 m_pub_msgs.trajectory_setpoint,
                 get_clock()->now(),
                 0.5,
-                0.25
+                0.15
             );
             if (m_interface.movement.wait_busy()){
                 m_fly = Hover;

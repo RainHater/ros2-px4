@@ -25,14 +25,6 @@ endif()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ArmOffboardStatus.msg"
-  "msg/TrackingFeedback.msg"
-  "msg/PidDebug.msg"
-  "action/NavigateToGPS.action"
-  "action/PrecisionLand.action"
-  "action/FlyRelativeDirection.action"
-  "action/ControlledDescent.action"
-  "action/SetOffboardMode.action"
-  "srv/TransformGpsToLocal.srv"
   DEPENDENCIES std_msgs builtin_interfaces px4_msgs
 )
 

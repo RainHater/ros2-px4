@@ -25,8 +25,20 @@ void Movement::switchflymode(
     double deltay = current.position[1]-m_local.destination.y;
     double deltaz = current.position[2]-m_local.destination.z;
     double delta = sqrt(pow(deltax,2)+pow(deltay,2)+pow(deltaz,2));
-    bool valid = (now.seconds() - m_time.start > m_time.total) && delta < 0.2;
-    
+    bool valid = (now.seconds() - m_time.start > m_time.total) && delta < 0.42;
+
+    // double deltax = std::abs(current.position[0] - m_local.destination.x);
+    // double deltay = std::abs(current.position[1] - m_local.destination.y);
+    // double deltaz = std::abs(current.position[2] - m_local.destination.z);
+
+    // double tolerance_x = 0.2;
+    // double tolerance_y = 0.2;
+    // double tolerance_z = 0.2;
+
+    // bool valid_delta = 0;
+    // bool valid_time = (now.seconds() - m_time.start > m_time.total);
+    // bool valid = valid_time && valid_delta;
+
     m_states.switchflymode = valid;
 
     RCLCPP_INFO(rclcpp::get_logger(

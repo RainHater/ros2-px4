@@ -10,7 +10,7 @@ fi
 
 TARGET_IP="$1"
 TARGET_USER="sunrise"
-TARGET_PATH="/home/sunrise/Desktop/ros2_px4"
+TARGET_PATH="/home/sunrise/ros2_px4"
 SOURCE_PATH="${TOP_DIR}/ros2_ws/"
 
 echo "开始同步到 $TARGET_USER@$TARGET_IP:$TARGET_PATH"
