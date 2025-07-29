@@ -15,6 +15,7 @@ namespace topic_out {
     constexpr const char* VEHICLE_GLOBAL_POSITION       = "/interface/out/vehicle_global_position";
     constexpr const char* BATTERY_STATUS                = "/interface/out/battery_status";
     constexpr const char* TRACKING_FEEDBACK             = "/vision_pipeline/tracking_feedback";
+    constexpr const char* YOLO_DETECTIONS               = "/yolo_detections";
 }
 
 namespace topic_in {
@@ -23,7 +24,6 @@ namespace topic_in {
     constexpr const char* VEHICLE_COMMAND               = "/interface/in/vehicle_command";
     constexpr const char* OFFBOARD_CONTROL_MODE         = "/interface/in/offboard_control_mode";
     constexpr const char* PX4_TRAJECTORY_SETPOINT       = "/interface/in/trajectory_setpoint";
-    constexpr const char* PID_VIEWER                    = "/debug/pid_viewer";
 }
 
 namespace common_services {

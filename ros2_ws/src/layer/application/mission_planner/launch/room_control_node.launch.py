@@ -16,14 +16,14 @@ def generate_launch_description():
         )
     )
 
-    vision_test_node = Node(
+    room_control_node = Node(
         package='mission_planner',
-        executable='vision_test_node',
-        name='vision_test_node',
+        executable='room_control_node',
+        name='room_control_node',
         output='screen',
     )
 
     return LaunchDescription([
         mission_planner,
-        vision_test_node,
+        room_control_node,
     ])

@@ -1,30 +1,27 @@
-#include "mission_planner/vision_test_node.h"
-#include <rclcpp/logging.hpp>
-#include <utilities/tf2_tool.hpp>
-#include <utilities/topic_name.hpp>
+#include "mission_planner/room_control_node.h"
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
 constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
 constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD_DISABLED;
 
-VisionTestNode::VisionTestNode()
-    : rclcpp::Node("vision_test_node")
+RoomControlNode::RoomControlNode()
+    : rclcpp::Node("room_control_node")
 {
-    RCLCPP_INFO(get_logger(), "vision_test_node 节点启动...");
+    RCLCPP_INFO(get_logger(), "room_control_node 节点启动...");
 }
 
-void VisionTestNode::initialize(){
+void RoomControlNode::initialize(){
 
     init_pub();
     init_sub();
 
     m_timer = create_wall_timer(
             std::chrono::milliseconds(100),
-            std::bind(&VisionTestNode::task_loop, this));
+            std::bind(&RoomControlNode::task_loop, this));
 }
 
-void VisionTestNode::init_pub(){
+void RoomControlNode::init_pub(){
     m_pub.offboard_mode = create_publisher<common_msgs::msg::ArmOffboardStatus>(
         topic_in::PX4_MODE, 10
     );
@@ -34,7 +31,7 @@ void VisionTestNode::init_pub(){
     );
 }
 
-void VisionTestNode::init_sub(){
+void RoomControlNode::init_sub(){
     m_sub.offboard_mode.subscribe(
         shared_from_this(), 
         topic_out::PX4_MODE, 10
@@ -49,14 +46,9 @@ void VisionTestNode::init_sub(){
         shared_from_this(),
         topic_out::VEHICLE_LOCAL_POSITION, 10
     );
-
-    m_sub.yolo_detections.subscribe(
-        shared_from_this(), 
-        topic_out::YOLO_DETECTIONS, 10
-    );
 }
 
-void VisionTestNode::task_loop(){
+void RoomControlNode::task_loop(){
     switch(m_fly){
         case IDLE:{
             m_interface.mode_control.unlock(
@@ -86,32 +78,17 @@ void VisionTestNode::task_loop(){
         }
 
         case Hover:{
-            auto detection = m_sub.yolo_detections.get_first_msg().detections[0];
-            RCLCPP_INFO(
-                get_logger(), 
-                "类别: %s, 置信度: %f"
-                "cx: %d, cy: %d",
-                detection.target_name.c_str(),
-                detection.confidence,
-                detection.cx, detection.cy
+            m_interface.movement.move_by_offset(
+                m_sub.vehicle_odometry.get_msg(),
+                m_pub_msgs.trajectory_setpoint,
+                get_clock()->now(),
+                {0, 0.5, 0},
+                0.25, true
             );
-            calculate_yaw(
-                detection.cx, 
-                detection.image_width, 100, 
-                m_sub.vehicle_odometry.get_msg(), 
-                m_pub_msgs.trajectory_setpoint
-            );
-            // m_interface.movement.move_by_offset(
-            //     m_sub.vehicle_odometry.get_msg(),
-            //     m_pub_msgs.trajectory_setpoint,
-            //     get_clock()->now(),
-            //     {0, 0.5, 0},
-            //     0.25, true
-            // );
-            // if (m_interface.movement.wait_busy()){
-            //     m_fly = LAND;
-            //     RCLCPP_INFO(get_logger(), "徘徊完成!");
-            // }
+            if (m_interface.movement.wait_busy()){
+                m_fly = LAND;
+                RCLCPP_INFO(get_logger(), "徘徊完成!");
+            }
             break;
         }
         case LAND:{
@@ -150,32 +127,10 @@ void VisionTestNode::task_loop(){
     }
 }
 
-void VisionTestNode::calculate_yaw(
-    int cx, 
-    int image_width, 
-    float fov_deg,
-    px4_msgs::msg::VehicleOdometry current,
-    px4_msgs::msg::TrajectorySetpoint &pose)
-{
-    tf2_tool::EulerAngles angles;
-    tf2_tool::get_euler_angles(current, angles);
-    float dx = cx - image_width / 2.0f;
-    float half_width = image_width / 2.0f;
-
-    float angle_offset_rad = (dx / half_width) * (fov_deg * M_PI / 180.0f / 2.0f);
-    float target_yaw_rad = angles.yaw + angle_offset_rad;
-
-    pose.yaw = target_yaw_rad;
-    RCLCPP_INFO(get_logger(), 
-        "当前yaw: %f, 转动yaw: %f, 目标yaw: %f",
-        angles.yaw, angle_offset_rad, target_yaw_rad
-    );
-}
-
 int main(int argc, char *argv[]) {
     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
     rclcpp::init(argc, argv);
-    auto node = std::make_shared<VisionTestNode>();
+    auto node = std::make_shared<RoomControlNode>();
     node->initialize();
     rclcpp::spin(node);
     rclcpp::shutdown();

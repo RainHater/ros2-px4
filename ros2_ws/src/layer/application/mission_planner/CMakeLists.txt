@@ -17,6 +17,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
 find_package(utilities REQUIRED)
 find_package(control_interface REQUIRED)
+find_package(identify REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -46,6 +47,7 @@ function(register_node target_name)
     common_msgs
     utilities
     control_interface
+    identify
   )
   install(TARGETS ${target_name} DESTINATION lib/${PROJECT_NAME})
 endfunction()

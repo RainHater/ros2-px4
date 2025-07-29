@@ -1,7 +1,6 @@
-#ifndef _SIMPLE_INDOOR_CONTROL_TASK_H
-#define _SIMPLE_INDOOR_CONTROL_TASK_H
+#ifndef _ROOM_CONTROL_NODE_H
+#define _ROOM_CONTROL_NODE_H
 
-#include <identify/msg/detail/yolo_detections__struct.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
@@ -9,31 +8,22 @@
 
 #include "common_msgs/msg/arm_offboard_status.hpp"
 
-#include "identify/msg/yolo_detections.hpp"
-
 #include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
-#include "utilities/tf2_tool.hpp"
 
 #include "control_interface/mode_control.h"
 #include "control_interface/movement.h"
 
-class VisionTestNode : public rclcpp::Node{
+class RoomControlNode : public rclcpp::Node{
 public:
-    VisionTestNode();
+    RoomControlNode();
     void initialize();
 protected:
     void init_pub();
     void init_sub();
 protected:
     void task_loop();
-    void calculate_yaw(
-        int cx, 
-        int image_width, 
-        float fov_deg,
-        px4_msgs::msg::VehicleOdometry current,
-        px4_msgs::msg::TrajectorySetpoint &pose
-    );
+
 private:
     enum FlyStep{
         IDLE,
@@ -52,7 +42,6 @@ private:
         TopicListener<common_msgs::msg::ArmOffboardStatus> offboard_mode;
         TopicListener<px4_msgs::msg::VehicleOdometry> vehicle_odometry;
         TopicListener<px4_msgs::msg::VehicleLocalPosition> local_position;
-        TopicListener<identify::msg::YoloDetections> yolo_detections;
     };
 
     struct PubMsgInfo{
@@ -62,7 +51,7 @@ private:
 
     struct InterfaceInfo{
         ModeControl mode_control;
-        Movement movement; 
+        Movement movement;
     };
 private:
     rclcpp::TimerBase::SharedPtr m_timer;
