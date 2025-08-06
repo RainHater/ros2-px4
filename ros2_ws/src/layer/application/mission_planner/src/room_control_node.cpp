@@ -8,7 +8,7 @@ constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD
 RoomControlNode::RoomControlNode()
     : rclcpp::Node("room_control_node")
 {   
-    m_fly = IDLE;
+    m_fly = Hover;
     RCLCPP_INFO(get_logger(), "room_control_node 节点启动...");
 }
 

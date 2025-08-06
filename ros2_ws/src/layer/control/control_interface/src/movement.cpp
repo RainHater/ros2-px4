@@ -1,4 +1,5 @@
 #include "control_interface/movement.h"
+#include <rclcpp/logging.hpp>
 #include <utilities/tf2_tool.hpp>
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
@@ -55,13 +56,24 @@ void Movement::justmove(
     Waypts target,
     double v = 0.5, bool auto_angle = false)
 {
-    if(m_states.indicator == 0) { 
+    if(m_states.indicator == 0) {
         m_local.start.x = current.position[0];
         m_local.start.y = current.position[1];
         m_local.start.z = current.position[2];
-
         m_local.destination = target;
-   
+
+        if (current.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_NED){
+            RCLCPP_INFO(rclcpp::get_logger(
+                m_log_name),
+                "当前为 NED 坐标系"
+            );
+        }else if (current.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD){
+            RCLCPP_INFO(rclcpp::get_logger(
+                m_log_name),
+                "当前为 FRD 坐标系"
+            );
+        }
+        
         double distancex = m_local.destination.x - m_local.start.x;
         double distancey = m_local.destination.y - m_local.start.y;
         double distancez = m_local.destination.z - m_local.start.z;
@@ -207,6 +219,7 @@ bool Movement::land_mode(
             auto dist_bottom = local_position.get_msg().dist_bottom;
             auto dist_bottom_valid = local_position.get_msg().dist_bottom_valid;
             auto start_dist_bottom = local_position.get_first_msg().dist_bottom;
+            auto baro_height = local_position.get_first_msg().dist_bottom;
 
             pose.position[0] = m_land.start_position.x;
             pose.position[1] = m_land.start_position.y;
