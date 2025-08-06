@@ -1,5 +1,6 @@
 #include "control_interface/movement.h"
 #include <rclcpp/logging.hpp>
+#include <utilities/geo_tool.hpp>
 #include <utilities/tf2_tool.hpp>
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
@@ -49,25 +50,59 @@ void Movement::switchflymode(
     );
 }
 
+bool move_to_gps_target(
+    double lat, double lon, double alt,
+    px4_msgs::msg::VehicleGlobalPosition sub_gps,
+    px4_msgs::msg::TrajectorySetpoint &pub_pose)
+{      
+    double position_tolerance = 0.5;
+    double altitude_tolerance = 0.8;
+    double c_lat = sub_gps.lat * 1e-7;
+    double c_lon = sub_gps.lon * 1e-7;
+
+    double cur_x, cur_y;
+    double tgt_x, tgt_y;
+    geo_tool::gps_to_local(
+        c_lat, c_lon, 
+        c_lat, c_lon, 
+        cur_x, cur_y
+    );
+    geo_tool::gps_to_local(
+        c_lat, c_lon, 
+        lat, lon, 
+        tgt_x, tgt_y
+    );
+    pub_pose.position[0] = tgt_y;
+    pub_pose.position[1] = tgt_x;
+    pub_pose.position[2] = -(lat - sub_gps.alt);
+
+    double dx = tgt_x - cur_x;
+    double dy = tgt_y - cur_y;
+    double dz = std::abs(alt - sub_gps.alt);
+    double dist_xy = std::sqrt(dx * dx + dy * dy);
+
+    return (dist_xy < position_tolerance && dz < altitude_tolerance);
+}
+
 void Movement::justmove(
-    px4_msgs::msg::VehicleOdometry current, 
-    px4_msgs::msg::TrajectorySetpoint &pose,
+    px4_msgs::msg::VehicleOdometry sub_pose, 
+    px4_msgs::msg::TrajectorySetpoint &pub_pose,
     rclcpp::Time instant_time,
     Waypts target,
     double v = 0.5, bool auto_angle = false)
 {
     if(m_states.indicator == 0) {
-        m_local.start.x = current.position[0];
-        m_local.start.y = current.position[1];
-        m_local.start.z = current.position[2];
+        m_local.start.x = sub_pose.position[0];
+        m_local.start.y = sub_pose.position[1];
+        m_local.start.z = sub_pose.position[2];
         m_local.destination = target;
 
-        if (current.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_NED){
+        if (sub_pose.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_NED){
             RCLCPP_INFO(rclcpp::get_logger(
                 m_log_name),
                 "当前为 NED 坐标系"
             );
-        }else if (current.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD){
+        }else if (sub_pose.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD){
             RCLCPP_INFO(rclcpp::get_logger(
                 m_log_name),
                 "当前为 FRD 坐标系"
@@ -87,7 +122,7 @@ void Movement::justmove(
             m_velocity.dw = atan2(m_velocity.vy, m_velocity.vx);
         }else {
             tf2_tool::EulerAngles angle;
-            tf2_tool::get_euler_angles(current, angle);
+            tf2_tool::get_euler_angles(sub_pose, angle);
             m_velocity.dw = angle.yaw;
         }
      
@@ -98,7 +133,7 @@ void Movement::justmove(
             "控制开始"
         );
     }
-    switchflymode(instant_time, current);
+    switchflymode(instant_time, sub_pose);
 
     m_velocity.dt = instant_time.seconds() - m_time.start;
 
@@ -118,25 +153,25 @@ void Movement::justmove(
         out_y = limit_to_destination(out_y, m_velocity.vy, m_local.destination.y);
         out_z = limit_to_destination(out_z, m_velocity.vz, m_local.destination.z);
         
-        pose.position[0] = out_x;
-        pose.position[1] = out_y;
-        pose.position[2] = out_z;
-        pose.yaw = m_velocity.dw;
+        pub_pose.position[0] = out_x;
+        pub_pose.position[1] = out_y;
+        pub_pose.position[2] = out_z;
+        pub_pose.yaw = m_velocity.dw;
 
         RCLCPP_INFO(rclcpp::get_logger(
             m_log_name), 
             "position[0]: %f, position[1]: %f, position[2]: %f",
-            pose.position[0],
-            pose.position[1],
-            pose.position[2]
+            pub_pose.position[0],
+            pub_pose.position[1],
+            pub_pose.position[2]
         );
 
         RCLCPP_INFO(rclcpp::get_logger(
             m_log_name), 
             "current[0]: %f, current[1]: %f, current[2]: %f",
-            current.position[0],
-            current.position[1],
-            current.position[2]
+            sub_pose.position[0],
+            sub_pose.position[1],
+            sub_pose.position[2]
         );
     }else {
         m_states.indicator = 0;
@@ -144,53 +179,53 @@ void Movement::justmove(
 }
 
 void Movement::move_by_offset(
-    px4_msgs::msg::VehicleOdometry current, 
-    px4_msgs::msg::TrajectorySetpoint &pose,
+    px4_msgs::msg::VehicleOdometry sub_pose, 
+    px4_msgs::msg::TrajectorySetpoint &pub_pose,
     rclcpp::Time instant_time,
     Offset target,
     double v = 0.5, double angle = 0.0)
 {
     tf2_tool::EulerAngles angles;
-    tf2_tool::get_euler_angles(current, angles);
+    tf2_tool::get_euler_angles(sub_pose, angles);
     float yaw = geo_tool::normalize_angle(angles.yaw + geo_tool::deg2rad(angle));
     float dx = target.forward * std::cos(yaw) - target.right * std::sin(yaw);
     float dy = target.forward * std::sin(yaw) + target.right * std::cos(yaw);
     float dz = -target.up;
 
     Waypts end;
-    end.x = (current.position[0] + dx);
-    end.y = (current.position[1] + dy);
-    end.z = (current.position[2] + dz);
-    justmove(current, pose, instant_time, end, v, true);
+    end.x = (sub_pose.position[0] + dx);
+    end.y = (sub_pose.position[1] + dy);
+    end.z = (sub_pose.position[2] + dz);
+    justmove(sub_pose, pub_pose, instant_time, end, v, true);
 }
 
 void Movement::change_height(
-    px4_msgs::msg::VehicleOdometry current, 
-    px4_msgs::msg::TrajectorySetpoint &pose,
+    px4_msgs::msg::VehicleOdometry sub_pose, 
+    px4_msgs::msg::TrajectorySetpoint &pub_pose,
     rclcpp::Time instant_time,
     double high,
     double v = 0.5)
 {
     Waypts target = {0, 0, -high};
 
-    justmove(current, pose, instant_time, target, v, false);
+    justmove(sub_pose, pub_pose, instant_time, target, v, false);
 }
 
 bool Movement::land_mode(
     double v,
     ModeControl mode_control,
     rclcpp::Time instant_time,
-    common_msgs::msg::ArmOffboardStatus px4_mode,
-    px4_msgs::msg::VehicleOdometry current_pose,
-    px4_msgs::msg::TrajectorySetpoint &pose,
-    common_msgs::msg::ArmOffboardStatus &px4_mode_pub,
+    common_msgs::msg::ArmOffboardStatus sub_px4_mode,
+    px4_msgs::msg::VehicleOdometry sub_pose,
+    px4_msgs::msg::TrajectorySetpoint &pub_pose,
+    common_msgs::msg::ArmOffboardStatus &pub_px4_mode,
     TopicListener<px4_msgs::msg::VehicleLocalPosition> local_position)
 {   
     bool finish = false;
 
     switch(m_land.state){
         case 0:{
-            m_land.start_state = px4_mode;
+            m_land.start_state = sub_px4_mode;
             m_land.state = 1;
             break;
         }
@@ -198,13 +233,13 @@ bool Movement::land_mode(
             mode_control.unlock(
                 ARM_ENABLE,
                 (POSITION | VELOCITY),
-                px4_mode, px4_mode_pub
+                sub_px4_mode, pub_px4_mode
             );
             if (mode_control.wait_busy()){
                 tf2_tool::EulerAngles angle;
-                tf2_tool::get_euler_angles(current_pose, angle);
-                m_land.start_position.x = current_pose.position[0];
-                m_land.start_position.y = current_pose.position[1];
+                tf2_tool::get_euler_angles(sub_pose, angle);
+                m_land.start_position.x = sub_pose.position[0];
+                m_land.start_position.y = sub_pose.position[1];
                 m_land.dw = angle.yaw;
                 m_land.state = 2;
                 RCLCPP_INFO(rclcpp::get_logger(
@@ -221,13 +256,13 @@ bool Movement::land_mode(
             auto start_dist_bottom = local_position.get_first_msg().dist_bottom;
             auto baro_height = local_position.get_first_msg().dist_bottom;
 
-            pose.position[0] = m_land.start_position.x;
-            pose.position[1] = m_land.start_position.y;
-            pose.position[2] = NAN;
-            pose.velocity[0] = NAN;
-            pose.velocity[1] = NAN;
-            pose.velocity[2] = v;
-            pose.yaw = m_land.dw;
+            pub_pose.position[0] = m_land.start_position.x;
+            pub_pose.position[1] = m_land.start_position.y;
+            pub_pose.position[2] = NAN;
+            pub_pose.velocity[0] = NAN;
+            pub_pose.velocity[1] = NAN;
+            pub_pose.velocity[2] = v;
+            pub_pose.yaw = m_land.dw;
             if (dist_bottom_valid && dist_bottom < (start_dist_bottom-0.05)){
                 m_land.start_time = instant_time.seconds();
                 m_land.state = 3;
@@ -245,7 +280,7 @@ bool Movement::land_mode(
         }
         case 3:{
             if (instant_time.seconds() - m_land.start_time >= 3){
-                px4_mode_pub.offboard = m_land.start_state.offboard;
+                pub_px4_mode.offboard = m_land.start_state.offboard;
                 m_land.state = 4;
             }
             break;
