@@ -11,9 +11,6 @@
 #include <px4_msgs/msg/vehicle_status.hpp>
 #include <px4_msgs/msg/battery_status.hpp>
 
-#include <geometry_msgs/msg/pose.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-
 #include "common_msgs/msg/arm_offboard_status.hpp"
 
 #include "utilities/topic_tool.hpp"

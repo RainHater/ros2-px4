@@ -1,7 +1,6 @@
 #ifndef _SIMPLE_INDOOR_CONTROL_TASK_H
 #define _SIMPLE_INDOOR_CONTROL_TASK_H
 
-#include <identify/msg/detail/yolo_detections__struct.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <px4_msgs/msg/trajectory_setpoint.hpp>

@@ -11,9 +11,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(rclcpp_action REQUIRED)
 find_package(px4_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
 find_package(utilities REQUIRED)
 find_package(control_interface REQUIRED)
@@ -41,9 +39,7 @@ function(register_node target_name)
   add_executable(${target_name} src/${target_name}.cpp)
   ament_target_dependencies(${target_name}
     rclcpp
-    rclcpp_action
     px4_msgs 
-    geometry_msgs
     common_msgs
     utilities
     control_interface

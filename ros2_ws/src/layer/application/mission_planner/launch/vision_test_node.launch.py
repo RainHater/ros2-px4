@@ -6,6 +6,16 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 
 def generate_launch_description():
+    mipi_detect = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('mipi_detect'),
+                'launch',
+                'detect.launch.py'
+            ])
+        )
+    )
+
     mission_planner = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
@@ -24,6 +34,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        mipi_detect,
         mission_planner,
         vision_test_node,
     ])

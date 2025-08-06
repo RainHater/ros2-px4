@@ -10,7 +10,8 @@ constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD
 
 VisionTestNode::VisionTestNode()
     : rclcpp::Node("vision_test_node")
-{
+{   
+    m_fly = IDLE;
     RCLCPP_INFO(get_logger(), "vision_test_node 节点启动...");
 }
 
@@ -86,32 +87,25 @@ void VisionTestNode::task_loop(){
         }
 
         case Hover:{
-            auto detection = m_sub.yolo_detections.get_first_msg().detections[0];
-            RCLCPP_INFO(
-                get_logger(), 
-                "类别: %s, 置信度: %f"
-                "cx: %d, cy: %d",
-                detection.target_name.c_str(),
-                detection.confidence,
-                detection.cx, detection.cy
-            );
-            calculate_yaw(
-                detection.cx, 
-                detection.image_width, 100, 
-                m_sub.vehicle_odometry.get_msg(), 
-                m_pub_msgs.trajectory_setpoint
-            );
-            // m_interface.movement.move_by_offset(
-            //     m_sub.vehicle_odometry.get_msg(),
-            //     m_pub_msgs.trajectory_setpoint,
-            //     get_clock()->now(),
-            //     {0, 0.5, 0},
-            //     0.25, true
-            // );
-            // if (m_interface.movement.wait_busy()){
-            //     m_fly = LAND;
-            //     RCLCPP_INFO(get_logger(), "徘徊完成!");
-            // }
+            auto has_received = m_sub.yolo_detections.has_received();
+            if (has_received){
+                auto detection = m_sub.yolo_detections.get_msg().detections[0];
+                RCLCPP_INFO(
+                    get_logger(), 
+                    "类别: %s, 置信度: %f"
+                    "cx: %d, cy: %d",
+                    detection.target_name.c_str(),
+                    detection.confidence,
+                    detection.cx, detection.cy
+                );
+                calculate_yaw(
+                    detection.cx, 
+                    detection.image_width, 100, 
+                    m_sub.vehicle_odometry.get_msg(), 
+                    m_pub_msgs.trajectory_setpoint
+                );
+            }
+            RCLCPP_INFO(get_logger(), "has_received: %d", has_received);
             break;
         }
         case LAND:{

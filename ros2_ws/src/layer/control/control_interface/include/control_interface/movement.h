@@ -3,8 +3,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <geometry_msgs/msg/pose_stamped.hpp>
-
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Eigen>
 #include <eigen3/Eigen/Dense>
@@ -19,7 +17,7 @@
 #include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
 #include "utilities/tf2_tool.hpp"
-#include  "utilities/geo_tool.hpp"
+#include "utilities/geo_tool.hpp"
 
 #include "control_interface/mode_control.h"
 

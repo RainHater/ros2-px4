@@ -11,10 +11,8 @@
 
   <depend>rclcpp</depend>
   <depend>px4_msgs</depend>
-  <depend>geometry_msgs</depend>
   <depend>common_msgs</depend>
   <depend>utilities</depend>
-  <depend>rclcpp_action</depend>
   <depend>control_interface</depend>
   <depend>identify</depend>
 
