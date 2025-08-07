@@ -8,7 +8,7 @@ constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD
 RoomControlNode::RoomControlNode()
     : rclcpp::Node("room_control_node")
 {   
-    m_fly = Hover;
+    m_fly = IDLE;
     RCLCPP_INFO(get_logger(), "room_control_node 节点启动...");
 }
 
@@ -33,6 +33,9 @@ void RoomControlNode::init_pub(){
 }
 
 void RoomControlNode::init_sub(){
+    rclcpp::QoS qos(rclcpp::KeepLast(10));
+    qos.best_effort();
+
     m_sub.offboard_mode.subscribe(
         shared_from_this(), 
         topic_out::PX4_MODE, 10
@@ -40,7 +43,7 @@ void RoomControlNode::init_sub(){
 
     m_sub.vehicle_odometry.subscribe(
         shared_from_this(), 
-        topic_out::VEHICLE_ODOMETRY, 10
+        topic_out::VEHICLE_ODOMETRY, qos
     );
 
     m_sub.local_position.subscribe(

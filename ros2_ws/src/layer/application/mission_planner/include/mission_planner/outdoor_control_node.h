@@ -1,0 +1,66 @@
+#ifndef _OUTDOOR_CONTROl_NODE_H
+#define _OUTDOOR_CONTROl_NODE_H
+
+#include <px4_msgs/msg/detail/vehicle_global_position__struct.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <px4_msgs/msg/trajectory_setpoint.hpp>
+#include <px4_msgs/msg/vehicle_odometry.hpp>
+
+#include "common_msgs/msg/arm_offboard_status.hpp"
+
+#include "utilities/topic_tool.hpp"
+#include "utilities/topic_name.hpp"
+
+#include "control_interface/mode_control.h"
+#include "control_interface/gps_movement.h"
+
+class OutdoorControlNode : public rclcpp::Node{
+public:
+    OutdoorControlNode();
+    void initialize();
+protected:
+    void init_pub();
+    void init_sub();
+protected:
+    void task_loop();
+
+private:
+    enum FlyStep{
+        IDLE,
+        RISE,
+        Hover,
+        LAND,
+        END,
+    }; 
+
+    struct PubInfo{
+        rclcpp::Publisher<common_msgs::msg::ArmOffboardStatus>::SharedPtr offboard_mode;
+        rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr trajectory_setpoint;
+    };
+
+    struct SubInfo{
+        TopicListener<common_msgs::msg::ArmOffboardStatus> offboard_mode;
+        TopicListener<px4_msgs::msg::VehicleOdometry> vehicle_odometry;
+        TopicListener<px4_msgs::msg::VehicleGlobalPosition> vehicle_global_position;
+    };
+
+    struct PubMsgInfo{
+        common_msgs::msg::ArmOffboardStatus offboard_mode;
+        px4_msgs::msg::TrajectorySetpoint trajectory_setpoint;
+    };
+
+    struct InterfaceInfo{
+        ModeControl mode_control;
+        GPSMovement gps_movement;
+    };
+private:
+    rclcpp::TimerBase::SharedPtr m_timer;
+    FlyStep m_fly;
+    PubInfo m_pub;
+    SubInfo m_sub;
+    PubMsgInfo m_pub_msgs;
+    InterfaceInfo m_interface;
+};
+
+#endif

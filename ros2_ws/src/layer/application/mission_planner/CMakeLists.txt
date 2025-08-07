@@ -49,5 +49,7 @@ function(register_node target_name)
 endfunction()
 
 register_node(vision_test_node)
+register_node(room_control_node)
+register_node(outdoor_control_node)
 
 ament_package()

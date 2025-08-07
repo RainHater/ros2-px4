@@ -13,7 +13,7 @@ public:
     ModeControl();
     void unlock(
         uint8_t arm_mode,
-        uint8_t offboard_mode,
+        uint16_t offboard_mode,
         common_msgs::msg::ArmOffboardStatus current,
         common_msgs::msg::ArmOffboardStatus &pub_msg
     );
@@ -25,7 +25,7 @@ public:
 protected:
     void set_mode(
         uint8_t target_arm,
-        uint8_t target_offboard,
+        uint16_t target_offboard,
         const common_msgs::msg::ArmOffboardStatus &current,
         common_msgs::msg::ArmOffboardStatus &pub_msg,
         const std::string &action_desc

@@ -37,6 +37,7 @@ set(ALL_DEPENDENCIES
 set(ALL_SRC
   src/movement.cpp
   src/mode_control.cpp
+  src/gps_movement.cpp
 )
 
 include_directories(

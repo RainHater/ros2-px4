@@ -10,6 +10,7 @@
 #include <px4_msgs/msg/vehicle_control_mode.hpp>
 #include <px4_msgs/msg/vehicle_status.hpp>
 #include <px4_msgs/msg/battery_status.hpp>
+#include <px4_msgs/msg/navigator_mission_item.hpp>
 
 #include "common_msgs/msg/arm_offboard_status.hpp"
 
@@ -28,6 +29,8 @@ typedef enum {
     ARMING,                     // 发送解锁（解锁电机）命令，准备起飞
     WAITING_ARM_CONFIRM,        // 等待飞控确认已成功解锁
     READY,                      // 已解锁且处于 Offboard 模式，准备执行飞行任务
+    NAV_WAYPOINT,               //飞航点
+    WAITING_WAYPOINT_REACHED,   //等待飞到航点
     FAILED                      // 初始化失败，可能需要重试或错误处理
 } FlightInitState;
 
@@ -52,7 +55,16 @@ private:
     //Arm上锁
     void disarm();  
     //发布一个 PX4 的 VehicleCommand 指令
-    void publish_vehicle_command(uint16_t command, float param1 = 0.0, float param2 = 0.0);
+    void publish_vehicle_command(
+        uint16_t command,
+        float param1 = 0.0,
+        float param2 = 0.0,
+        float param3 = 0.0,
+        float param4 = 0.0,
+        float param5 = 0.0,
+        float param6 = 0.0,
+        float param7 = 0.0
+    );
 protected:
     struct PubInfo{
         rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command;

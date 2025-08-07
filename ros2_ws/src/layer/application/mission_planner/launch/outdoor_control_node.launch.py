@@ -3,18 +3,27 @@ from launch.substitutions import PathJoinSubstitution
 from launch.actions import IncludeLaunchDescription
 from launch_ros.substitutions import FindPackageShare
 from launch import LaunchDescription
+from launch_ros.actions import Node
 
 def generate_launch_description():
-    control_motion = IncludeLaunchDescription(
+    mission_planner = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
-                FindPackageShare('control_motion'),
+                FindPackageShare('mission_planner'),
                 'launch',
-                'control_motion.launch.py'
+                'mission_planner.launch.py'
             ])
         )
     )
 
+    outdoor_control_node = Node(
+        package='mission_planner',
+        executable='outdoor_control_node',
+        name='outdoor_control_node',
+        output='screen',
+    )
+
     return LaunchDescription([
-        control_motion
+        mission_planner,
+        outdoor_control_node,
     ])
