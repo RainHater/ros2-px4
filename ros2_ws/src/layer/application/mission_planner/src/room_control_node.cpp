@@ -28,7 +28,7 @@ void RoomControlNode::init_pub(){
     );
 
     m_pub.trajectory_setpoint = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
-        topic_in::PX4_TRAJECTORY_SETPOINT, 10
+        topic_px4_in::PX4_TRAJECTORY_SETPOINT, 10
     );
 }
 
@@ -43,12 +43,12 @@ void RoomControlNode::init_sub(){
 
     m_sub.vehicle_odometry.subscribe(
         shared_from_this(), 
-        topic_out::VEHICLE_ODOMETRY, qos
+        topic_px4_out::VEHICLE_ODOMETRY, qos
     );
 
     m_sub.local_position.subscribe(
         shared_from_this(),
-        topic_out::VEHICLE_LOCAL_POSITION, 10
+        topic_px4_out::VEHICLE_LOCAL_POSITION, 10
     );
 }
 

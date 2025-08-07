@@ -1,4 +1,5 @@
 #include "control_motion/flight_mode_manager_node.h"
+#include <cmath>
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
@@ -35,10 +36,13 @@ void FlightModeManagerNode::initialize(){
 
 void FlightModeManagerNode::init_publisher(){
     m_pub.offboard_control_mode = create_publisher<px4_msgs::msg::OffboardControlMode>(
-        topic_in::OFFBOARD_CONTROL_MODE, 10);
+        topic_px4_in::OFFBOARD_CONTROL_MODE, 10);
 
     m_pub.vehicle_command = create_publisher<px4_msgs::msg::VehicleCommand>(
-        topic_in::VEHICLE_COMMAND, 10);
+        topic_px4_in::VEHICLE_COMMAND, 10);
+
+    m_pub.navigator_mission_item = create_publisher<px4_msgs::msg::NavigatorMissionItem>(
+        topic_px4_in::MISSION_ITEM, 10);
 
     m_pub.px4_mode_status_broadcaster = create_publisher<common_msgs::msg::ArmOffboardStatus>(
         topic_out::PX4_MODE, 10);
@@ -55,12 +59,12 @@ void FlightModeManagerNode::init_subscription(){
 
     m_arm_offboard_mode.px4_mode.subscribe(
         shared_from_this(), 
-        topic_out::VEHICLE_STATUS, qos
+        topic_px4_out::VEHICLE_STATUS, qos
     );
 
     m_sub.battery_status.subscribe(
         shared_from_this(), 
-        topic_out::BATTERY_STATUS, qos
+        topic_px4_out::BATTERY_STATUS, qos
     );
 }
 
@@ -88,7 +92,7 @@ void FlightModeManagerNode::arm_and_set_offboard() {
             publish_px4_offboard_mode();
             mode.setpoint_counter++;
             if (mode.setpoint_counter >= 10) {
-                publish_vehicle_command(VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_OFFBOARD);
+                pub_vehicle_command(VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_OFFBOARD);
                 m_flight_state = WAITING_OFFBOARD_CONFIRM;
                 RCLCPP_INFO(get_logger(), "已发送10次 setpoint");
             }
@@ -112,7 +116,7 @@ void FlightModeManagerNode::arm_and_set_offboard() {
         }
 
         case ARMING: {
-            publish_vehicle_command(VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
+            pub_vehicle_command(VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
             m_flight_state = WAITING_ARM_CONFIRM;
             break;
         }
@@ -145,31 +149,32 @@ void FlightModeManagerNode::arm_and_set_offboard() {
                 return;
             if (target_mode.arm == ARM_DISABLED){
                 disarm();
-                publish_vehicle_command(VEHICLE_CMD_DO_SET_MODE, 1, px4_msgs::msg::VehicleCommand::VEHICLE_CMD_NAV_LAND);
+                pub_vehicle_command(VEHICLE_CMD_DO_SET_MODE, 1, px4_msgs::msg::VehicleCommand::VEHICLE_CMD_NAV_LAND);
                 m_flight_state = IDLE;
                 RCLCPP_INFO(get_logger(), "已上锁 arm");
                 return;
             }
 
             if (target_mode.offboard == WAYPOINT){
-                publish_vehicle_command(
-                    VEHICLE_CMD_NAV_WAYPOINT,
-                    0.0,   // Hold time
-                    5.0,   // Acceptance radius
-                    0.0,   // Pass radius
-                    NAN,   // Yaw
-                    target_mode.lat,    // Lat
-                    target_mode.lon,    // Lon
-                    target_mode.alt     // Altitude AMSL
-                );
-                RCLCPP_INFO(
-                    get_logger(), 
-                    "切换为航点飞行模式, "
-                    "lat: %f, lon: %f, alt: %f",
-                    target_mode.lat,
-                    target_mode.lon,
-                    target_mode.alt
-                );
+                
+                // pub_vehicle_command(
+                //     VEHICLE_CMD_NAV_WAYPOINT,
+                //     0.0,   // Hold time
+                //     5.0,   // Acceptance radius
+                //     0.0,   // Pass radius
+                //     NAN,   // Yaw
+                //     target_mode.lat,    // Lat
+                //     target_mode.lon,    // Lon
+                //     target_mode.alt     // Altitude AMSL
+                // );
+                // RCLCPP_INFO(
+                //     get_logger(), 
+                //     "切换为航点飞行模式, "
+                //     "lat: %f, lon: %f, alt: %f",
+                //     target_mode.lat,
+                //     target_mode.lon,
+                //     target_mode.alt
+                // );
                 m_flight_state = NAV_WAYPOINT;
             }
             mode.current = target_mode;
@@ -186,7 +191,7 @@ void FlightModeManagerNode::arm_and_set_offboard() {
                 );
                 m_flight_state = WAITING_WAYPOINT_REACHED;
             }else {
-                publish_vehicle_command(
+                pub_vehicle_command(
                     VEHICLE_CMD_NAV_WAYPOINT,
                     0.0,   // Hold time
                     5.0,   // Acceptance radius
@@ -213,7 +218,7 @@ void FlightModeManagerNode::arm_and_set_offboard() {
         }
         case WAITING_WAYPOINT_REACHED: {
             if (target_mode.target_reached == true){
-                publish_vehicle_command(
+                pub_vehicle_command(
                 VEHICLE_CMD_DO_SET_MODE,
                 1,
                 PX4_CUSTOM_MAIN_MODE_OFFBOARD
@@ -261,7 +266,7 @@ void FlightModeManagerNode::publish_current_mode(){
     m_pub.px4_mode_status_broadcaster->publish(msg);
 }
 
-void FlightModeManagerNode::publish_vehicle_command(
+void FlightModeManagerNode::pub_vehicle_command(
     uint16_t command,
     float param1,
     float param2,
@@ -290,11 +295,28 @@ void FlightModeManagerNode::publish_vehicle_command(
 }
 
 void FlightModeManagerNode::arm() {
-    publish_vehicle_command(VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
+    pub_vehicle_command(VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
     RCLCPP_DEBUG(get_logger(), "Arm command send");
 }
 
 void FlightModeManagerNode::disarm() {
-    publish_vehicle_command(VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
+    pub_vehicle_command(VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
     RCLCPP_DEBUG(get_logger(), "Disarm command send");
+}
+
+void FlightModeManagerNode::pub_waypoint(float lat, float lon, float alt){
+    px4_msgs::msg::NavigatorMissionItem msg{};
+    msg.instance_count = 1;
+    msg.sequence_current = 0;
+    msg.nav_cmd = 16;
+
+    msg.latitude = lat;
+    msg.longitude = lon;
+    msg.altitude = alt;
+
+    msg.acceptance_radius = 5.0;
+    msg.yaw = NAN;
+    msg.autocontinue = true;
+    msg.altitude_is_relative = false;
+    msg.frame = 0;
 }
