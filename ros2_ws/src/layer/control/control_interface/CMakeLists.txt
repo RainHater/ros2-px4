@@ -33,7 +33,6 @@ set(ALL_DEPENDENCIES
   px4_msgs
   common_msgs
   utilities
-  yaml-cpp
 )
 
 set(ALL_SRC
@@ -48,6 +47,10 @@ include_directories(
 add_library(${PROJECT_NAME} ${ALL_SRC})
 
 ament_target_dependencies(${PROJECT_NAME} ${ALL_DEPENDENCIES})
+
+target_link_libraries(${PROJECT_NAME}
+  yaml-cpp
+)
 
 install(
   TARGETS ${PROJECT_NAME}

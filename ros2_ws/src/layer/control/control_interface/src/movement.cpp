@@ -9,10 +9,15 @@ Movement::Movement()
 {   
     m_log_name = "控制无人机(movement.cpp)";
     m_land.state = 0;
+}
 
-    // YAML::Node config = YAML::LoadFile(yaml_path)["movement"];
-    // m_yaml.HORIZONTAL_DIST_THRESHOLD = config["HORIZONTAL_DIST_THRESHOLD"].as<float>();
-    // m_yaml.VERTICAL_DIST_THRESHOLD = config["VERTICAL_DIST_THRESHOLD"].as<float>();
+void Movement::initialize(std::string yaml_path){
+    YAML::Node config = YAML::LoadFile(yaml_path)["movement"];
+    m_yaml.HORIZONTAL_DIST_THRESHOLD = config["HORIZONTAL_DIST_THRESHOLD"].as<float>();
+    m_yaml.VERTICAL_DIST_THRESHOLD = config["VERTICAL_DIST_THRESHOLD"].as<float>();
+    m_yaml.delta = config["delta"].as<float>();
+    m_yaml.land_correction = config["land_correction"].as<float>();
+    m_yaml.land_start_time = config["land_start_time"].as<int>();
 }
 
 bool Movement::move_to_gps_target(
@@ -21,9 +26,6 @@ bool Movement::move_to_gps_target(
     px4_msgs::msg::VehicleGlobalPosition init_gps,
     px4_msgs::msg::VehicleOdometry sub_tra)
 {     
-    const float HORIZONTAL_DIST_THRESHOLD = 0.9f;
-    const float VERTICAL_DIST_THRESHOLD = 0.4f;
-
     if (m_gps_nav.state == 0){
         float x = 0.0, y = 0.0;
         double init_lat = init_gps.lat / 1e7;
@@ -51,8 +53,8 @@ bool Movement::move_to_gps_target(
 
     float horizontal_dist = std::hypot(dx, dy);
     float vertical_dist = std::abs(dz);
-    bool hor_arrive = (horizontal_dist < HORIZONTAL_DIST_THRESHOLD);
-    bool ver_arrive = (vertical_dist < VERTICAL_DIST_THRESHOLD);
+    bool hor_arrive = (horizontal_dist < m_yaml.HORIZONTAL_DIST_THRESHOLD);
+    bool ver_arrive = (vertical_dist < m_yaml.VERTICAL_DIST_THRESHOLD);
 
     pub_pose.position = convert_pose;
     pub_pose.yaw = NAN;
@@ -95,18 +97,6 @@ bool Movement::justmove(
         double distancez = m_justmove.target_pose.z - m_justmove.start_pose.z;
         double distance  = sqrt(pow(distancex,2) + pow(distancey,2) + pow(distancez,2));
 
-        // double deltax = std::abs(current.position[0] - m_justmove.target_pose.x);
-        // double deltay = std::abs(current.position[1] - m_justmove.target_pose.y);
-        // double deltaz = std::abs(current.position[2] - m_justmove.target_pose.z);
-
-        // double tolerance_x = 0.2;
-        // double tolerance_y = 0.2;
-        // double tolerance_z = 0.2;
-
-        // bool valid_delta = 0;
-        // bool valid_time = (now.seconds() - m_justmove.start_time > m_justmove.total_time);
-        // bool valid = valid_time && valid_delta;
-
         m_justmove.total_time = distance / v;
         m_justmove.vx = distancex / m_justmove.total_time;
         m_justmove.vy = distancey / m_justmove.total_time;
@@ -133,7 +123,7 @@ bool Movement::justmove(
     double deltay = sub_pose.position[1]-m_justmove.target_pose.y;
     double deltaz = sub_pose.position[2]-m_justmove.target_pose.z;
     double delta = sqrt(pow(deltax,2)+pow(deltay,2)+pow(deltaz,2));
-    bool arrive = (instant_time.seconds() - m_justmove.start_time > m_justmove.total_time) && delta < 0.42;
+    bool arrive = (instant_time.seconds() - m_justmove.start_time > m_justmove.total_time) && delta < m_yaml.delta;
 
     if(!arrive){
         double out_x = m_justmove.start_pose.x + m_justmove.dt * m_justmove.vx;
@@ -267,7 +257,7 @@ bool Movement::land_mode(
             pub_pose.velocity[1] = NAN;
             pub_pose.velocity[2] = v;
             pub_pose.yaw = m_land.dw;
-            if (dist_bottom_valid && dist_bottom < (start_dist_bottom-0.05)){
+            if (dist_bottom_valid && dist_bottom < (start_dist_bottom-m_yaml.land_correction)){
                 m_land.start_time = instant_time.seconds();
                 m_land.state = 3;
                 RCLCPP_INFO(rclcpp::get_logger(
@@ -283,7 +273,7 @@ bool Movement::land_mode(
             break;
         }
         case 3:{
-            if (instant_time.seconds() - m_land.start_time >= 3){
+            if (instant_time.seconds() - m_land.start_time >= m_yaml.land_start_time){
                 pub_px4_mode.offboard = m_land.start_state.offboard;
                 m_land.state = 4;
             }

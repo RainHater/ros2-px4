@@ -48,6 +48,8 @@ class Movement{
 public:
     Movement();
 
+    void initialize(std::string yaml_path);
+
     //飞往目标经纬度
     bool move_to_gps_target(
         double lat, double lon, float alt,
@@ -126,8 +128,11 @@ private:
     };
 
     struct YamlInfo{
-        float HORIZONTAL_DIST_THRESHOLD;
-        float VERTICAL_DIST_THRESHOLD;
+        float HORIZONTAL_DIST_THRESHOLD = 0.9;
+        float VERTICAL_DIST_THRESHOLD = 0.4;
+        float delta = 0.42;
+        float land_correction = 0.05;
+        int land_start_time = 3;
     };
 private:
     std::string m_log_name;

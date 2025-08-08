@@ -8,6 +8,10 @@ constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD
 OutdoorControlNode::OutdoorControlNode()
     : rclcpp::Node("outdoor_control_node")
 {   
+    declare_parameter<std::string>("yaml_path", "./config/app.yaml");
+
+    std::string yaml_path = get_parameter("yaml_path").as_string();
+    m_interface.movement.initialize(yaml_path);
     m_fly = IDLE;
     RCLCPP_INFO(get_logger(), "outdoor_control_node 节点启动...");
 }
