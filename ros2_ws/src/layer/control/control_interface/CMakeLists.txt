@@ -14,6 +14,7 @@ find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
 find_package(utilities REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -32,12 +33,12 @@ set(ALL_DEPENDENCIES
   px4_msgs
   common_msgs
   utilities
+  yaml-cpp
 )
 
 set(ALL_SRC
   src/movement.cpp
   src/mode_control.cpp
-  src/gps_movement.cpp
 )
 
 include_directories(

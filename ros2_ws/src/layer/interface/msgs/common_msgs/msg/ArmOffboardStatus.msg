@@ -11,14 +11,6 @@ uint16 BODY_RATE                = 0x10
 uint16 THRUST_AND_TORQUE        = 0x20
 uint16 DIRECT_ACTUATOR          = 0x40
 uint16 OFFBOARD_DISABLED        = 0x80
-uint16 WAYPOINT                 = 0x100
-
-#目标经纬度
-float64 lat
-float64 lon
-float32 alt
-#目标到达经纬度标志位
-bool target_reached
 
 uint8 arm                                   #arm 状态
 uint16 offboard                             #offboard 状态

@@ -1,101 +1,82 @@
 #include "control_interface/movement.h"
-#include <rclcpp/logging.hpp>
-#include <utilities/geo_tool.hpp>
-#include <utilities/tf2_tool.hpp>
+#include <yaml-cpp/yaml.h>
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
 constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
 
 Movement::Movement()
-{
+{   
     m_log_name = "控制无人机(movement.cpp)";
     m_land.state = 0;
+
+    // YAML::Node config = YAML::LoadFile(yaml_path)["movement"];
+    // m_yaml.HORIZONTAL_DIST_THRESHOLD = config["HORIZONTAL_DIST_THRESHOLD"].as<float>();
+    // m_yaml.VERTICAL_DIST_THRESHOLD = config["VERTICAL_DIST_THRESHOLD"].as<float>();
 }
 
-bool Movement::wait_busy() const{
-    if (!m_states.indicator)
-        return true;
-    return false;
+bool Movement::move_to_gps_target(
+    double lat, double lon, float alt,
+    px4_msgs::msg::TrajectorySetpoint &pub_pose,
+    px4_msgs::msg::VehicleGlobalPosition init_gps,
+    px4_msgs::msg::VehicleOdometry sub_tra)
+{     
+    const float HORIZONTAL_DIST_THRESHOLD = 0.9f;
+    const float VERTICAL_DIST_THRESHOLD = 0.4f;
+
+    if (m_gps_nav.state == 0){
+        float x = 0.0, y = 0.0;
+        double init_lat = init_gps.lat / 1e7;
+        double init_lon = init_gps.lon / 1e7;
+        float init_alt = init_gps.alt / 1e3;
+        
+        geo_tool::gps_to_local(
+        init_lat, init_lon,
+            lat, lon, 
+            x, y
+        );
+
+        m_gps_nav.target[0] = x;
+        m_gps_nav.target[1] = y;
+        m_gps_nav.target[2] = init_alt - alt;
+
+        m_gps_nav.state = 1;
+    }
+
+    std::array<float, 3> convert_pose = m_gps_nav.target;
+
+    float dx = convert_pose[0] - sub_tra.position[0];
+    float dy = convert_pose[1] - sub_tra.position[1];
+    float dz = convert_pose[2] - sub_tra.position[2];
+
+    float horizontal_dist = std::hypot(dx, dy);
+    float vertical_dist = std::abs(dz);
+    bool hor_arrive = (horizontal_dist < HORIZONTAL_DIST_THRESHOLD);
+    bool ver_arrive = (vertical_dist < VERTICAL_DIST_THRESHOLD);
+
+    pub_pose.position = convert_pose;
+    pub_pose.yaw = NAN;
+
+    bool arrive = hor_arrive && ver_arrive;
+    if (arrive){
+        m_gps_nav.state = 0;
+    }
+
+    return arrive;
 }
 
-void Movement::switchflymode(
-    rclcpp::Time now, 
-    px4_msgs::msg::VehicleOdometry current)
-{   
-    double deltax = current.position[0]-m_local.destination.x;
-    double deltay = current.position[1]-m_local.destination.y;
-    double deltaz = current.position[2]-m_local.destination.z;
-    double delta = sqrt(pow(deltax,2)+pow(deltay,2)+pow(deltaz,2));
-    bool valid = (now.seconds() - m_time.start > m_time.total) && delta < 0.42;
-
-    // double deltax = std::abs(current.position[0] - m_local.destination.x);
-    // double deltay = std::abs(current.position[1] - m_local.destination.y);
-    // double deltaz = std::abs(current.position[2] - m_local.destination.z);
-
-    // double tolerance_x = 0.2;
-    // double tolerance_y = 0.2;
-    // double tolerance_z = 0.2;
-
-    // bool valid_delta = 0;
-    // bool valid_time = (now.seconds() - m_time.start > m_time.total);
-    // bool valid = valid_time && valid_delta;
-
-    m_states.switchflymode = valid;
-
-    RCLCPP_INFO(rclcpp::get_logger(
-        m_log_name), 
-        "delta: %f",
-        delta
-    );
-}
-
-bool move_to_gps_target(
-    double lat, double lon, double alt,
-    px4_msgs::msg::VehicleGlobalPosition sub_gps,
-    px4_msgs::msg::TrajectorySetpoint &pub_pose)
-{      
-    double position_tolerance = 0.5;
-    double altitude_tolerance = 0.8;
-    double c_lat = sub_gps.lat * 1e-7;
-    double c_lon = sub_gps.lon * 1e-7;
-
-    double cur_x, cur_y;
-    double tgt_x, tgt_y;
-    geo_tool::gps_to_local(
-        c_lat, c_lon, 
-        c_lat, c_lon, 
-        cur_x, cur_y
-    );
-    geo_tool::gps_to_local(
-        c_lat, c_lon, 
-        lat, lon, 
-        tgt_x, tgt_y
-    );
-    pub_pose.position[0] = tgt_y;
-    pub_pose.position[1] = tgt_x;
-    pub_pose.position[2] = -(lat - sub_gps.alt);
-
-    double dx = tgt_x - cur_x;
-    double dy = tgt_y - cur_y;
-    double dz = std::abs(alt - sub_gps.alt);
-    double dist_xy = std::sqrt(dx * dx + dy * dy);
-
-    return (dist_xy < position_tolerance && dz < altitude_tolerance);
-}
-
-void Movement::justmove(
+bool Movement::justmove(
     px4_msgs::msg::VehicleOdometry sub_pose, 
     px4_msgs::msg::TrajectorySetpoint &pub_pose,
     rclcpp::Time instant_time,
     Waypts target,
     double v = 0.5, bool auto_angle = false)
 {
-    if(m_states.indicator == 0) {
-        m_local.start.x = sub_pose.position[0];
-        m_local.start.y = sub_pose.position[1];
-        m_local.start.z = sub_pose.position[2];
-        m_local.destination = target;
+    if(m_justmove.state == 0) {
+        m_justmove.start_pose.x = sub_pose.position[0];
+        m_justmove.start_pose.y = sub_pose.position[1];
+        m_justmove.start_pose.z = sub_pose.position[2];
+        m_justmove.target_pose = target;
 
         if (sub_pose.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_NED){
             RCLCPP_INFO(rclcpp::get_logger(
@@ -109,38 +90,55 @@ void Movement::justmove(
             );
         }
         
-        double distancex = m_local.destination.x - m_local.start.x;
-        double distancey = m_local.destination.y - m_local.start.y;
-        double distancez = m_local.destination.z - m_local.start.z;
+        double distancex = m_justmove.target_pose.x - m_justmove.start_pose.x;
+        double distancey = m_justmove.target_pose.y - m_justmove.start_pose.y;
+        double distancez = m_justmove.target_pose.z - m_justmove.start_pose.z;
         double distance  = sqrt(pow(distancex,2) + pow(distancey,2) + pow(distancez,2));
 
-        m_time.total = distance / v;
-        m_velocity.vx = distancex / m_time.total;
-        m_velocity.vy = distancey / m_time.total;
-        m_velocity.vz = distancez / m_time.total;
+        // double deltax = std::abs(current.position[0] - m_justmove.target_pose.x);
+        // double deltay = std::abs(current.position[1] - m_justmove.target_pose.y);
+        // double deltaz = std::abs(current.position[2] - m_justmove.target_pose.z);
+
+        // double tolerance_x = 0.2;
+        // double tolerance_y = 0.2;
+        // double tolerance_z = 0.2;
+
+        // bool valid_delta = 0;
+        // bool valid_time = (now.seconds() - m_justmove.start_time > m_justmove.total_time);
+        // bool valid = valid_time && valid_delta;
+
+        m_justmove.total_time = distance / v;
+        m_justmove.vx = distancex / m_justmove.total_time;
+        m_justmove.vy = distancey / m_justmove.total_time;
+        m_justmove.vz = distancez / m_justmove.total_time;
         if (auto_angle){
-            m_velocity.dw = atan2(m_velocity.vy, m_velocity.vx);
+            m_justmove.dw = atan2(m_justmove.vy, m_justmove.vx);
         }else {
             tf2_tool::EulerAngles angle;
             tf2_tool::get_euler_angles(sub_pose, angle);
-            m_velocity.dw = angle.yaw;
+            m_justmove.dw = angle.yaw;
         }
      
-        m_time.start = instant_time.seconds();
-        m_states.indicator = 1;
+        m_justmove.start_time = instant_time.seconds();
+        m_justmove.state = 1;
         RCLCPP_INFO(rclcpp::get_logger(
             m_log_name), 
             "控制开始"
         );
     }
-    switchflymode(instant_time, sub_pose);
 
-    m_velocity.dt = instant_time.seconds() - m_time.start;
+    m_justmove.dt = instant_time.seconds() - m_justmove.start_time;
 
-    if(!m_states.switchflymode){
-        double out_x = m_local.start.x + m_velocity.dt * m_velocity.vx;
-        double out_y = m_local.start.y + m_velocity.dt * m_velocity.vy;
-        double out_z = m_local.start.z + m_velocity.dt * m_velocity.vz;
+    double deltax = sub_pose.position[0]-m_justmove.target_pose.x;
+    double deltay = sub_pose.position[1]-m_justmove.target_pose.y;
+    double deltaz = sub_pose.position[2]-m_justmove.target_pose.z;
+    double delta = sqrt(pow(deltax,2)+pow(deltay,2)+pow(deltaz,2));
+    bool arrive = (instant_time.seconds() - m_justmove.start_time > m_justmove.total_time) && delta < 0.42;
+
+    if(!arrive){
+        double out_x = m_justmove.start_pose.x + m_justmove.dt * m_justmove.vx;
+        double out_y = m_justmove.start_pose.y + m_justmove.dt * m_justmove.vy;
+        double out_z = m_justmove.start_pose.z + m_justmove.dt * m_justmove.vz;
 
         auto limit_to_destination = [](double out, double v, double dest) -> double {
             if ((v > 0 && out > dest) || (v < 0 && out < dest)) {
@@ -149,14 +147,14 @@ void Movement::justmove(
             return out;
         };
 
-        out_x = limit_to_destination(out_x, m_velocity.vx, m_local.destination.x);
-        out_y = limit_to_destination(out_y, m_velocity.vy, m_local.destination.y);
-        out_z = limit_to_destination(out_z, m_velocity.vz, m_local.destination.z);
+        out_x = limit_to_destination(out_x, m_justmove.vx, m_justmove.target_pose.x);
+        out_y = limit_to_destination(out_y, m_justmove.vy, m_justmove.target_pose.y);
+        out_z = limit_to_destination(out_z, m_justmove.vz, m_justmove.target_pose.z);
         
         pub_pose.position[0] = out_x;
         pub_pose.position[1] = out_y;
         pub_pose.position[2] = out_z;
-        pub_pose.yaw = m_velocity.dw;
+        pub_pose.yaw = m_justmove.dw;
 
         RCLCPP_INFO(rclcpp::get_logger(
             m_log_name), 
@@ -174,11 +172,13 @@ void Movement::justmove(
             sub_pose.position[2]
         );
     }else {
-        m_states.indicator = 0;
+        m_justmove.state = 0;
     }
+
+    return arrive;
 }
 
-void Movement::move_by_offset(
+bool Movement::move_by_offset(
     px4_msgs::msg::VehicleOdometry sub_pose, 
     px4_msgs::msg::TrajectorySetpoint &pub_pose,
     rclcpp::Time instant_time,
@@ -196,10 +196,12 @@ void Movement::move_by_offset(
     end.x = (sub_pose.position[0] + dx);
     end.y = (sub_pose.position[1] + dy);
     end.z = (sub_pose.position[2] + dz);
-    justmove(sub_pose, pub_pose, instant_time, end, v, true);
+    bool arrive = justmove(sub_pose, pub_pose, instant_time, end, v, true);
+
+    return arrive;
 }
 
-void Movement::change_height(
+bool Movement::change_height(
     px4_msgs::msg::VehicleOdometry sub_pose, 
     px4_msgs::msg::TrajectorySetpoint &pub_pose,
     rclcpp::Time instant_time,
@@ -208,7 +210,9 @@ void Movement::change_height(
 {
     Waypts target = {0, 0, -high};
 
-    justmove(sub_pose, pub_pose, instant_time, target, v, false);
+    bool arrive = justmove(sub_pose, pub_pose, instant_time, target, v, false);
+
+    return arrive;
 }
 
 bool Movement::land_mode(

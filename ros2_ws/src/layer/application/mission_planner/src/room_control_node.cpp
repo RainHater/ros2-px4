@@ -18,8 +18,9 @@ void RoomControlNode::initialize(){
     init_sub();
 
     m_timer = create_wall_timer(
-            std::chrono::milliseconds(100),
-            std::bind(&RoomControlNode::task_loop, this));
+        std::chrono::milliseconds(100),
+        std::bind(&RoomControlNode::task_loop, this)
+    );
 }
 
 void RoomControlNode::init_pub(){
@@ -67,14 +68,14 @@ void RoomControlNode::task_loop(){
             break;
         }
         case RISE:{
-            m_interface.movement.change_height(
+            bool arrive = m_interface.movement.change_height(
                 m_sub.vehicle_odometry.get_msg(),
                 m_pub_msgs.trajectory_setpoint,
                 get_clock()->now(),
                 0.5,
                 0.15
             );
-            if (m_interface.movement.wait_busy()){
+            if (arrive){
                 m_fly = Hover;
                 RCLCPP_INFO(get_logger(), "上升完成!");
             }
@@ -82,14 +83,14 @@ void RoomControlNode::task_loop(){
         }
 
         case Hover:{
-            m_interface.movement.move_by_offset(
+            bool arrive = m_interface.movement.move_by_offset(
                 m_sub.vehicle_odometry.get_msg(),
                 m_pub_msgs.trajectory_setpoint,
                 get_clock()->now(),
                 {0, 0.5, 0},
                 0.25, true
             );
-            if (m_interface.movement.wait_busy()){
+            if (arrive){
                 m_fly = LAND;
                 RCLCPP_INFO(get_logger(), "徘徊完成!");
             }

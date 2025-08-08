@@ -18,7 +18,7 @@ inline double deg2rad(double deg){
 //GPS → ENU 简易转换函数（参考点 + 当前点 → x, y）
 inline void gps_to_local(double lat0, double lon0, 
     double lat, double lon, 
-    double &x, double &y)
+    float &x, float &y)
 {
     //简化的球面近似方法（ENU坐标）
     double dLat = deg2rad(lat - lat0);

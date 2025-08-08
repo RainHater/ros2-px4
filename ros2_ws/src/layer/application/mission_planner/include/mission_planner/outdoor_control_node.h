@@ -13,7 +13,7 @@
 #include "utilities/topic_name.hpp"
 
 #include "control_interface/mode_control.h"
-#include "control_interface/gps_movement.h"
+#include "control_interface/movement.h"
 
 class OutdoorControlNode : public rclcpp::Node{
 public:
@@ -52,7 +52,7 @@ private:
 
     struct InterfaceInfo{
         ModeControl mode_control;
-        GPSMovement gps_movement;
+        Movement movement;
     };
 private:
     rclcpp::TimerBase::SharedPtr m_timer;

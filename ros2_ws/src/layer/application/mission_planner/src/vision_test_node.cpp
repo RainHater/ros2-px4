@@ -21,8 +21,9 @@ void VisionTestNode::initialize(){
     init_sub();
 
     m_timer = create_wall_timer(
-            std::chrono::milliseconds(100),
-            std::bind(&VisionTestNode::task_loop, this));
+        std::chrono::milliseconds(100),
+        std::bind(&VisionTestNode::task_loop, this)
+    );
 }
 
 void VisionTestNode::init_pub(){
@@ -72,14 +73,14 @@ void VisionTestNode::task_loop(){
             break;
         }
         case RISE:{
-            m_interface.movement.change_height(
+            bool arrive = m_interface.movement.change_height(
                 m_sub.vehicle_odometry.get_msg(),
                 m_pub_msgs.trajectory_setpoint,
                 get_clock()->now(),
                 0.5,
                 0.15
             );
-            if (m_interface.movement.wait_busy()){
+            if (arrive){
                 m_fly = Hover;
                 RCLCPP_INFO(get_logger(), "上升完成!");
             }

@@ -48,17 +48,16 @@ class Movement{
 public:
     Movement();
 
-    bool wait_busy() const;
-
     //飞往目标经纬度
     bool move_to_gps_target(
-        double lat, double lon, double alt,
-        px4_msgs::msg::VehicleGlobalPosition sub_gps,
-        px4_msgs::msg::TrajectorySetpoint &pub_pose
+        double lat, double lon, float alt,
+        px4_msgs::msg::TrajectorySetpoint &pub_pose,
+        px4_msgs::msg::VehicleGlobalPosition init_gps,
+        px4_msgs::msg::VehicleOdometry sub_tra
     );
 
     //根据局部整体坐标移动
-    void justmove(
+    bool justmove(
         px4_msgs::msg::VehicleOdometry sub_pose, 
         px4_msgs::msg::TrajectorySetpoint &pub_pose,
         rclcpp::Time instant_time,
@@ -67,7 +66,7 @@ public:
     );
 
     //根据当前坐标进行移动
-    void move_by_offset(
+    bool move_by_offset(
         px4_msgs::msg::VehicleOdometry sub_pose, 
         px4_msgs::msg::TrajectorySetpoint &pub_pose,
         rclcpp::Time instant_time,
@@ -76,7 +75,7 @@ public:
     );
 
     //起飞高度
-    void change_height(
+    bool change_height(
         px4_msgs::msg::VehicleOdometry sub_pose, 
         px4_msgs::msg::TrajectorySetpoint &pub_pose,
         rclcpp::Time instant_time,
@@ -95,43 +94,8 @@ public:
         TopicListener<px4_msgs::msg::VehicleLocalPosition> local_position
     );
 
-protected:
-    void switchflymode(
-        rclcpp::Time now, 
-        px4_msgs::msg::VehicleOdometry current
-    );  
+protected: 
 private:
-    struct PubInfo{
-        rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr trajectory_setpoint;
-    };
-
-    struct SubInfo{
-        TopicListener<px4_msgs::msg::VehicleOdometry> vehicle_odometry;
-    };
-
-    struct TimeInfo{
-        double start;
-        double total;
-    };
-
-    struct VelocityProfile{
-        double dw = 0.0;
-        double vx = 0.0;
-        double vy = 0.0;
-        double vz = 0.0;
-        double dt = 0.0;
-    };
-
-    struct StatusBits{
-        int indicator;
-        bool switchflymode;
-    };
-
-    struct LocationInfo{
-        Waypts start;
-        Waypts destination;
-    };
-
     struct LandInfo{
         common_msgs::msg::ArmOffboardStatus start_state;
         Waypts start_position;
@@ -139,13 +103,38 @@ private:
         int state;
         uint64_t start_time;
     };
+
+    struct GPSInfo{
+        std::array<float, 3> target;
+        uint8_t state;
+    };
+
+    struct JustmoveInfo{
+        double dw = 0.0;
+        double vx = 0.0;
+        double vy = 0.0;
+        double vz = 0.0;
+        double dt = 0.0;
+
+        double start_time;
+        double total_time;
+
+        Waypts start_pose;
+        Waypts target_pose;
+
+        uint8_t state;
+    };
+
+    struct YamlInfo{
+        float HORIZONTAL_DIST_THRESHOLD;
+        float VERTICAL_DIST_THRESHOLD;
+    };
 private:
     std::string m_log_name;
-    StatusBits m_states;
-    TimeInfo m_time;
-    VelocityProfile m_velocity;
-    LocationInfo m_local;
     LandInfo m_land;
+    GPSInfo m_gps_nav;
+    JustmoveInfo m_justmove;
+    YamlInfo m_yaml;
 };
 
 #endif

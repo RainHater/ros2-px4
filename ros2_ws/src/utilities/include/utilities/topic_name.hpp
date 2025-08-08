@@ -22,7 +22,8 @@ namespace topic_px4_in {
     constexpr const char* VEHICLE_COMMAND               = "/fmu/in/vehicle_command";
     constexpr const char* OFFBOARD_CONTROL_MODE         = "/fmu/in/offboard_control_mode";
     constexpr const char* PX4_TRAJECTORY_SETPOINT       = "/fmu/in/trajectory_setpoint";
-    constexpr const char* MISSION_ITEM                  = "/fmu/in/mission_item";
+    constexpr const char* MISSION                       = "/fmu/in/mission";
+    constexpr const char* NAVIGATOR_MISSION_ITEM        = "/fmu/in/navigator_mission_item";
 }
 
 namespace topic_px4_out {

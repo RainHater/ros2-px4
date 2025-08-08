@@ -44,7 +44,7 @@ sudo make install
 5. 配置ros humble工具包
 ```bash
 sudo apt install ros-humble-cv-bridge ros-humble-tf2 ros-humble-tf-transformations ros-humble-vision-opencv ros-dev-tools -y
-sudo apt install python3-colcon-common-extensions -y
+sudo apt install python3-colcon-common-extensions libyaml-cpp-dev -y
 ```
 
 6. 配置python环境
@@ -147,5 +147,5 @@ sudo systemctl restart serial-getty@ttyS1.service
 sudo apt install --reinstall libstdc++-12-dev
 ```
 
-> _日期：2025-07-28_  
+> _日期：2025-08-08_  
 > _作者：xuguocai_  

@@ -1,5 +1,4 @@
 #include "mission_planner/outdoor_control_node.h"
-#include <utilities/topic_name.hpp>
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
@@ -35,6 +34,9 @@ void OutdoorControlNode::init_pub(){
 }
 
 void OutdoorControlNode::init_sub(){
+    rclcpp::QoS qos(rclcpp::KeepLast(10));
+    qos.best_effort();
+
     m_sub.offboard_mode.subscribe(
         shared_from_this(), 
         topic_out::PX4_MODE, 10
@@ -42,12 +44,12 @@ void OutdoorControlNode::init_sub(){
 
     m_sub.vehicle_odometry.subscribe(
         shared_from_this(), 
-        topic_px4_out::VEHICLE_ODOMETRY, 10
+        topic_px4_out::VEHICLE_ODOMETRY, qos
     );
 
     m_sub.vehicle_global_position.subscribe(
         shared_from_this(), 
-        topic_px4_out::VEHICLE_GLOBAL_POSITION, 10
+        topic_px4_out::VEHICLE_GLOBAL_POSITION, qos
     );
 }
 
@@ -69,50 +71,56 @@ void OutdoorControlNode::task_loop(){
             if (!m_sub.vehicle_global_position.has_received())
                 return;
 
-            auto vehicle_global_position = m_sub.vehicle_global_position.get_first_msg();
-            double lat = vehicle_global_position.lat;
-            double lon = vehicle_global_position.lon;
-            float  alt = vehicle_global_position.alt + 10;
-            // RCLCPP_INFO(
-            //     get_logger(), 
-            //     "lat: %f, lon: %f, alt: %f",
-            //     lat, lon, alt
-            // );
-            m_interface.gps_movement.move_to_gps_target(
+            auto c_gps = m_sub.vehicle_global_position.get_msg();
+            auto c_tra = m_sub.vehicle_odometry.get_msg();
+            auto init_gps = m_sub.vehicle_global_position.get_first_msg();
+            double lat = c_gps.lat / 1e7;
+            double lon = c_gps.lon / 1e7;
+            float  alt = c_gps.alt / 1e3 + 10;
+            RCLCPP_INFO(
+                get_logger(), 
+                "lat: %f, lon: %f, alt: %f",
+                lat, lon, alt
+            );
+            auto arrive = m_interface.movement.move_to_gps_target(
                 lat, lon, alt, 
-                m_sub.vehicle_global_position.get_msg(),
-                m_pub_msgs.offboard_mode
+                m_pub_msgs.trajectory_setpoint,
+                init_gps,
+                c_tra
             );
 
-            if (m_interface.gps_movement.switchflymode()){
-                RCLCPP_INFO(get_logger(), "上升完成!");
+            if (arrive){
+                m_fly = Hover;
+                RCLCPP_INFO(get_logger(), "到达目标经纬度");
             }
-            // m_interface.movement.change_height(
-            //     m_sub.vehicle_odometry.get_msg(),
-            //     m_pub_msgs.trajectory_setpoint,
-            //     get_clock()->now(),
-            //     0.5,
-            //     0.15
-            // );
-            // if (m_interface.movement.wait_busy()){
-            //     m_fly = Hover;
-            //     RCLCPP_INFO(get_logger(), "上升完成!");
-            // }
             break;
         }
 
         case Hover:{
-            // m_interface.movement.move_by_offset(
-            //     m_sub.vehicle_odometry.get_msg(),
-            //     m_pub_msgs.trajectory_setpoint,
-            //     get_clock()->now(),
-            //     {0, 0.5, 0},
-            //     0.25, true
-            // );
-            // if (m_interface.movement.wait_busy()){
-            //     m_fly = LAND;
-            //     RCLCPP_INFO(get_logger(), "徘徊完成!");
-            // }
+            if (!m_sub.vehicle_global_position.has_change())
+                return;
+            auto c_gps = m_sub.vehicle_global_position.get_msg();
+            auto c_tra = m_sub.vehicle_odometry.get_msg();
+            auto init_gps = m_sub.vehicle_global_position.get_first_msg();
+            double lat = c_gps.lat / 1e7;
+            double lon = c_gps.lon / 1e7 + 0.000001;
+            float  alt = c_gps.alt / 1e3;
+            RCLCPP_INFO(
+                get_logger(), 
+                "lat: %f, lon: %f, alt: %f",
+                lat, lon, alt
+            );
+            auto arrive = m_interface.movement.move_to_gps_target(
+                lat, lon, alt, 
+                m_pub_msgs.trajectory_setpoint,
+                init_gps,
+                c_tra
+            );
+
+            if (arrive){
+                m_fly = Hover;
+                RCLCPP_INFO(get_logger(), "到达目标经纬度");
+            }
             break;
         }
         case LAND:{
