@@ -16,6 +16,7 @@
 
 #include "control_interface/mode_control.h"
 #include "control_interface/movement.h"
+#include "control_interface/track.h"
 
 class VisionTestNode : public rclcpp::Node{
 public:
@@ -37,10 +38,11 @@ private:
     enum FlyStep{
         IDLE,
         RISE,
+        SWITCH_MODE,
         Hover,
         LAND,
         END,
-    }; 
+    };
 
     struct PubInfo{
         rclcpp::Publisher<common_msgs::msg::ArmOffboardStatus>::SharedPtr offboard_mode;
@@ -62,6 +64,7 @@ private:
     struct InterfaceInfo{
         ModeControl mode_control;
         Movement movement; 
+        Track track;
     };
 private:
     rclcpp::TimerBase::SharedPtr m_timer;

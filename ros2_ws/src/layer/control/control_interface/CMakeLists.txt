@@ -15,6 +15,7 @@ find_package(px4_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
 find_package(utilities REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(identify REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -33,11 +34,13 @@ set(ALL_DEPENDENCIES
   px4_msgs
   common_msgs
   utilities
+  identify
 )
 
 set(ALL_SRC
   src/movement.cpp
   src/mode_control.cpp
+  src/track.cpp
 )
 
 include_directories(

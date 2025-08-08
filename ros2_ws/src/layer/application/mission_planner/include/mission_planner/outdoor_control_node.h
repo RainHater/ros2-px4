@@ -43,6 +43,7 @@ private:
         TopicListener<common_msgs::msg::ArmOffboardStatus> offboard_mode;
         TopicListener<px4_msgs::msg::VehicleOdometry> vehicle_odometry;
         TopicListener<px4_msgs::msg::VehicleGlobalPosition> vehicle_global_position;
+        TopicListener<px4_msgs::msg::VehicleLocalPosition> local_position;
     };
 
     struct PubMsgInfo{

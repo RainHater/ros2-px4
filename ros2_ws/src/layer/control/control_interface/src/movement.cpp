@@ -28,9 +28,9 @@ bool Movement::move_to_gps_target(
 {     
     if (m_gps_nav.state == 0){
         float x = 0.0, y = 0.0;
-        double init_lat = init_gps.lat / 1e7;
-        double init_lon = init_gps.lon / 1e7;
-        float init_alt = init_gps.alt / 1e3;
+        double init_lat = init_gps.lat;
+        double init_lon = init_gps.lon;
+        float init_alt = init_gps.alt;
         
         geo_tool::gps_to_local(
         init_lat, init_lon,

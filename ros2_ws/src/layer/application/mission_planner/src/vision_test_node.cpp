@@ -6,6 +6,7 @@
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
 constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
+constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
 constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD_DISABLED;
 
 VisionTestNode::VisionTestNode()
@@ -81,12 +82,23 @@ void VisionTestNode::task_loop(){
                 0.15
             );
             if (arrive){
-                m_fly = Hover;
+                m_fly = SWITCH_MODE;
                 RCLCPP_INFO(get_logger(), "上升完成!");
             }
             break;
         }
-
+        case SWITCH_MODE: {
+            m_interface.mode_control.unlock(
+                ARM_ENABLE, VELOCITY, 
+                m_sub.offboard_mode.get_msg(), 
+                m_pub_msgs.offboard_mode
+            );
+            if (m_interface.mode_control.wait_busy()){
+                m_fly = Hover;
+                RCLCPP_INFO(get_logger(), "切换到速度模式!");
+            }
+            break;
+        }
         case Hover:{
             auto has_received = m_sub.yolo_detections.has_received();
             if (has_received){
@@ -99,14 +111,11 @@ void VisionTestNode::task_loop(){
                     detection.confidence,
                     detection.cx, detection.cy
                 );
-                calculate_yaw(
-                    detection.cx, 
-                    detection.image_width, 100, 
-                    m_sub.vehicle_odometry.get_msg(), 
+                m_interface.track.normal_track(
+                    detection, 
                     m_pub_msgs.trajectory_setpoint
                 );
             }
-            RCLCPP_INFO(get_logger(), "has_received: %d", has_received);
             break;
         }
         case LAND:{

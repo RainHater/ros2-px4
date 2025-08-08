@@ -55,6 +55,11 @@ void OutdoorControlNode::init_sub(){
         shared_from_this(), 
         topic_px4_out::VEHICLE_GLOBAL_POSITION, qos
     );
+
+    m_sub.local_position.subscribe(
+        shared_from_this(),
+        topic_px4_out::VEHICLE_LOCAL_POSITION, 10
+    );
 }
 
 void OutdoorControlNode::task_loop(){
@@ -72,22 +77,21 @@ void OutdoorControlNode::task_loop(){
             break;
         }
         case RISE:{
-            if (!m_sub.vehicle_global_position.has_received())
+            if (!m_sub.vehicle_global_position.has_change())
                 return;
-
             auto c_gps = m_sub.vehicle_global_position.get_msg();
             auto c_tra = m_sub.vehicle_odometry.get_msg();
             auto init_gps = m_sub.vehicle_global_position.get_first_msg();
-            double lat = c_gps.lat / 1e7;
-            double lon = c_gps.lon / 1e7;
-            float  alt = c_gps.alt / 1e3 + 10;
+            double lat = c_gps.lat;
+            double lon = c_gps.lon;
+            float  alt = c_gps.alt;
             RCLCPP_INFO(
                 get_logger(), 
-                "lat: %f, lon: %f, alt: %f",
+                "当前经纬度 lat: %f, lon: %f, alt: %f",
                 lat, lon, alt
             );
             auto arrive = m_interface.movement.move_to_gps_target(
-                lat, lon, alt, 
+                lat, lon, alt + 2, 
                 m_pub_msgs.trajectory_setpoint,
                 init_gps,
                 c_tra
@@ -106,9 +110,9 @@ void OutdoorControlNode::task_loop(){
             auto c_gps = m_sub.vehicle_global_position.get_msg();
             auto c_tra = m_sub.vehicle_odometry.get_msg();
             auto init_gps = m_sub.vehicle_global_position.get_first_msg();
-            double lat = c_gps.lat / 1e7;
-            double lon = c_gps.lon / 1e7 + 0.000001;
-            float  alt = c_gps.alt / 1e3;
+            double lat = c_gps.lat;
+            double lon = c_gps.lon + 0.00001;
+            float  alt = c_gps.alt;
             RCLCPP_INFO(
                 get_logger(), 
                 "lat: %f, lon: %f, alt: %f",
@@ -128,20 +132,20 @@ void OutdoorControlNode::task_loop(){
             break;
         }
         case LAND:{
-            // bool finish = m_interface.movement.land_mode(
-            //     0.3,
-            //     m_interface.mode_control,
-            //     get_clock()->now(),
-            //     m_sub.offboard_mode.get_msg(),
-            //     m_sub.vehicle_odometry.get_msg(),
-            //     m_pub_msgs.trajectory_setpoint,
-            //     m_pub_msgs.offboard_mode,
-            //     m_sub.local_position
-            // );
-            // if (finish){
-            //     m_fly = END;
-            //     RCLCPP_INFO(get_logger(), "降落完成!");
-            // }
+            bool finish = m_interface.movement.land_mode(
+                0.3,
+                m_interface.mode_control,
+                get_clock()->now(),
+                m_sub.offboard_mode.get_msg(),
+                m_sub.vehicle_odometry.get_msg(),
+                m_pub_msgs.trajectory_setpoint,
+                m_pub_msgs.offboard_mode,
+                m_sub.local_position
+            );
+            if (finish){
+                m_fly = END;
+                RCLCPP_INFO(get_logger(), "降落完成!");
+            }
             break;
         }
         case END:{
