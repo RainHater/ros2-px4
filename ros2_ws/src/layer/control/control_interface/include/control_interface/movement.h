@@ -48,8 +48,6 @@ class Movement{
 public:
     Movement();
 
-    void initialize(std::string yaml_path);
-
     //飞往目标经纬度
     bool move_to_gps_target(
         double lat, double lon, float alt,

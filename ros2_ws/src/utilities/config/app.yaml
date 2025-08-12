@@ -4,4 +4,3 @@ movement:
   delta: 0.42
   land_correction: 0.05
   land_start_time: 3
-  

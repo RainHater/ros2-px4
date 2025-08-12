@@ -33,7 +33,10 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include 
 )
 
-install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+install(DIRECTORY 
+  launch
+  DESTINATION share/${PROJECT_NAME}/
+)
 
 function(register_node target_name)
   add_executable(${target_name} src/${target_name}.cpp)

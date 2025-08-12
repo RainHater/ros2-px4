@@ -73,6 +73,7 @@ private:
     SubInfo m_sub;
     PubMsgInfo m_pub_msgs;
     InterfaceInfo m_interface;
+    std::string m_yaml_path;
 };
 
 #endif

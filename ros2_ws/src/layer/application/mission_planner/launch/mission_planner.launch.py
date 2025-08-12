@@ -1,5 +1,5 @@
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import PathJoinSubstitution
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
 from launch.actions import IncludeLaunchDescription
 from launch_ros.substitutions import FindPackageShare
 from launch import LaunchDescription
@@ -12,7 +12,7 @@ def generate_launch_description():
                 'launch',
                 'control_motion.launch.py'
             ])
-        )
+        ),
     )
 
     return LaunchDescription([

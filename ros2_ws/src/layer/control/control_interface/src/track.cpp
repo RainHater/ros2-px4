@@ -10,25 +10,27 @@ void Track::normal_track(
     px4_msgs::msg::TrajectorySetpoint &pub_tra)
 {   
     float image_width = detection.image_width;
-    float image_height = detection.image_height;
-    float lateral_gain = 0.5;
 
-    int cx = (detection.x_min + detection.x_max) / 2;
-    int cy = (detection.y_min + detection.y_max) / 2;
+    float dx = (detection.cx - image_width / 2) / (image_width / 2.0f);   // -1 ~ 1
 
-    float dx = (cx - image_width/2) / (image_width/2.0f);   // -1 ~ 1
-    float dy = (cy - image_height/2) / (image_height/2.0f); // -1 ~ 1
+    float yaw_angle = -dx * M_PI;  // 映射偏航角，-1~1 映射到 -π ~ π ，可根据需求调整增益和范围
 
-    float yaw_rate = -dx * 1.0f;   // gain 可调
-    float vy = -dx * lateral_gain;
-    float vz = -dy * 0.5f;
+    // 只设置目标yaw角
+    // pub_tra.position[0] = NAN;
+    // pub_tra.position[1] = NAN;
+    // pub_tra.position[2] = NAN;
 
-    pub_tra.position[0] = NAN;
-    pub_tra.position[1] = NAN;
-    pub_tra.position[2] = NAN;
-    pub_tra.velocity[0] = 0.0f;
-    pub_tra.velocity[1] = vy;
-    pub_tra.velocity[2] = vz;
-    pub_tra.yaw = NAN;
-    pub_tra.yawspeed = yaw_rate;
+    // pub_tra.velocity[0] = 0.0f;
+    // pub_tra.velocity[1] = 0.0f;
+    // pub_tra.velocity[2] = 1;
+
+    // pub_tra.yawspeed = 0.0f;
+
+    pub_tra.yaw = yaw_angle;
+    RCLCPP_INFO(rclcpp::get_logger(
+        "跟踪"), 
+        "yaw_angle: %f",
+        yaw_angle
+    );
 }
+

@@ -1,6 +1,4 @@
 #include "control_interface/mode_control.h"
-#include <rclcpp/logger.hpp>
-
 
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
 constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD_DISABLED;

@@ -1,7 +1,4 @@
 #include "mission_planner/vision_test_node.h"
-#include <rclcpp/logging.hpp>
-#include <utilities/tf2_tool.hpp>
-#include <utilities/topic_name.hpp>
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
@@ -11,7 +8,7 @@ constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD
 
 VisionTestNode::VisionTestNode()
     : rclcpp::Node("vision_test_node")
-{   
+{       
     m_fly = IDLE;
     RCLCPP_INFO(get_logger(), "vision_test_node 节点启动...");
 }
@@ -20,7 +17,7 @@ void VisionTestNode::initialize(){
 
     init_pub();
     init_sub();
-
+    
     m_timer = create_wall_timer(
         std::chrono::milliseconds(100),
         std::bind(&VisionTestNode::task_loop, this)
@@ -38,6 +35,8 @@ void VisionTestNode::init_pub(){
 }
 
 void VisionTestNode::init_sub(){
+    rclcpp::QoS qos(rclcpp::KeepLast(10));
+    qos.best_effort();
     m_sub.offboard_mode.subscribe(
         shared_from_this(), 
         topic_out::PX4_MODE, 10
@@ -45,12 +44,12 @@ void VisionTestNode::init_sub(){
 
     m_sub.vehicle_odometry.subscribe(
         shared_from_this(), 
-        topic_px4_out::VEHICLE_ODOMETRY, 10
+        topic_px4_out::VEHICLE_ODOMETRY, qos
     );
 
     m_sub.local_position.subscribe(
         shared_from_this(),
-        topic_px4_out::VEHICLE_LOCAL_POSITION, 10
+        topic_px4_out::VEHICLE_LOCAL_POSITION, qos
     );
 
     m_sub.yolo_detections.subscribe(
@@ -82,25 +81,25 @@ void VisionTestNode::task_loop(){
                 0.15
             );
             if (arrive){
-                m_fly = SWITCH_MODE;
+                m_fly = Hover;
                 RCLCPP_INFO(get_logger(), "上升完成!");
             }
             break;
         }
-        case SWITCH_MODE: {
-            m_interface.mode_control.unlock(
-                ARM_ENABLE, VELOCITY, 
-                m_sub.offboard_mode.get_msg(), 
-                m_pub_msgs.offboard_mode
-            );
-            if (m_interface.mode_control.wait_busy()){
-                m_fly = Hover;
-                RCLCPP_INFO(get_logger(), "切换到速度模式!");
-            }
-            break;
-        }
+        // case SWITCH_MODE: {
+        //     m_interface.mode_control.unlock(
+        //         ARM_ENABLE, VELOCITY, 
+        //         m_sub.offboard_mode.get_msg(), 
+        //         m_pub_msgs.offboard_mode
+        //     );
+        //     if (m_interface.mode_control.wait_busy()){
+        //         m_fly = Hover;
+        //         RCLCPP_INFO(get_logger(), "切换到速度模式!");
+        //     }
+        //     break;
+        // }
         case Hover:{
-            auto has_received = m_sub.yolo_detections.has_received();
+            auto has_received = m_sub.yolo_detections.has_change();
             if (has_received){
                 auto detection = m_sub.yolo_detections.get_msg().detections[0];
                 RCLCPP_INFO(

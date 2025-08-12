@@ -1,5 +1,7 @@
 #include "control_interface/movement.h"
+
 #include <yaml-cpp/yaml.h>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
@@ -9,15 +11,18 @@ Movement::Movement()
 {   
     m_log_name = "控制无人机(movement.cpp)";
     m_land.state = 0;
-}
 
-void Movement::initialize(std::string yaml_path){
+    std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["movement"];
     m_yaml.HORIZONTAL_DIST_THRESHOLD = config["HORIZONTAL_DIST_THRESHOLD"].as<float>();
     m_yaml.VERTICAL_DIST_THRESHOLD = config["VERTICAL_DIST_THRESHOLD"].as<float>();
     m_yaml.delta = config["delta"].as<float>();
     m_yaml.land_correction = config["land_correction"].as<float>();
     m_yaml.land_start_time = config["land_start_time"].as<int>();
+    // RCLCPP_INFO(rclcpp::get_logger(
+    //     m_log_name), 
+    //     "找到的路径: %s", yaml_path.c_str()
+    // );
 }
 
 bool Movement::move_to_gps_target(

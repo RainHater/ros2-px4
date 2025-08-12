@@ -45,6 +45,11 @@ install(
   DESTINATION include
 )
 
+install(DIRECTORY 
+  config
+  DESTINATION share/${PROJECT_NAME}/
+)
+
 # **关键：安装并导出 INTERFACE 库**
 install(
   TARGETS ${PROJECT_NAME}
