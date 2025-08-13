@@ -35,7 +35,7 @@ private:
         bool is_busy = false;
     };
 private:
-    std::string m_log_name;
+    rclcpp::Logger m_log;
     StatusBits m_states;
 };
 

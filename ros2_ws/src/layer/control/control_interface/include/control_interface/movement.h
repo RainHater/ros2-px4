@@ -133,7 +133,7 @@ private:
         int land_start_time = 3;
     };
 private:
-    std::string m_log_name;
+    rclcpp::Logger m_log;
     LandInfo m_land;
     GPSInfo m_gps_nav;
     JustmoveInfo m_justmove;

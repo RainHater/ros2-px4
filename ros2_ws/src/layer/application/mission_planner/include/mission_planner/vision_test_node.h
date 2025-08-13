@@ -53,6 +53,7 @@ private:
         TopicListener<common_msgs::msg::ArmOffboardStatus> offboard_mode;
         TopicListener<px4_msgs::msg::VehicleOdometry> vehicle_odometry;
         TopicListener<px4_msgs::msg::VehicleLocalPosition> local_position;
+        TopicListener<px4_msgs::msg::VehicleAttitude> vehicle_attitude;
         TopicListener<identify::msg::YoloDetections> yolo_detections;
     };
 

@@ -8,8 +8,8 @@ constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
 constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
 
 Movement::Movement()
+ : m_log(rclcpp::get_logger("控制无人机(movement.cpp)"))
 {   
-    m_log_name = "控制无人机(movement.cpp)";
     m_land.state = 0;
 
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
@@ -86,13 +86,11 @@ bool Movement::justmove(
         m_justmove.target_pose = target;
 
         if (sub_pose.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_NED){
-            RCLCPP_INFO(rclcpp::get_logger(
-                m_log_name),
+            RCLCPP_INFO(m_log,
                 "当前为 NED 坐标系"
             );
         }else if (sub_pose.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD){
-            RCLCPP_INFO(rclcpp::get_logger(
-                m_log_name),
+            RCLCPP_INFO(m_log,
                 "当前为 FRD 坐标系"
             );
         }
@@ -116,8 +114,7 @@ bool Movement::justmove(
      
         m_justmove.start_time = instant_time.seconds();
         m_justmove.state = 1;
-        RCLCPP_INFO(rclcpp::get_logger(
-            m_log_name), 
+        RCLCPP_INFO(m_log, 
             "控制开始"
         );
     }
@@ -151,16 +148,14 @@ bool Movement::justmove(
         pub_pose.position[2] = out_z;
         pub_pose.yaw = m_justmove.dw;
 
-        RCLCPP_INFO(rclcpp::get_logger(
-            m_log_name), 
+        RCLCPP_INFO(m_log, 
             "position[0]: %f, position[1]: %f, position[2]: %f",
             pub_pose.position[0],
             pub_pose.position[1],
             pub_pose.position[2]
         );
 
-        RCLCPP_INFO(rclcpp::get_logger(
-            m_log_name), 
+        RCLCPP_INFO(m_log, 
             "current[0]: %f, current[1]: %f, current[2]: %f",
             sub_pose.position[0],
             sub_pose.position[1],
@@ -241,8 +236,7 @@ bool Movement::land_mode(
                 m_land.start_position.y = sub_pose.position[1];
                 m_land.dw = angle.yaw;
                 m_land.state = 2;
-                RCLCPP_INFO(rclcpp::get_logger(
-                    m_log_name), 
+                RCLCPP_INFO(m_log, 
                     "切换模式成功, 开始降落, 起始 dist_bottom: %f",
                     local_position.get_first_msg().dist_bottom
                 );
@@ -265,13 +259,11 @@ bool Movement::land_mode(
             if (dist_bottom_valid && dist_bottom < (start_dist_bottom-m_yaml.land_correction)){
                 m_land.start_time = instant_time.seconds();
                 m_land.state = 3;
-                RCLCPP_INFO(rclcpp::get_logger(
-                    m_log_name), 
+                RCLCPP_INFO(m_log, 
                     "降落完成!"
                 );
             }
-            RCLCPP_INFO(rclcpp::get_logger(
-                m_log_name), 
+            RCLCPP_INFO(m_log, 
                 "当前位置 dist_bottom: %f",
                 dist_bottom
             );

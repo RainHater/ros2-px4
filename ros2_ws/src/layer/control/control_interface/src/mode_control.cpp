@@ -3,8 +3,10 @@
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
 constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD_DISABLED;
 
-ModeControl::ModeControl(){
-    m_log_name = "切换飞控模式(mode_control.cpp)";
+ModeControl::ModeControl()
+ : m_log(rclcpp::get_logger("切换飞控模式(mode_control.cpp)"))
+{
+    
 }
 
 void ModeControl::unlock(
@@ -45,8 +47,8 @@ void ModeControl::set_mode(
     if (!m_states.is_busy) {
         pub_msg.arm = target_arm;
         pub_msg.offboard = target_offboard;
-        RCLCPP_INFO(rclcpp::get_logger(m_log_name), 
-            "[%s] 目标 arm: %d, offboard: %d，当前 arm: %d, offboard: %d",
+        RCLCPP_INFO(m_log, 
+            "[%s] 目标 arm: %d, offboard: %d, 当前 arm: %d, offboard: %d",
             action_desc.c_str(), target_arm, target_offboard,
             current.arm, current.offboard);
         m_states.is_busy = true;
@@ -54,7 +56,7 @@ void ModeControl::set_mode(
 
     if (current.arm == target_arm && current.offboard == target_offboard) {
         m_states.is_busy = false;
-        RCLCPP_INFO(rclcpp::get_logger(m_log_name), "[%s] 模式切换成功!", action_desc.c_str());
+        RCLCPP_INFO(m_log, "[%s] 模式切换成功!", action_desc.c_str());
     }
 }
 

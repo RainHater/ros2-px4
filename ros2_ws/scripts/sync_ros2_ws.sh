@@ -23,5 +23,9 @@ ssh $TARGET_USER@$TARGET_IP "mkdir -p $TARGET_PATH/install"
 rsync -aAXv \
     "$SOURCE_PATH" \
     "$TARGET_USER@$TARGET_IP:$TARGET_PATH/install"
+rsync -aAXv \
+    "$SOURCE_PATH/utilities/share/utilities/config/app.yaml" \
+    "./scripts/yaml_update.sh" \
+    "$TARGET_USER@$TARGET_IP:$TARGET_PATH"
 
 echo "✅ 同步完成"

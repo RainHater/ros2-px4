@@ -52,6 +52,11 @@ void VisionTestNode::init_sub(){
         topic_px4_out::VEHICLE_LOCAL_POSITION, qos
     );
 
+    m_sub.vehicle_attitude.subscribe(
+        shared_from_this(), 
+        topic_px4_out::VEHICLE_ATTITUDE, 10
+    );
+
     m_sub.yolo_detections.subscribe(
         shared_from_this(), 
         topic_out::YOLO_DETECTIONS, 10
@@ -101,22 +106,12 @@ void VisionTestNode::task_loop(){
         case Hover:{
             auto has_received = m_sub.yolo_detections.has_change();
             if (has_received){
-                auto detection = m_sub.yolo_detections.get_msg().detections[0];
-                if (detection.confidence > 0.6f){
-                        RCLCPP_INFO(
-                        get_logger(), 
-                        "类别: %s, 置信度: %f"
-                        "cx: %d, cy: %d",
-                        detection.target_name.c_str(),
-                        detection.confidence,
-                        detection.cx, detection.cy
-                    );
-                    m_interface.track.normal_track(
-                        detection, 
-                        m_sub.vehicle_odometry.get_msg(),
-                        m_pub_msgs.trajectory_setpoint
-                    );
-                }
+                track::NormalTrack normal_track;
+                normal_track.detections = m_sub.yolo_detections.get_msg();
+                normal_track.sub_pose = m_sub.vehicle_odometry.get_msg();
+                normal_track.sub_attitude = m_sub.vehicle_attitude.get_msg();
+                normal_track.pub_tra = &m_pub_msgs.trajectory_setpoint;
+                m_interface.track.normal_track(normal_track);
             }
             break;
         }

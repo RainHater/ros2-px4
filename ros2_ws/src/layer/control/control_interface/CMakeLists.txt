@@ -41,6 +41,7 @@ set(ALL_SRC
   src/movement.cpp
   src/mode_control.cpp
   src/track.cpp
+  src/pid.cpp
 )
 
 include_directories(
