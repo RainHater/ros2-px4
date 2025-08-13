@@ -78,7 +78,7 @@ void VisionTestNode::task_loop(){
                 m_pub_msgs.trajectory_setpoint,
                 get_clock()->now(),
                 0.5,
-                0.15
+                0.1
             );
             if (arrive){
                 m_fly = Hover;
@@ -102,18 +102,25 @@ void VisionTestNode::task_loop(){
             auto has_received = m_sub.yolo_detections.has_change();
             if (has_received){
                 auto detection = m_sub.yolo_detections.get_msg().detections[0];
-                RCLCPP_INFO(
-                    get_logger(), 
-                    "类别: %s, 置信度: %f"
-                    "cx: %d, cy: %d",
-                    detection.target_name.c_str(),
-                    detection.confidence,
-                    detection.cx, detection.cy
-                );
-                m_interface.track.normal_track(
-                    detection, 
-                    m_pub_msgs.trajectory_setpoint
-                );
+                if (detection.confidence > 0.6f){
+                        RCLCPP_INFO(
+                        get_logger(), 
+                        "类别: %s, 置信度: %f"
+                        "cx: %d, cy: %d",
+                        detection.target_name.c_str(),
+                        detection.confidence,
+                        detection.cx, detection.cy
+                    );
+                    m_interface.track.normal_track(
+                        detection, 
+                        m_sub.vehicle_odometry.get_msg(),
+                        m_pub_msgs.trajectory_setpoint
+                    );
+                }else {
+                    m_pub_msgs.trajectory_setpoint.yawspeed = NAN;
+                }
+            }else {
+                m_pub_msgs.trajectory_setpoint.yawspeed = NAN;
             }
             break;
         }

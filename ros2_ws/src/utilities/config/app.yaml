@@ -1,6 +1,6 @@
 movement:
   HORIZONTAL_DIST_THRESHOLD: 0.9
   VERTICAL_DIST_THRESHOLD: 0.4
-  delta: 0.42
+  delta: 0.5
   land_correction: 0.05
   land_start_time: 3

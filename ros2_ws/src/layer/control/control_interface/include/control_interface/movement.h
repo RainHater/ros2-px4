@@ -128,7 +128,7 @@ private:
     struct YamlInfo{
         float HORIZONTAL_DIST_THRESHOLD = 0.9;
         float VERTICAL_DIST_THRESHOLD = 0.4;
-        float delta = 0.42;
+        float delta = 0.5;
         float land_correction = 0.05;
         int land_start_time = 3;
     };
