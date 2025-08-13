@@ -116,11 +116,7 @@ void VisionTestNode::task_loop(){
                         m_sub.vehicle_odometry.get_msg(),
                         m_pub_msgs.trajectory_setpoint
                     );
-                }else {
-                    m_pub_msgs.trajectory_setpoint.yawspeed = NAN;
                 }
-            }else {
-                m_pub_msgs.trajectory_setpoint.yawspeed = NAN;
             }
             break;
         }

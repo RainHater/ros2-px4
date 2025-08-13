@@ -3,12 +3,7 @@
 
 TOP_DIR=$(pwd)
 
-if [ -z "$1" ]; then
-    echo "❌ 用法: $0 <目标IP地址>"
-    exit 1
-fi
-
-TARGET_IP="$1"
+TARGET_IP="100.76.77.51"
 TARGET_USER="sunrise"
 TARGET_PATH="/home/${TARGET_USER}/ros2_px4"
 SOURCE_PATH="${TOP_DIR}/install/"
