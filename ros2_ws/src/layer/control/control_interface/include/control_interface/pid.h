@@ -10,6 +10,7 @@ public:
     void initialize(
         float kp, float ki, float kd, 
         bool incr_select, 
+        float output_limit,
         float integral_limit = 0.0f
     );
     float compute(
@@ -37,6 +38,7 @@ private:
     float m_integral_limit;
 
     float m_output;
+    float m_output_limit;
     float m_last_output;
 
     //是否为增量式

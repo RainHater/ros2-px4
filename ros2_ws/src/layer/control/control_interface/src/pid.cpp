@@ -20,12 +20,14 @@ void PIDController::reset(){
 void PIDController::initialize(
     float kp, float ki, float kd, 
     bool incr_select, 
+    float output_limit,
     float integral_limit)
 {
     m_kp = kp;
     m_ki = ki;
     m_kd = kd;
     m_incr_select = incr_select;
+    m_output_limit = output_limit;
     m_integral_limit = integral_limit;
 }
 
@@ -43,6 +45,7 @@ float PIDController::compute(
         float delta_output = kp_output + ki_output + kd_output;
         
         m_output = m_last_output + delta_output;
+        m_output = std::clamp(m_output, -m_output_limit, m_output_limit);
         m_last_output = m_output;
         m_prev_error = m_last_error;
         m_last_error = m_error;
@@ -60,8 +63,10 @@ float PIDController::compute(
         float kd_output = m_kd * derivative;
 
         m_output = kp_output + ki_output + kd_output;
+        m_output = std::clamp(m_output, -m_output_limit, m_output_limit);
 
         m_last_error = m_error;
+
         return m_output;
     }
 }

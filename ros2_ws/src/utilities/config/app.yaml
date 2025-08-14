@@ -5,6 +5,7 @@ movement:
   land_correction: 0.05
   land_start_time: 3
 track:
-  deviation_kp: 0.01
+  deviation_kp: 0.003
   deviation_ki: 0.00001
   deviation_kd: 0.0
+
