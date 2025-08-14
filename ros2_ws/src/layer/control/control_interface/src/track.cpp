@@ -13,7 +13,7 @@ Track::Track()
     m_yaml.deviation_ki = config["deviation_ki"].as<float>();
     m_yaml.deviation_kd = config["deviation_kd"].as<float>();
 
-    m_pid.deviation.initialize(m_yaml.deviation_kp, m_yaml.deviation_ki, m_yaml.deviation_kd, false, 3.0f, 0.785f); 
+    m_pid.deviation.initialize(m_yaml.deviation_kp, m_yaml.deviation_ki, m_yaml.deviation_kd, false, 30.0f, 30.0f); 
     // m_pid.yawspeed.initialize(0.0015, 0.00001, 0.0f, false); 
 }
 
