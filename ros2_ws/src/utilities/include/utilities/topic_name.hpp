@@ -33,4 +33,5 @@ namespace topic_px4_out {
     constexpr const char* VEHICLE_GLOBAL_POSITION       = "/fmu/out/vehicle_global_position";
     constexpr const char* BATTERY_STATUS                = "/fmu/out/battery_status";
     constexpr const char* VEHICLE_ATTITUDE              = "/fmu/out/vehicle_attitude";
+    constexpr const char* MANUAL_CONTROL_SETPOINT       = "/fmu/out/manual_control_setpoint";
 }

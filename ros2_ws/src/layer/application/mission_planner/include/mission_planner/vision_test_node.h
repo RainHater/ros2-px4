@@ -1,6 +1,7 @@
 #ifndef _SIMPLE_INDOOR_CONTROL_TASK_H
 #define _SIMPLE_INDOOR_CONTROL_TASK_H
 
+#include <px4_msgs/msg/detail/manual_control_setpoint__struct.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
@@ -17,6 +18,7 @@
 #include "control_interface/mode_control.h"
 #include "control_interface/movement.h"
 #include "control_interface/track.h"
+#include "control_interface/rc_signal.h"
 
 class VisionTestNode : public rclcpp::Node{
 public:
@@ -54,6 +56,7 @@ private:
         TopicListener<px4_msgs::msg::VehicleOdometry> vehicle_odometry;
         TopicListener<px4_msgs::msg::VehicleLocalPosition> local_position;
         TopicListener<px4_msgs::msg::VehicleAttitude> vehicle_attitude;
+        TopicListener<px4_msgs::msg::ManualControlSetpoint> manual_control_setpoint;
         TopicListener<identify::msg::YoloDetections> yolo_detections;
     };
 
@@ -66,6 +69,7 @@ private:
         ModeControl mode_control;
         Movement movement; 
         Track track;
+        RcSignal rc_signal;
     };
 private:
     rclcpp::TimerBase::SharedPtr m_timer;

@@ -1,4 +1,5 @@
 #include "mission_planner/vision_test_node.h"
+#include <control_interface/rc_signal.h>
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
@@ -25,18 +26,27 @@ void VisionTestNode::initialize(){
 }
 
 void VisionTestNode::init_pub(){
+    rclcpp::QoS qos(rclcpp::KeepLast(1));
+    qos.best_effort();
+    qos.durability_volatile();
+    qos.transient_local();
+
     m_pub.offboard_mode = create_publisher<common_msgs::msg::ArmOffboardStatus>(
         topic_in::PX4_MODE, 10
     );
 
     m_pub.trajectory_setpoint = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
-        topic_px4_in::PX4_TRAJECTORY_SETPOINT, 10
+        topic_px4_in::PX4_TRAJECTORY_SETPOINT, qos
     );
 }
 
 void VisionTestNode::init_sub(){
-    rclcpp::QoS qos(rclcpp::KeepLast(10));
-    qos.best_effort();
+    rclcpp::QoS qos_best_effort(rclcpp::KeepLast(10));
+    qos_best_effort.best_effort();
+    rclcpp::QoS qos_reliable(rclcpp::KeepLast(1));
+    qos_reliable.best_effort();
+    qos_reliable.transient_local();
+
     m_sub.offboard_mode.subscribe(
         shared_from_this(), 
         topic_out::PX4_MODE, 10
@@ -44,17 +54,22 @@ void VisionTestNode::init_sub(){
 
     m_sub.vehicle_odometry.subscribe(
         shared_from_this(), 
-        topic_px4_out::VEHICLE_ODOMETRY, qos
+        topic_px4_out::VEHICLE_ODOMETRY, qos_best_effort
     );
 
     m_sub.local_position.subscribe(
         shared_from_this(),
-        topic_px4_out::VEHICLE_LOCAL_POSITION, qos
+        topic_px4_out::VEHICLE_LOCAL_POSITION, qos_best_effort
     );
 
     m_sub.vehicle_attitude.subscribe(
         shared_from_this(), 
-        topic_px4_out::VEHICLE_ATTITUDE, 10
+        topic_px4_out::VEHICLE_ATTITUDE, qos_reliable
+    );
+
+    m_sub.manual_control_setpoint.subscribe(
+        shared_from_this(), 
+        topic_px4_out::MANUAL_CONTROL_SETPOINT, qos_reliable
     );
 
     m_sub.yolo_detections.subscribe(
@@ -64,6 +79,12 @@ void VisionTestNode::init_sub(){
 }
 
 void VisionTestNode::task_loop(){
+    auto rc_mode = m_interface.rc_signal.get_rc(m_sub.manual_control_setpoint.get_msg());
+
+    if (rc_mode == rc_signal::LAND && m_fly != END){
+        m_fly = LAND;
+    }
+
     switch(m_fly){
         case IDLE:{
             m_interface.mode_control.unlock(
