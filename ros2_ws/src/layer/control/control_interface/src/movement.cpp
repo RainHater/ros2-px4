@@ -68,13 +68,13 @@ bool Movement::move_to_gps_target(
     return arrive;
 }
 
-bool Movement::justmove(
-    px4_msgs::msg::VehicleOdometry sub_pose, 
-    px4_msgs::msg::TrajectorySetpoint &pub_pose,
-    rclcpp::Time instant_time,
-    Waypts target,
-    double v = 0.5, bool auto_angle = false)
-{
+bool Movement::justmove(movement::JustmoveInfo justmove_info, Waypts target) {   
+    auto& sub_pose = justmove_info.sub_pose;
+    auto& pub_pose = justmove_info.pub_pose;
+    auto& instant_time = justmove_info.instant_time;
+    auto& v = justmove_info.v;
+    auto& auto_angle = justmove_info.auto_angle;
+
     if(m_justmove.state == 0) {
         m_justmove.start_pose.x = sub_pose.position[0];
         m_justmove.start_pose.y = sub_pose.position[1];
@@ -139,16 +139,16 @@ bool Movement::justmove(
         out_y = limit_to_destination(out_y, m_justmove.vy, m_justmove.target_pose.y);
         out_z = limit_to_destination(out_z, m_justmove.vz, m_justmove.target_pose.z);
         
-        pub_pose.position[0] = out_x;
-        pub_pose.position[1] = out_y;
-        pub_pose.position[2] = out_z;
-        pub_pose.yaw = m_justmove.dw;
+        pub_pose->position[0] = out_x;
+        pub_pose->position[1] = out_y;
+        pub_pose->position[2] = out_z;
+        pub_pose->yaw = m_justmove.dw;
 
         RCLCPP_INFO(m_log, 
             "position[0]: %f, position[1]: %f, position[2]: %f",
-            pub_pose.position[0],
-            pub_pose.position[1],
-            pub_pose.position[2]
+            pub_pose->position[0],
+            pub_pose->position[1],
+            pub_pose->position[2]
         );
 
         RCLCPP_INFO(m_log, 
@@ -165,12 +165,12 @@ bool Movement::justmove(
 }
 
 bool Movement::move_by_offset(
-    px4_msgs::msg::VehicleOdometry sub_pose, 
-    px4_msgs::msg::TrajectorySetpoint &pub_pose,
-    rclcpp::Time instant_time,
+    movement::JustmoveInfo justmove_info, 
     Offset target,
-    double v = 0.5, double angle = 0.0)
+    double angle)
 {
+    auto& sub_pose = justmove_info.sub_pose;
+
     tf2_tool::EulerAngles angles;
     tf2_tool::get_euler_angles(sub_pose, angles);
     float yaw = geo_tool::normalize_angle(angles.yaw + geo_tool::deg2rad(angle));
@@ -182,35 +182,32 @@ bool Movement::move_by_offset(
     end.x = (sub_pose.position[0] + dx);
     end.y = (sub_pose.position[1] + dy);
     end.z = (sub_pose.position[2] + dz);
-    bool arrive = justmove(sub_pose, pub_pose, instant_time, end, v, true);
+
+    justmove_info.auto_angle = true;
+
+    bool arrive = justmove(justmove_info, end);
 
     return arrive;
 }
 
-bool Movement::change_height(
-    px4_msgs::msg::VehicleOdometry sub_pose, 
-    px4_msgs::msg::TrajectorySetpoint &pub_pose,
-    rclcpp::Time instant_time,
-    double high,
-    double v = 0.5)
-{
+bool Movement::change_height(movement::JustmoveInfo justmove_info, double high) {   
     Waypts target = {0, 0, -high};
+    justmove_info.auto_angle = false;
 
-    bool arrive = justmove(sub_pose, pub_pose, instant_time, target, v, false);
+    bool arrive = justmove(justmove_info, target);
 
     return arrive;
 }
 
-bool Movement::land_mode(
-    double v,
-    ModeControl mode_control,
-    rclcpp::Time instant_time,
-    common_msgs::msg::ArmOffboardStatus sub_px4_mode,
-    px4_msgs::msg::VehicleOdometry sub_pose,
-    px4_msgs::msg::TrajectorySetpoint &pub_pose,
-    common_msgs::msg::ArmOffboardStatus &pub_px4_mode,
-    TopicListener<px4_msgs::msg::VehicleLocalPosition> local_position)
-{   
+bool Movement::land_mode(movement::LandModeInfo land_mode_info, float v) {   
+    auto& pub_pose = land_mode_info.pub_pose;
+    auto& pub_px4_mode = land_mode_info.pub_px4_mode;
+    auto& sub_pose = land_mode_info.sub_pose;
+    auto& sub_px4_mode = land_mode_info.sub_px4_mode;
+    auto& mode_control = land_mode_info.mode_control;
+    auto& local_position = land_mode_info.local_position;
+    auto& instant_time = land_mode_info.instant_time;
+    
     bool finish = false;
 
     switch(m_land.state){
@@ -223,7 +220,7 @@ bool Movement::land_mode(
             mode_control.unlock(
                 ARM_ENABLE,
                 (POSITION | VELOCITY),
-                sub_px4_mode, pub_px4_mode
+                sub_px4_mode, *pub_px4_mode
             );
             if (mode_control.wait_busy()){
                 tf2_tool::EulerAngles angle;
@@ -245,13 +242,13 @@ bool Movement::land_mode(
             auto start_dist_bottom = local_position.get_first_msg().dist_bottom;
             auto baro_height = local_position.get_first_msg().dist_bottom;
 
-            pub_pose.position[0] = m_land.start_position.x;
-            pub_pose.position[1] = m_land.start_position.y;
-            pub_pose.position[2] = NAN;
-            pub_pose.velocity[0] = NAN;
-            pub_pose.velocity[1] = NAN;
-            pub_pose.velocity[2] = v;
-            pub_pose.yaw = m_land.dw;
+            pub_pose->position[0] = m_land.start_position.x;
+            pub_pose->position[1] = m_land.start_position.y;
+            pub_pose->position[2] = NAN;
+            pub_pose->velocity[0] = NAN;
+            pub_pose->velocity[1] = NAN;
+            pub_pose->velocity[2] = v;
+            pub_pose->yaw = m_land.dw;
             if (dist_bottom_valid && dist_bottom < (start_dist_bottom-m_yaml.land_correction)){
                 m_land.start_time = instant_time.seconds();
                 m_land.state = 3;
@@ -267,7 +264,7 @@ bool Movement::land_mode(
         }
         case 3:{
             if (instant_time.seconds() - m_land.start_time >= m_yaml.land_start_time){
-                pub_px4_mode.offboard = m_land.start_state.offboard;
+                pub_px4_mode->offboard = m_land.start_state.offboard;
                 m_land.state = 4;
             }
             break;

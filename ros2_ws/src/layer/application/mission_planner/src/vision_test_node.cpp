@@ -1,5 +1,4 @@
 #include "mission_planner/vision_test_node.h"
-#include <control_interface/rc_signal.h>
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
@@ -106,13 +105,12 @@ void VisionTestNode::task_loop(){
         case RISE:{
             auto msg_arrive = m_sub.vehicle_odometry.has_change();
             if (msg_arrive){
-                    bool arrive = m_interface.movement.change_height(
-                    m_sub.vehicle_odometry.get_msg(),
-                    m_pub_msgs.trajectory_setpoint,
-                    get_clock()->now(),
-                    0.5,
-                    0.1
-                );
+                movement::JustmoveInfo justmove_info;
+                justmove_info.sub_pose = m_sub.vehicle_odometry.get_msg();
+                justmove_info.pub_pose = &m_pub_msgs.trajectory_setpoint;
+                justmove_info.instant_time = get_clock()->now();
+                justmove_info.v = 0.1;
+                bool arrive = m_interface.movement.change_height(justmove_info, 0.5);
                 if (arrive){
                     m_fly = Hover;
                     RCLCPP_INFO(get_logger(), "上升完成!");
@@ -146,16 +144,16 @@ void VisionTestNode::task_loop(){
             break;
         }
         case LAND:{
-            bool finish = m_interface.movement.land_mode(
-                0.3,
-                m_interface.mode_control,
-                get_clock()->now(),
-                m_sub.offboard_mode.get_msg(),
-                m_sub.vehicle_odometry.get_msg(),
-                m_pub_msgs.trajectory_setpoint,
-                m_pub_msgs.offboard_mode,
-                m_sub.local_position
-            );
+            movement::LandModeInfo land_mode_info;
+            land_mode_info.mode_control = m_interface.mode_control;
+            land_mode_info.pub_px4_mode = &m_pub_msgs.offboard_mode;
+            land_mode_info.pub_pose = &m_pub_msgs.trajectory_setpoint;
+            land_mode_info.sub_px4_mode = m_sub.offboard_mode.get_msg();
+            land_mode_info.sub_pose = m_sub.vehicle_odometry.get_msg();
+            land_mode_info.local_position = m_sub.local_position;
+            land_mode_info.instant_time = get_clock()->now();
+
+            bool finish = m_interface.movement.land_mode(land_mode_info, 0.3);
             if (finish){
                 m_fly = END;
                 RCLCPP_INFO(get_logger(), "降落完成!");

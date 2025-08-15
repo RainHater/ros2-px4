@@ -34,16 +34,25 @@ struct Offset{
     double right;
 };
 
-// namespace movement{
-// struct JustmoveInfo{
-//     px4_msgs::msg::VehicleOdometry sub_pose;
-//     px4_msgs::msg::TrajectorySetpoint* pub_pose;
-//     rclcpp::Time instant_time;
-//     Waypts target;
-//     double v = 0.5;
-//     bool auto_angle = false;
-// };
-// };
+namespace movement{
+struct JustmoveInfo{
+    px4_msgs::msg::VehicleOdometry sub_pose;
+    px4_msgs::msg::TrajectorySetpoint* pub_pose;
+    rclcpp::Time instant_time;
+    double v = 0.5;
+    bool auto_angle = false;
+};
+
+struct LandModeInfo{
+    px4_msgs::msg::TrajectorySetpoint* pub_pose;
+    common_msgs::msg::ArmOffboardStatus* pub_px4_mode;
+    px4_msgs::msg::VehicleOdometry sub_pose;
+    common_msgs::msg::ArmOffboardStatus sub_px4_mode;
+    TopicListener<px4_msgs::msg::VehicleLocalPosition> local_position;
+    ModeControl mode_control;
+    rclcpp::Time instant_time;
+};
+};
 
 class Movement{
 public:
@@ -58,42 +67,19 @@ public:
     );
 
     //根据局部整体坐标移动
-    bool justmove(
-        px4_msgs::msg::VehicleOdometry sub_pose, 
-        px4_msgs::msg::TrajectorySetpoint &pub_pose,
-        rclcpp::Time instant_time,
-        Waypts target,
-        double v, bool auto_angle
-    );
+    bool justmove(movement::JustmoveInfo justmove_info, Waypts target);
 
     //根据当前坐标进行移动
     bool move_by_offset(
-        px4_msgs::msg::VehicleOdometry sub_pose, 
-        px4_msgs::msg::TrajectorySetpoint &pub_pose,
-        rclcpp::Time instant_time,
+        movement::JustmoveInfo justmove_info, 
         Offset target,
-        double v, double angle
+        double angle = 0.0f
     );
 
     //起飞高度
-    bool change_height(
-        px4_msgs::msg::VehicleOdometry sub_pose, 
-        px4_msgs::msg::TrajectorySetpoint &pub_pose,
-        rclcpp::Time instant_time,
-        double high,
-        double v
-    );
+    bool change_height(movement::JustmoveInfo justmove_info, double high);
 
-    bool land_mode(
-        double v,
-        ModeControl mode_control,
-        rclcpp::Time instant_time,
-        common_msgs::msg::ArmOffboardStatus sub_px4_mode,
-        px4_msgs::msg::VehicleOdometry sub_pose,
-        px4_msgs::msg::TrajectorySetpoint &pub_pose,
-        common_msgs::msg::ArmOffboardStatus &pub_px4_mode,
-        TopicListener<px4_msgs::msg::VehicleLocalPosition> local_position
-    );
+    bool land_mode(movement::LandModeInfo land_mode_info, float v = 0.5f);
 
 protected: 
 private:
