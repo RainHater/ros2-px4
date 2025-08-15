@@ -1,7 +1,6 @@
 #ifndef _SIMPLE_INDOOR_CONTROL_TASK_H
 #define _SIMPLE_INDOOR_CONTROL_TASK_H
 
-#include <px4_msgs/msg/detail/manual_control_setpoint__struct.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
@@ -57,6 +56,7 @@ private:
         TopicListener<px4_msgs::msg::VehicleLocalPosition> local_position;
         TopicListener<px4_msgs::msg::VehicleAttitude> vehicle_attitude;
         TopicListener<px4_msgs::msg::ManualControlSetpoint> manual_control_setpoint;
+        TopicListener<px4_msgs::msg::SensorCombined> sensor_combined;
         TopicListener<identify::msg::YoloDetections> yolo_detections;
     };
 

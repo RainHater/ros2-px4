@@ -22,16 +22,6 @@
 
 #include "control_interface/mode_control.h"
 
-struct UAVpose{
-    double x;
-    double y;
-    double z;
-    double ow;
-    double ox;
-    double oy;
-    double oz;
-};
-
 struct Waypts{
     double x;
     double y;
@@ -43,6 +33,17 @@ struct Offset{
     double forward;
     double right;
 };
+
+// namespace movement{
+// struct JustmoveInfo{
+//     px4_msgs::msg::VehicleOdometry sub_pose;
+//     px4_msgs::msg::TrajectorySetpoint* pub_pose;
+//     rclcpp::Time instant_time;
+//     Waypts target;
+//     double v = 0.5;
+//     bool auto_angle = false;
+// };
+// };
 
 class Movement{
 public:

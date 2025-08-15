@@ -19,10 +19,6 @@ Movement::Movement()
     m_yaml.delta = config["delta"].as<float>();
     m_yaml.land_correction = config["land_correction"].as<float>();
     m_yaml.land_start_time = config["land_start_time"].as<int>();
-    // RCLCPP_INFO(rclcpp::get_logger(
-    //     m_log_name), 
-    //     "找到的路径: %s", yaml_path.c_str()
-    // );
 }
 
 bool Movement::move_to_gps_target(

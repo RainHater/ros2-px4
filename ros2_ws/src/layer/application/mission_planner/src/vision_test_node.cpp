@@ -67,6 +67,11 @@ void VisionTestNode::init_sub(){
         topic_px4_out::VEHICLE_ATTITUDE, qos_reliable
     );
 
+    m_sub.sensor_combined.subscribe(
+        shared_from_this(), 
+        topic_px4_out::SENSOR_COMBINED, qos_reliable
+    );
+
     m_sub.manual_control_setpoint.subscribe(
         shared_from_this(), 
         topic_px4_out::MANUAL_CONTROL_SETPOINT, qos_reliable
@@ -99,16 +104,19 @@ void VisionTestNode::task_loop(){
             break;
         }
         case RISE:{
-            bool arrive = m_interface.movement.change_height(
-                m_sub.vehicle_odometry.get_msg(),
-                m_pub_msgs.trajectory_setpoint,
-                get_clock()->now(),
-                0.5,
-                0.1
-            );
-            if (arrive){
-                m_fly = Hover;
-                RCLCPP_INFO(get_logger(), "上升完成!");
+            auto msg_arrive = m_sub.vehicle_odometry.has_change();
+            if (msg_arrive){
+                    bool arrive = m_interface.movement.change_height(
+                    m_sub.vehicle_odometry.get_msg(),
+                    m_pub_msgs.trajectory_setpoint,
+                    get_clock()->now(),
+                    0.5,
+                    0.1
+                );
+                if (arrive){
+                    m_fly = Hover;
+                    RCLCPP_INFO(get_logger(), "上升完成!");
+                }
             }
             break;
         }
@@ -131,6 +139,7 @@ void VisionTestNode::task_loop(){
                 normal_track.detections = m_sub.yolo_detections.get_msg();
                 normal_track.sub_pose = m_sub.vehicle_odometry.get_msg();
                 normal_track.sub_attitude = m_sub.vehicle_attitude.get_msg();
+                normal_track.sensor_combined = m_sub.sensor_combined.get_msg();
                 normal_track.pub_tra = &m_pub_msgs.trajectory_setpoint;
                 m_interface.track.normal_track(normal_track);
             }

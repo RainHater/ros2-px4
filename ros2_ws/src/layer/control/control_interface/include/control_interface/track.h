@@ -1,11 +1,15 @@
 #ifndef _TRACK_H
 #define _TRACK_H
 
+#include <px4_msgs/msg/detail/sensor_combined__struct.hpp>
+#include <px4_msgs/msg/detail/vehicle_attitude__struct.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_odometry.hpp>
 #include <px4_msgs/msg/vehicle_attitude.hpp>
+#include <px4_msgs/msg/vehicle_angular_velocity.hpp>
+#include <px4_msgs/msg/sensor_combined.hpp>
 
 #include "identify/msg/yolo_detections.hpp"
 
@@ -19,6 +23,7 @@ struct NormalTrack{
     identify::msg::YoloDetections detections;
     px4_msgs::msg::VehicleOdometry sub_pose;
     px4_msgs::msg::VehicleAttitude sub_attitude;
+    px4_msgs::msg::SensorCombined sensor_combined;
     px4_msgs::msg::TrajectorySetpoint* pub_tra;
 };
 }
@@ -29,6 +34,12 @@ public:
 
     void normal_track(track::NormalTrack& normal_info);
 private:
+    struct CameraInfo{
+        float hfov;
+        float width;
+        float height;
+    };
+
     struct PIDInfo{
         PIDController deviation;
         PIDController yawspeed;
@@ -43,6 +54,7 @@ private:
     rclcpp::Logger m_log;
     PIDInfo m_pid;
     YamlInfo m_yaml;
+    CameraInfo m_camera;
 };
 
 #endif
