@@ -42,7 +42,7 @@ private:
 
     struct PIDInfo{
         PIDController deviation;
-        PIDController yawspeed;
+        float last_time;
     };
 
     struct YamlInfo{

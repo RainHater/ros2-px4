@@ -31,12 +31,8 @@ void PIDController::initialize(
     m_integral_limit = integral_limit;
 }
 
-float PIDController::compute(
-    float setpoint, 
-    float measured_value, 
-    float dt)
-{
-    m_error = setpoint - measured_value;
+float PIDController::compute(float error, float dt) {
+    m_error = error;
 
     if(m_incr_select){  
         float kp_output = (m_kp*(m_error - m_last_error));

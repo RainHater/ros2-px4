@@ -13,11 +13,7 @@ public:
         float output_limit,
         float integral_limit = 0.0f
     );
-    float compute(
-        float setpoint, 
-        float measured_value, 
-        float dt=1.0f/30.0f
-    );
+    float compute(float error, float dt);
 private:
     //比例增益
     float m_kp;
