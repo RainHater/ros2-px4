@@ -240,7 +240,6 @@ bool Movement::land_mode(movement::LandModeInfo land_mode_info, float v) {
             auto dist_bottom = local_position.get_msg().dist_bottom;
             auto dist_bottom_valid = local_position.get_msg().dist_bottom_valid;
             auto start_dist_bottom = local_position.get_first_msg().dist_bottom;
-            auto baro_height = local_position.get_first_msg().dist_bottom;
 
             pub_pose->position[0] = m_land.start_position.x;
             pub_pose->position[1] = m_land.start_position.y;

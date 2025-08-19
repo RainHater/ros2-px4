@@ -1,5 +1,6 @@
 #!/bin/bash
 # 密码sunrise
+#请安装 sudo apt install sshpass
 
 TOP_DIR=$(pwd)
 
@@ -17,15 +18,16 @@ if [ ! -d "$SOURCE_PATH" ]; then
 fi
 
 # 远端目录检测（通过 ssh 远程执行 mkdir -p，保证目录存在）
-ssh $TARGET_USER@$TARGET_IP "mkdir -p $TARGET_PATH/install"
+sshpass -p "sunrise" ssh $TARGET_USER@$TARGET_IP "mkdir -p $TARGET_PATH/install"
 
 # 同步
-rsync -aAXv \
+sshpass -p "sunrise" rsync -aAXv \
     "$SOURCE_PATH" \
     "$TARGET_USER@$TARGET_IP:$TARGET_PATH/install"
-rsync -aAXv \
+
+sshpass -p "sunrise" rsync -aAXv \
     "$SOURCE_PATH/utilities/share/utilities/config/app.yaml" \
-    "./scripts/yaml_update.sh" \
+    "./yaml_update.sh" \
     "$TARGET_USER@$TARGET_IP:$TARGET_PATH"
 
 echo "✅ 同步完成"
