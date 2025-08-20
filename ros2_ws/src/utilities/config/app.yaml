@@ -11,7 +11,6 @@ movement:
   land_start_time: 3
 track:
   #yawspeed PID
-  deviation_kp: 0.99
-  deviation_ki: 0.0000
+  deviation_kp: 0.002
+  deviation_ki: 0.00001
   deviation_kd: 0.0
-

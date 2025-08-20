@@ -1,4 +1,4 @@
-#include "control_interface/track.h"
+#include "control_interface/track_2.h"
 
 #include <cmath>
 #include <yaml-cpp/yaml.h>
@@ -9,15 +9,20 @@ Track::Track()
 {   
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["track"];
-    m_yaml.deviation_kp = config["deviation_kp"].as<float>();
-    m_yaml.deviation_ki = config["deviation_ki"].as<float>();
-    m_yaml.deviation_kd = config["deviation_kd"].as<float>();
+    pos_yaml.deviation_kp = config["pos_kp"].as<float>();
+    pos_yaml.deviation_ki = config["pos_ki"].as<float>();
+    pos_yaml.deviation_kd = config["pos_kd"].as<float>();
+
+    speed_yaml.deviation_kp = config["speed_kp"].as<float>();
+    speed_yaml.deviation_ki = config["speed_ki"].as<float>();
+    speed_yaml.deviation_kd = config["speed_kd"].as<float>();
 
     m_camera.width = 1920;
     m_camera.height = 1080;
     // m_camera.hfov = M_PI * (77.0 / 180.0);
 
-    m_pid.deviation.initialize(m_yaml.deviation_kp, m_yaml.deviation_ki, m_yaml.deviation_kd, false, 1.5708f, 1.5708f); 
+    speed_pid.deviation.initialize(speed_yaml.deviation_kp, speed_yaml.deviation_ki, speed_yaml.deviation_kd, false, 0.785f, 0.785f); 
+    pos_pid.deviation.initialize(pos_yaml.deviation_kp, pos_yaml.deviation_ki, pos_yaml.deviation_kd, false)
 }
 
 void Track::normal_track(track::NormalTrack& normal_info) {
@@ -44,8 +49,7 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float pixel_offset = cx - m_camera.width / 2.0;
     // float angle_offset = (pixel_offset / (m_camera.width / 2.0)) * (m_camera.hfov / 2.0);
     float angle_offset = pixel_offset;
-    // float setpoint = angle_offset * M_PI / 180.0f;
-    float setpoint = angle_offset;
+    float setpoint = angle_offset * M_PI / 180.0f;
 
 
     float output = m_pid.deviation.compute(setpoint, dt);
@@ -53,8 +57,6 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     pub_tra.yaw = NAN;
     pub_tra.yawspeed = output;
 
-    if (!detect_flag)
-        return;
     RCLCPP_INFO(m_log, 
         "cx: %f, setpoint: %f, yawspeed: %f",
         cx, setpoint, 
