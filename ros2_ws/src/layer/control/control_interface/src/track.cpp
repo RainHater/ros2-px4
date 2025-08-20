@@ -9,15 +9,18 @@ Track::Track()
 {   
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["track"];
-    m_yaml.deviation_kp = config["deviation_kp"].as<float>();
-    m_yaml.deviation_ki = config["deviation_ki"].as<float>();
-    m_yaml.deviation_kd = config["deviation_kd"].as<float>();
+    m_yaml.cx_kp = config["cx_kp"].as<float>();
+    m_yaml.cx_ki = config["cx_ki"].as<float>();
+    m_yaml.cx_kd = config["cx_kd"].as<float>();
+    m_yaml.cy_kp = config["cy_kp"].as<float>();
+    m_yaml.cy_ki = config["cy_ki"].as<float>();
+    m_yaml.cy_kd = config["cy_kd"].as<float>();
 
     m_camera.width = 1920;
     m_camera.height = 1080;
-    // m_camera.hfov = M_PI * (77.0 / 180.0);
 
-    m_pid.deviation.initialize(m_yaml.deviation_kp, m_yaml.deviation_ki, m_yaml.deviation_kd, false, 1.5708f, 1.5708f); 
+    m_pid.cx.initialize(m_yaml.cx_kp, m_yaml.cx_ki, m_yaml.cx_kd, false, 1.5708f, 1.5708f); 
+    m_pid.cy.initialize(m_yaml.cy_kp, m_yaml.cy_ki, m_yaml.cy_kd, false, 0.5f, 0.5f); 
 }
 
 void Track::normal_track(track::NormalTrack& normal_info) {
@@ -33,31 +36,41 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float dt  = cur_time - m_pid.last_time;
     m_pid.last_time = cur_time;
 
-    float cx = 0.0;
+    float cx = 0.0f;
+    float cy = 0.0f;
     if (detect_flag){
         auto& detection = normal_info.detections.detections[0];
         cx = detection.cx;
+        cy = detection.cy;
     }else {
         cx = 960.0f;
+        cy = 540.0f;
     }
 
-    float pixel_offset = cx - m_camera.width / 2.0;
-    // float angle_offset = (pixel_offset / (m_camera.width / 2.0)) * (m_camera.hfov / 2.0);
-    float angle_offset = pixel_offset;
-    // float setpoint = angle_offset * M_PI / 180.0f;
-    float setpoint = angle_offset;
+    float cx_error = cx - m_camera.width / 2.0;
+    float cy_error = cy - m_camera.height / 2.0;
 
 
-    float output = m_pid.deviation.compute(setpoint, dt);
+    float cx_output = m_pid.cx.compute(cx_error, dt);
+    float cy_output = m_pid.cx.compute(cy_error, dt);
     
     pub_tra.yaw = NAN;
-    pub_tra.yawspeed = output;
+    pub_tra.position[0] = NAN;
+    pub_tra.position[1] = NAN;
+    pub_tra.position[2] = NAN;
+    pub_tra.velocity[0] = 0.0f;
+    pub_tra.velocity[1] = 0.0f;
+    pub_tra.velocity[2] = cy_output;
+    pub_tra.yawspeed = cx_output;
 
     if (!detect_flag)
         return;
     RCLCPP_INFO(m_log, 
-        "cx: %f, setpoint: %f, yawspeed: %f",
-        cx, setpoint, 
-        pub_tra.yawspeed
+        "cx: %f, cx_error: %f, cx_out: %f"
+        "cy: %f, cy_error: %f, cy_out: %f",
+        cx, cx_error, 
+        pub_tra.yawspeed,
+        cy, cy_error,
+        pub_tra.velocity[2]
     );
 }

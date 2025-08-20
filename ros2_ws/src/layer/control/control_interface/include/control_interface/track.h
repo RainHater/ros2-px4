@@ -43,14 +43,18 @@ private:
     };
 
     struct PIDInfo{
-        PIDController deviation;
+        PIDController cx;
+        PIDController cy;
         float last_time;
     };
 
     struct YamlInfo{
-        float deviation_kp = 0.003f;
-        float deviation_ki = 0.00001f;
-        float deviation_kd = 0.0f;
+        float cx_kp = 0.003f;
+        float cx_ki = 0.00001f;
+        float cx_kd = 0.0f;
+        float cy_kp = 0.003f;
+        float cy_ki = 0.00001f;
+        float cy_kd = 0.0f;
     };
 private:
     rclcpp::Logger m_log;

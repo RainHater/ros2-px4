@@ -25,6 +25,7 @@ sshpass -p "sunrise" rsync -aAXv \
     --exclude="/log/" \
     --exclude="/scripts/" \
     --exclude="/tmp/" \
+    --exclude="/tools/" \
     --exclude="/src/simulation" \
     "$SOURCE_PATH" \
     "scripts/sync/ros2_ws.sh" \

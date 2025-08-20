@@ -1,0 +1,115 @@
+﻿[mipi_detect_node-1] 2000/01/01 08:01:21.236 !INFO [SetImageFrame][0495]N2D init done!
+[mipi_detect_node-1]
+[vision_test_node-3] [INFO] [0946684881.647566904] [控制无人机(movement.cpp)]: position[0]: -0.004741, position[1]: -0.000413, position[2]: -0.441856
+[vision_test_node-3] [INFO] [0946684881.647662487] [控制无人机(movement.cpp)]: current[0]: -0.466952, current[1]: -0.454653, current[2]: -0.273504
+[vision_test_node-3] [INFO] [0946684881.747548320] [控制无人机(movement.cpp)]: position[0]: -0.003928, position[1]: -0.000342, position[2]: -0.451821
+[vision_test_node-3] [INFO] [0946684881.747650279] [控制无人机(movement.cpp)]: current[0]: -0.475228, current[1]: -0.461060, current[2]: -0.298221
+[vision_test_node-3] [INFO] [0946684881.847567279] [控制无人机(movement.cpp)]: position[0]: -0.003115, position[1]: -0.000271, position[2]: -0.461789
+[vision_test_node-3] [INFO] [0946684881.847677737] [控制无人机(movement.cpp)]: current[0]: -0.486297, current[1]: -0.467775, current[2]: -0.321236
+[vision_test_node-3] [INFO] [0946684881.947572362] [控制无人机(movement.cpp)]: position[0]: -0.002303, position[1]: -0.000201, position[2]: -0.471757
+[vision_test_node-3] [INFO] [0946684881.947684070] [控制无人机(movement.cpp)]: current[0]: -0.502310, current[1]: -0.476048, current[2]: -0.347226
+[vision_test_node-3] [INFO] [0946684882.047585529] [控制无人机(movement.cpp)]: position[0]: -0.001490, position[1]: -0.000130, position[2]: -0.481725
+[vision_test_node-3] [INFO] [0946684882.047718362] [控制无人机(movement.cpp)]: current[0]: -0.519386, current[1]: -0.485923, current[2]: -0.372856
+[vision_test_node-3] [INFO] [0946684882.147563196] [控制无人机(movement.cpp)]: position[0]: -0.000678, position[1]: -0.000059, position[2]: -0.491689
+[vision_test_node-3] [INFO] [0946684882.147687237] [控制无人机(movement.cpp)]: current[0]: -0.536793, current[1]: -0.496597, current[2]: -0.397948
+[vision_test_node-3] [INFO] [0946684882.247560571] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684882.247680821] [控制无人机(movement.cpp)]: current[0]: -0.555031, current[1]: -0.507461, current[2]: -0.422026
+[vision_test_node-3] [INFO] [0946684882.347612362] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684882.347717196] [控制无人机(movement.cpp)]: current[0]: -0.572546, current[1]: -0.518316, current[2]: -0.444991
+[vision_test_node-3] [INFO] [0946684882.447571154] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684882.447853029] [控制无人机(movement.cpp)]: current[0]: -0.588823, current[1]: -0.528410, current[2]: -0.465809
+[vision_test_node-3] [INFO] [0946684882.547585112] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684882.547717237] [控制无人机(movement.cpp)]: current[0]: -0.601874, current[1]: -0.536858, current[2]: -0.483473
+[vision_test_node-3] [INFO] [0946684882.647588946] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684882.647730946] [控制无人机(movement.cpp)]: current[0]: -0.614273, current[1]: -0.545754, current[2]: -0.500862
+[vision_test_node-3] [INFO] [0946684882.747593946] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684882.747729404] [控制无人机(movement.cpp)]: current[0]: -0.624109, current[1]: -0.553874, current[2]: -0.516301
+[vision_test_node-3] [INFO] [0946684882.847564821] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684882.847684446] [控制无人机(movement.cpp)]: current[0]: -0.631161, current[1]: -0.560554, current[2]: -0.529760
+[vision_test_node-3] [INFO] [0946684882.947566904] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684882.947685488] [控制无人机(movement.cpp)]: current[0]: -0.635030, current[1]: -0.564952, current[2]: -0.541057
+[vision_test_node-3] [INFO] [0946684883.047586363] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684883.047722946] [控制无人机(movement.cpp)]: current[0]: -0.637423, current[1]: -0.568282, current[2]: -0.550386
+[vision_test_node-3] [INFO] [0946684883.147534488] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684883.147638113] [控制无人机(movement.cpp)]: current[0]: -0.637091, current[1]: -0.568492, current[2]: -0.558333
+[vision_test_node-3] [INFO] [0946684883.247620821] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684883.247711321] [控制无人机(movement.cpp)]: current[0]: -0.635026, current[1]: -0.567479, current[2]: -0.563759
+[vision_test_node-3] [INFO] [0946684883.347572196] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684883.347671196] [控制无人机(movement.cpp)]: current[0]: -0.629876, current[1]: -0.565954, current[2]: -0.568020
+[vision_test_node-3] [INFO] [0946684883.447571863] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684883.447672863] [控制无人机(movement.cpp)]: current[0]: -0.621937, current[1]: -0.565455, current[2]: -0.569602
+[vision_test_node-3] [INFO] [0946684883.547573030] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684883.547672738] [控制无人机(movement.cpp)]: current[0]: -0.611024, current[1]: -0.562151, current[2]: -0.570041
+[vision_test_node-3] [INFO] [0946684883.647567571] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684883.647666155] [控制无人机(movement.cpp)]: current[0]: -0.598362, current[1]: -0.557135, current[2]: -0.569868
+[vision_test_node-3] [INFO] [0946684883.747565571] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684883.747665530] [控制无人机(movement.cpp)]: current[0]: -0.583704, current[1]: -0.549839, current[2]: -0.569117
+[vision_test_node-3] [INFO] [0946684883.847554530] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684883.847654280] [控制无人机(movement.cpp)]: current[0]: -0.567212, current[1]: -0.540197, current[2]: -0.567934
+[vision_test_node-3] [INFO] [0946684883.947580155] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684883.947679238] [控制无人机(movement.cpp)]: current[0]: -0.551844, current[1]: -0.530707, current[2]: -0.566336
+[vision_test_node-3] [INFO] [0946684884.047587863] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684884.047817238] [控制无人机(movement.cpp)]: current[0]: -0.533524, current[1]: -0.519308, current[2]: -0.564126
+[vision_test_node-3] [INFO] [0946684884.147579072] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684884.147680155] [控制无人机(movement.cpp)]: current[0]: -0.514231, current[1]: -0.506220, current[2]: -0.561425
+[vision_test_node-3] [INFO] [0946684884.247558905] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684884.247658322] [控制无人机(movement.cpp)]: current[0]: -0.494704, current[1]: -0.490898, current[2]: -0.558924
+[vision_test_node-3] [INFO] [0946684884.347581488] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684884.347681947] [控制无人机(movement.cpp)]: current[0]: -0.475772, current[1]: -0.474535, current[2]: -0.555701
+[vision_test_node-3] [INFO] [0946684884.447558030] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684884.447671447] [控制无人机(movement.cpp)]: current[0]: -0.457393, current[1]: -0.457157, current[2]: -0.551326
+[vision_test_node-3] [INFO] [0946684884.547549988] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684884.547658863] [控制无人机(movement.cpp)]: current[0]: -0.440103, current[1]: -0.440327, current[2]: -0.545974
+[vision_test_node-3] [INFO] [0946684884.647567863] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684884.647678947] [控制无人机(movement.cpp)]: current[0]: -0.426184, current[1]: -0.425702, current[2]: -0.541044
+[vision_test_node-3] [INFO] [0946684884.747602697] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684884.747719113] [控制无人机(movement.cpp)]: current[0]: -0.412251, current[1]: -0.409602, current[2]: -0.536568
+[vision_test_node-3] [INFO] [0946684884.847601530] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684884.847715239] [控制无人机(movement.cpp)]: current[0]: -0.399422, current[1]: -0.393018, current[2]: -0.533621
+[vision_test_node-3] [INFO] [0946684884.947592447] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684884.947697239] [控制无人机(movement.cpp)]: current[0]: -0.387530, current[1]: -0.377445, current[2]: -0.531706
+[vision_test_node-3] [INFO] [0946684885.047635030] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684885.047823780] [控制无人机(movement.cpp)]: current[0]: -0.376076, current[1]: -0.362426, current[2]: -0.530854
+[vision_test_node-3] [INFO] [0946684885.147700114] [控制无人机(movement.cpp)]: position[0]: 0.000000, position[1]: 0.000000, position[2]: -0.500000
+[vision_test_node-3] [INFO] [0946684885.147847614] [控制无人机(movement.cpp)]: current[0]: -0.364135, current[1]: -0.347860, current[2]: -0.531781
+[vision_test_node-3] [INFO] [0946684885.247555030] [vision_test_node]: 上升完成!
+[vision_test_node-3] [INFO] [0946684896.647584994] [跟踪(track.cpp)]: 类别: person, cx: 409, cy: 573, yawspeed: -0.267008
+[vision_test_node-3] [INFO] [0946684905.147540623] [跟踪(track.cpp)]: 类别: person, cx: 1107, cy: 531, yawspeed: -2.361008
+[vision_test_node-3] [INFO] [0946684905.247578748] [跟踪(track.cpp)]: 类别: person, cx: 1071, cy: 529, yawspeed: -2.253008
+[vision_test_node-3] [INFO] [0946684911.947542376] [跟踪(track.cpp)]: 类别: person, cx: 1527, cy: 540, yawspeed: -3.621008
+[vision_test_node-3] [INFO] [0946684912.047538418] [跟踪(track.cpp)]: 类别: person, cx: 1524, cy: 537, yawspeed: -3.612008
+[vision_test_node-3] [INFO] [0946684912.147536335] [跟踪(track.cpp)]: 类别: person, cx: 1506, cy: 540, yawspeed: -3.558008
+[vision_test_node-3] [INFO] [0946684913.847698586] [跟踪(track.cpp)]: 类别: person, cx: 768, cy: 537, yawspeed: -1.344008
+[vision_test_node-3] [INFO] [0946684913.947561169] [跟踪(track.cpp)]: 类别: person, cx: 526, cy: 536, yawspeed: -0.618008
+[vision_test_node-3] [INFO] [0946684914.047547836] [跟踪(track.cpp)]: 类别: person, cx: 472, cy: 537, yawspeed: -0.456008
+[vision_test_node-3] [INFO] [0946684915.947607670] [跟踪(track.cpp)]: 类别: person, cx: 555, cy: 537, yawspeed: -0.705008
+[vision_test_node-3] [INFO] [0946684916.147568295] [跟踪(track.cpp)]: 类别: person, cx: 793, cy: 537, yawspeed: -1.419008
+[vision_test_node-3] [INFO] [0946684916.647558879] [跟踪(track.cpp)]: 类别: person, cx: 1291, cy: 530, yawspeed: -2.913008
+[vision_test_node-3] [INFO] [0946684916.747590795] [跟踪(track.cpp)]: 类别: person, cx: 1326, cy: 530, yawspeed: -3.018008
+[vision_test_node-3] [INFO] [0946684916.847567670] [跟踪(track.cpp)]: 类别: person, cx: 1362, cy: 535, yawspeed: -3.126008
+[vision_test_node-3] [INFO] [0946684917.947589129] [跟踪(track.cpp)]: 类别: person, cx: 1521, cy: 534, yawspeed: -3.603008
+[vision_test_node-3] [INFO] [0946684918.147570629] [跟踪(track.cpp)]: 类别: person, cx: 1347, cy: 538, yawspeed: -3.081008
+[vision_test_node-3] [INFO] [0946684918.247640838] [跟踪(track.cpp)]: 类别: person, cx: 1393, cy: 538, yawspeed: -3.219008
+[vision_test_node-3] [INFO] [0946684919.447604880] [跟踪(track.cpp)]: 类别: person, cx: 888, cy: 539, yawspeed: -1.704008
+[vision_test_node-3] [INFO] [0946684920.447562630] [跟踪(track.cpp)]: 类别: person, cx: 901, cy: 538, yawspeed: -1.743008
+[vision_test_node-3] [INFO] [0946684920.647545631] [跟踪(track.cpp)]: 类别: person, cx: 1179, cy: 539, yawspeed: -2.577008
+[vision_test_node-3] [INFO] [0946684920.747566131] [跟踪(track.cpp)]: 类别: person, cx: 1189, cy: 539, yawspeed: -2.607008
+[vision_test_node-3] [INFO] [0946684921.847560464] [跟踪(track.cpp)]: 类别: person, cx: 1558, cy: 517, yawspeed: -3.714008
+[vision_test_node-3] [INFO] [0946684921.947560506] [跟踪(track.cpp)]: 类别: person, cx: 1543, cy: 517, yawspeed: -3.669008
+[vision_test_node-3] [INFO] [0946684922.047561298] [跟踪(track.cpp)]: 类别: person, cx: 1531, cy: 518, yawspeed: -3.633008
+[vision_test_node-3] [INFO] [0946684922.747552632] [跟踪(track.cpp)]: 类别: person, cx: 1711, cy: 557, yawspeed: -4.173007
+[vision_test_node-3] [INFO] [0946684923.347560757] [跟踪(track.cpp)]: 类别: person, cx: 958, cy: 542, yawspeed: -1.914008
+[vision_test_node-3] [INFO] [0946684923.447540757] [跟踪(track.cpp)]: 类别: person, cx: 949, cy: 538, yawspeed: -1.887008
+[vision_test_node-3] [INFO] [0946684923.547551882] [跟踪(track.cpp)]: 类别: person, cx: 961, cy: 537, yawspeed: -1.923008
+[vision_test_node-3] [INFO] [0946684925.847588008] [跟踪(track.cpp)]: 类别: person, cx: 943, cy: 539, yawspeed: -1.869008
+[vision_test_node-3] [INFO] [0946684925.947565591] [跟踪(track.cpp)]: 类别: person, cx: 1071, cy: 539, yawspeed: -2.253008
+[vision_test_node-3] [INFO] [0946684926.047559508] [跟踪(track.cpp)]: 类别: person, cx: 1020, cy: 539, yawspeed: -2.100008
+[vision_test_node-3] [INFO] [0946684926.147549550] [跟踪(track.cpp)]: 类别: person, cx: 958, cy: 541, yawspeed: -1.914008
+[vision_test_node-3] [INFO] [0946684926.247559717] [跟踪(track.cpp)]: 类别: person, cx: 1062, cy: 539, yawspeed: -2.226008
+[vision_test_node-3] [INFO] [0946684926.347579550] [跟踪(track.cpp)]: 类别: person, cx: 991, cy: 540, yawspeed: -2.013008
+[vision_test_node-3] [INFO] [0946684926.447576050] [跟踪(track.cpp)]: 类别: person, cx: 1029, cy: 542, yawspeed: -2.127008
+[vision_test_node-3] [INFO] [0946684926.547588717] [跟踪(track.cpp)]: 类别: person, cx: 1080, cy: 542, yawspeed: -2.280008
+[vision_test_node-3] [INFO] [0946684926.647612467] [跟踪(track.cpp)]: 类别: person, cx: 1123, cy: 539, yawspeed: -2.409008
+[vision_test_node-3] [INFO] [0946684926.747584300] [跟踪(track.cpp)]: 类别: person, cx: 1140, cy: 539, yawspeed: -2.460008
+[vision_test_node-3] [INFO] [0946684926.847581550] [跟踪(track.cpp)]: 类别: person, cx: 976, cy: 539, yawspeed: -1.968008
+[vision_test_node-3] [INFO] [0946684926.947572550] [跟踪(track.cpp)]: 类别: person, cx: 915, cy: 544, yawspeed: -1.785008
