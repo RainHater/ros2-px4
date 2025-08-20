@@ -11,6 +11,8 @@
 #include <px4_msgs/msg/vehicle_angular_velocity.hpp>
 #include <px4_msgs/msg/sensor_combined.hpp>
 
+#include <builtin_interfaces/msg/time.hpp>
+
 #include "identify/msg/yolo_detections.hpp"
 
 #include "utilities/tf2_tool.hpp"

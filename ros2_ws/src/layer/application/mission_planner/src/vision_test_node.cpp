@@ -1,4 +1,5 @@
 #include "mission_planner/vision_test_node.h"
+#include <cmath>
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
@@ -118,20 +119,21 @@ void VisionTestNode::task_loop(){
             }
             break;
         }
-        // case SWITCH_MODE: {
-        //     m_interface.mode_control.unlock(
-        //         ARM_ENABLE, VELOCITY, 
-        //         m_sub.offboard_mode.get_msg(), 
-        //         m_pub_msgs.offboard_mode
-        //     );
-        //     if (m_interface.mode_control.wait_busy()){
-        //         m_fly = Hover;
-        //         RCLCPP_INFO(get_logger(), "切换到速度模式!");
-        //     }
-        //     break;
-        // }
+        case SWITCH_MODE: {
+            m_interface.mode_control.unlock(
+                ARM_ENABLE, VELOCITY, 
+                m_sub.offboard_mode.get_msg(), 
+                m_pub_msgs.offboard_mode
+            );
+            if (m_interface.mode_control.wait_busy()){
+                m_fly = Hover;
+                RCLCPP_INFO(get_logger(), "切换到速度模式!");
+            }
+            break;
+        }
         case Hover:{
             auto has_received = m_sub.yolo_detections.has_change();
+            // RCLCPP_INFO(get_logger(), "has_received %d", has_received);
             if (has_received){
                 track::NormalTrack normal_track;
                 normal_track.detections = m_sub.yolo_detections.get_msg();

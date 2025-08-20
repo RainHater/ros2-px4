@@ -21,19 +21,26 @@ Track::Track()
 }
 
 void Track::normal_track(track::NormalTrack& normal_info) {
-    auto& detection = normal_info.detections.detections[0];
+
     auto& cur_ns = normal_info.detections.stamp.nanosec;
     auto& detect_flag = normal_info.detections.detect_flag;
     // auto& sub_pose = normal_info.sub_pose;
     // auto& sub_attitude = normal_info.sub_attitude;
     // auto& sensor_combined = normal_info.sensor_combined;
-    auto* pub_tra = normal_info.pub_tra;
+    auto& pub_tra = *normal_info.pub_tra;
 
     float cur_time =  cur_ns / 1e6f;
     float dt  = cur_time - m_pid.last_time;
     m_pid.last_time = cur_time;
 
-    float cx = detect_flag?detection.cx:0.0;
+    float cx = 0.0;
+    if (detect_flag){
+        auto& detection = normal_info.detections.detections[0];
+        cx = detection.cx;
+    }else {
+        cx = 0.0;
+    }
+
     float pixel_offset = cx - m_camera.width / 2.0;
     float angle_offset = (pixel_offset / (m_camera.width / 2.0)) * (m_camera.hfov / 2.0);
     float setpoint = angle_offset * M_PI / 180.0f;
@@ -41,11 +48,12 @@ void Track::normal_track(track::NormalTrack& normal_info) {
 
     float output = m_pid.deviation.compute(setpoint, dt);
     
-    pub_tra->yawspeed = output;
+    pub_tra.yaw = NAN;
+    pub_tra.yawspeed = output;
 
     RCLCPP_INFO(m_log, 
-        "cx: %d, setpoint: %f, yawspeed: %f",
-        detection.cx, setpoint, 
-        pub_tra->yawspeed
+        "cx: %f, setpoint: %f, yawspeed: %f",
+        cx, setpoint, 
+        pub_tra.yawspeed
     );
 }
