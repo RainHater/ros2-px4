@@ -113,7 +113,7 @@ void VisionTestNode::task_loop(){
                 justmove_info.v = 0.1;
                 bool arrive = m_interface.movement.change_height(justmove_info, 0.5);
                 if (arrive){
-                    m_fly = Hover;
+                    m_fly = SWITCH_MODE;
                     RCLCPP_INFO(get_logger(), "上升完成!");
                 }
             }

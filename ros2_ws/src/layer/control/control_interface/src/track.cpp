@@ -27,7 +27,7 @@ void Track::normal_track(track::NormalTrack& normal_info) {
 
     auto& cur_ns = normal_info.detections.stamp.nanosec;
     auto& detect_flag = normal_info.detections.detect_flag;
-    // auto& sub_pose = normal_info.sub_pose;
+    auto& sub_pose = normal_info.sub_pose;
     // auto& sub_attitude = normal_info.sub_attitude;
     // auto& sensor_combined = normal_info.sensor_combined;
     auto& pub_tra = *normal_info.pub_tra;
@@ -55,9 +55,9 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float cy_output = m_pid.cx.compute(cy_error, dt);
     
     pub_tra.yaw = NAN;
-    pub_tra.position[0] = NAN;
-    pub_tra.position[1] = NAN;
-    pub_tra.position[2] = NAN;
+    pub_tra.position[0] = sub_pose.position[0];
+    pub_tra.position[1] = sub_pose.position[1];
+    pub_tra.position[2] = sub_pose.position[2];
     pub_tra.velocity[0] = 0.0f;
     pub_tra.velocity[1] = 0.0f;
     pub_tra.velocity[2] = cy_output;
@@ -66,7 +66,7 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     if (!detect_flag)
         return;
     RCLCPP_INFO(m_log, 
-        "cx: %f, cx_error: %f, cx_out: %f"
+        "cx: %f, cx_error: %f, cx_out: %f, "
         "cy: %f, cy_error: %f, cy_out: %f",
         cx, cx_error, 
         pub_tra.yawspeed,
