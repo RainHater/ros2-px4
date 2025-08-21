@@ -8,11 +8,22 @@
 #include <ctime>
 #include <string>
 #include <mutex>
+#include <filesystem>
 #include <rclcpp/rclcpp.hpp>
 
 class LoggerTool {
 public:
-    LoggerTool(const std::string &log_dir = "~/tmp/ros2_logs/") {
+    LoggerTool(const std::string &log_dir = "/tmp/ros2_logs/") {
+        namespace fs = std::filesystem;
+
+        // 确保目录存在，不存在就创建
+        fs::path dir_path(log_dir);
+        if (!fs::exists(dir_path)) {
+            if (!fs::create_directories(dir_path)) {
+                throw std::runtime_error("无法创建日志目录: " + log_dir);
+            }
+        }
+
         // 确保目录结尾有 /
         std::string dir = log_dir;
         if (dir.back() != '/') {
@@ -29,6 +40,7 @@ public:
             << std::put_time(&tm, "%Y%m%d_%H%M%S")
             << ".log";
 
+        // 打开日志文件
         m_log_file.open(oss.str(), std::ios::out | std::ios::app);
         if (!m_log_file.is_open()) {
             throw std::runtime_error("无法打开日志文件: " + oss.str());

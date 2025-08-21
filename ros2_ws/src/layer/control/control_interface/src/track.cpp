@@ -39,10 +39,14 @@ void Track::normal_track(track::NormalTrack& normal_info) {
 
     float cx = 0.0f;
     float cy = 0.0f;
+    float area = 0.0f;
+    float area_speed = 10.0;
     if (detect_flag){
         auto& detection = normal_info.detections.detections[0];
         cx = detection.cx;
         cy = detection.cy;
+        area = abs((detection.x_max - detection.x_min) * (detection.y_max - detection.y_min));
+        
     }else {
         cx = 960.0f;
         cy = 540.0f;
@@ -54,24 +58,44 @@ void Track::normal_track(track::NormalTrack& normal_info) {
 
     float cx_output = m_pid.cx.compute(cx_error, dt);
     float cy_output = m_pid.cx.compute(cy_error, dt);
-    
+    // 1920, 1080 
+    // 1920/4 * 1080
+
+    float thre_area = 1920.0 / 4.72 * 1080.0;
+    if (area < thre_area){
+        area_speed = 10.3;
+    }
+    else{
+        area_speed = -15;
+    }
+
     pub_tra.yaw = NAN;
-    pub_tra.position[0] = sub_pose.position[0];
-    pub_tra.position[1] = sub_pose.position[1];
-    pub_tra.position[2] = sub_pose.position[2];
-    pub_tra.velocity[0] = 0.0f;
+    // pub_tra.position[0] = sub_pose.position[0];
+    // pub_tra.position[1] = sub_pose.position[1];
+    // pub_tra.position[2] = sub_pose.position[2];
+    // pub_tra.velocity[0] = 0.0f;
+    pub_tra.velocity[0] = area_speed;
+
     pub_tra.velocity[1] = 0.0f;
+
     pub_tra.velocity[2] = cy_output;
     pub_tra.yawspeed = cx_output;
 
-    if (!detect_flag)
-        return;
-    m_logger.info(m_log, 
-        "cx: %f, cx_error: %f, cx_out: %f, "
-        "cy: %f, cy_error: %f, cy_out: %f",
-        cx, cx_error, 
-        pub_tra.yawspeed,
-        cy, cy_error,
-        pub_tra.velocity[2]
-    );
+    if (detect_flag){
+        // pub_tra.position[0] = NAN;
+        // pub_tra.position[1] = NAN;
+        // pub_tra.position[2] = NAN;
+        m_logger.info(m_log, 
+            "cx: %f, cx_error: %f, cx_out: %f, "
+            "cy: %f, cy_error: %f, cy_out: %f",
+            cx, cx_error, 
+            pub_tra.yawspeed,
+            cy, cy_error,
+            pub_tra.velocity[2]
+        );
+    }else {
+        // pub_tra.position[0] = sub_pose.position[0];
+        // pub_tra.position[1] = sub_pose.position[1];
+        pub_tra.position[2] = sub_pose.position[2];
+    } 
 }
