@@ -5,7 +5,8 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
 Track::Track()
- : m_log(rclcpp::get_logger("跟踪(track.cpp)"))
+ :  m_log(rclcpp::get_logger("跟踪(track.cpp)")),
+    m_logger("/home/sunrise/ros2_logs/track.log")
 {   
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["track"];
@@ -65,7 +66,7 @@ void Track::normal_track(track::NormalTrack& normal_info) {
 
     if (!detect_flag)
         return;
-    RCLCPP_INFO(m_log, 
+    m_logger.info(m_log, 
         "cx: %f, cx_error: %f, cx_out: %f, "
         "cy: %f, cy_error: %f, cy_out: %f",
         cx, cx_error, 
