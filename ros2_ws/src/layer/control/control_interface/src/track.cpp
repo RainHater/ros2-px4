@@ -40,13 +40,14 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float cx = 0.0f;
     float cy = 0.0f;
     float area = 0.0f;
-    float area_speed = 10.0;
+    float area_speed = 0.05;
+    float thre_area = (1920.0 / 2.72) * (1080.0/1.4);    // 26%~30%
+
     if (detect_flag){
         auto& detection = normal_info.detections.detections[0];
         cx = detection.cx;
         cy = detection.cy;
-        area = abs((detection.x_max - detection.x_min) * (detection.y_max - detection.y_min));
-        
+        area = abs((detection.x_max - detection.x_min) * (detection.y_max - detection.y_min));        
     }else {
         cx = 960.0f;
         cy = 540.0f;
@@ -59,14 +60,18 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float cx_output = m_pid.cx.compute(cx_error, dt);
     float cy_output = m_pid.cx.compute(cy_error, dt);
     // 1920, 1080 
-    // 1920/4 * 1080
+    // 1920/2.27 * 1080/1.4
 
-    float thre_area = 1920.0 / 4.72 * 1080.0;
     if (area < thre_area){
-        area_speed = 10.3;
+        area_speed = 0.05;
     }
-    else{
-        area_speed = -15;
+    else if (area == thre_area)
+    {
+        area_speed = 0.0f;
+    }
+    else
+    {
+        area_speed = -0.1;
     }
 
     pub_tra.yaw = NAN;
