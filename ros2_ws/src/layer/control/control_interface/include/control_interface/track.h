@@ -46,7 +46,9 @@ private:
     struct PIDInfo{
         PIDController cx;
         PIDController cy;
-        float last_time;
+        std::array<float, 3> last_postition;
+        double last_time;
+        bool last_pos_init = false;
     };
 
     struct YamlInfo{
