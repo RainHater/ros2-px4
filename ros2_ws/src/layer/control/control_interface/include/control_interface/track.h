@@ -20,7 +20,6 @@
 
 #include "control_interface/pid.h"
 
-
 namespace track {
 struct NormalTrack{
     identify::msg::YoloDetections detections;
@@ -37,32 +36,31 @@ public:
 
     void normal_track(track::NormalTrack& normal_info);
 private:
+
     struct CameraInfo{
         float hfov;
         float width;
         float height;
     };
 
-    struct PIDInfo{
-        PIDController cx;
-        PIDController cy;
+    struct PidCalInfo{
+        PIDController yaw;
+        PIDController ud;
+        PIDController fb;
         std::array<float, 3> last_postition;
         double last_time;
         bool last_pos_init = false;
     };
 
     struct YamlInfo{
-        float cx_kp = 0.003f;
-        float cx_ki = 0.00001f;
-        float cx_kd = 0.0f;
-        float cy_kp = 0.003f;
-        float cy_ki = 0.00001f;
-        float cy_kd = 0.0f;
+        PidInfo yaw = {0.003f, 0.00001f, 0.0f};
+        PidInfo ud = {0.003f, 0.00001f, 0.0f};
+        PidInfo fb = {0.003f, 0.00001f, 0.0f};
     };
 private:
     rclcpp::Logger m_log;
     LoggerTool m_logger;
-    PIDInfo m_pid;
+    PidCalInfo m_pid;
     YamlInfo m_yaml;
     CameraInfo m_camera;
     

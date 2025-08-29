@@ -11,18 +11,22 @@ Track::Track()
 {   
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["track"];
-    m_yaml.cx_kp = config["cx_kp"].as<float>();
-    m_yaml.cx_ki = config["cx_ki"].as<float>();
-    m_yaml.cx_kd = config["cx_kd"].as<float>();
-    m_yaml.cy_kp = config["cy_kp"].as<float>();
-    m_yaml.cy_ki = config["cy_ki"].as<float>();
-    m_yaml.cy_kd = config["cy_kd"].as<float>();
+    m_yaml.yaw.kp = config["yaw_kp"].as<float>();
+    m_yaml.yaw.ki = config["yaw_ki"].as<float>();
+    m_yaml.yaw.kd = config["yaw_kd"].as<float>();
+    m_yaml.ud.kp = config["ud_kp"].as<float>();
+    m_yaml.ud.ki = config["ud_ki"].as<float>();
+    m_yaml.ud.kd = config["ud_kd"].as<float>();
+    m_yaml.fb.kp = config["fb_kp"].as<float>();
+    m_yaml.fb.ki = config["fb_ki"].as<float>();
+    m_yaml.fb.kd = config["fb_kd"].as<float>();
 
     m_camera.width = 1920;
     m_camera.height = 1080;
 
-    m_pid.cx.initialize(m_yaml.cx_kp, m_yaml.cx_ki, m_yaml.cx_kd, false, 1.5708f, 1.5708f); 
-    m_pid.cy.initialize(m_yaml.cy_kp, m_yaml.cy_ki, m_yaml.cy_kd, false, 0.5f, 0.5f); 
+    m_pid.yaw.initialize(m_yaml.yaw.kp, m_yaml.yaw.ki, m_yaml.yaw.kd, false, 1.5708f, 1.5708f); 
+    m_pid.ud.initialize(m_yaml.ud.kp, m_yaml.ud.ki, m_yaml.ud.kd, false, 0.5f, 0.5f); 
+    m_pid.fb.initialize(m_yaml.fb.kp, m_yaml.fb.ki, m_yaml.fb.kd, false, 0.5f, 0.5f);
 }
 
 void Track::normal_track(track::NormalTrack& normal_info) {
@@ -45,14 +49,14 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float cy = 0.0f;
     float area = 0.0f;
     float area_speed = 0.0f;
-    float thre_area = (1920.0 / 2.4) * (1080.0/1);    // 47%
+    float thre_area = (1920.0 / 2.4) * (1080.0/1);
     float yaw = angles.yaw;
 
     if (detect_flag){
         auto& detection = normal_info.detections.detections[0];
         cx = detection.cx;
         cy = detection.cy;
-        area = abs((detection.x_max - detection.x_min) * (detection.y_max - detection.y_min));    
+        area = abs((detection.x_max - detection.x_min) * (detection.y_max - detection.y_min));  
         if (area < thre_area){
             area_speed = 0.3f;
         }
@@ -68,8 +72,8 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float cy_error = cy - m_camera.height / 2.0;
 
 
-    float cx_output = m_pid.cx.compute(cx_error, dt);
-    float cy_output = m_pid.cx.compute(cy_error, dt);
+    float cx_output = m_pid.yaw.compute(cx_error, dt);
+    float cy_output = m_pid.ud.compute(cy_error, dt);
 
     pub_tra.yaw = NAN;
     pub_tra.velocity[0] = cosf(yaw) * area_speed;

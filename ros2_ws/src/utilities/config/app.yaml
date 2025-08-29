@@ -10,11 +10,15 @@ movement:
   #降落到地面时间
   land_start_time: 3
 track:
-  #cx PID
-  cx_kp: 0.002
-  cx_ki: 0.00001
-  cx_kd: 0.0
-  #cy PID
-  cy_kp: 0.0002
-  cy_ki: 0.0000
-  cy_kd: 0.0
+  #yaw PID
+  yaw_kp: 0.002
+  yaw_ki: 0.00001
+  yaw_kd: 0.0
+  #上下 PID
+  ud_kp: 0.0002
+  ud_ki: 0.0000
+  ud_kd: 0.0
+  #前后 PID
+  fb_kp: 0.0002
+  fb_ki: 0.00
+  fb_kd: 0.0

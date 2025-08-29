@@ -22,10 +22,10 @@ void PIDController::initialize(
     bool incr_select, 
     float output_limit,
     float integral_limit)
-{
-    m_kp = kp;
-    m_ki = ki;
-    m_kd = kd;
+{   
+    m_pid.kp = kp;
+    m_pid.ki = ki;
+    m_pid.kd = kd;
     m_incr_select = incr_select;
     m_output_limit = output_limit;
     m_integral_limit = integral_limit;
@@ -35,9 +35,9 @@ float PIDController::compute(float error, float dt) {
     m_error = error;
 
     if(m_incr_select){  
-        float kp_output = (m_kp*(m_error - m_last_error));
-        float ki_output = (m_ki * m_error * dt);
-        float kd_output = dt?(m_kd * (m_error - m_last_error)) / dt : 0.0f;
+        float kp_output = (m_pid.kp*(m_error - m_last_error));
+        float ki_output = (m_pid.ki * m_error * dt);
+        float kd_output = dt?(m_pid.kd * (m_error - m_last_error)) / dt : 0.0f;
         float delta_output = kp_output + ki_output + kd_output;
         
         m_output = m_last_output + delta_output;
@@ -54,9 +54,9 @@ float PIDController::compute(float error, float dt) {
 
         float derivative = dt?(m_error - m_last_error) / dt:0.0f;
 
-        float kp_output = m_kp * m_error;
-        float ki_output = m_ki * m_integral;
-        float kd_output = m_kd * derivative;
+        float kp_output = m_pid.kp * m_error;
+        float ki_output = m_pid.ki * m_integral;
+        float kd_output = m_pid.kd * derivative;
 
         m_output = kp_output + ki_output + kd_output;
         m_output = std::clamp(m_output, -m_output_limit, m_output_limit);

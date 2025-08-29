@@ -1,6 +1,12 @@
 #ifndef PID_H
 #define PID_H
 
+struct PidInfo{
+    float kp;
+    float ki;
+    float kd;
+};
+
 class PIDController {
 public:
     PIDController();
@@ -15,12 +21,8 @@ public:
     );
     float compute(float error, float dt);
 private:
-    //比例增益
-    float m_kp;
-    //积分增益           
-    float m_ki;
-    //微分增益             
-    float m_kd;
+    //pid 值
+    PidInfo m_pid;
 
     //误差
     float m_error;
