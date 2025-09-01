@@ -16,6 +16,7 @@ find_package(common_msgs REQUIRED)
 find_package(utilities REQUIRED)
 find_package(control_interface REQUIRED)
 find_package(identify REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -47,12 +48,11 @@ function(register_node target_name)
     utilities
     control_interface
     identify
+    yaml-cpp
   )
   install(TARGETS ${target_name} DESTINATION lib/${PROJECT_NAME})
 endfunction()
 
 register_node(vision_test_node)
-# register_node(room_control_node)
-# register_node(outdoor_control_node)
 
 ament_package()

@@ -17,10 +17,10 @@ track:
   yaw_ki: 0.00001
   yaw_kd: 0.0
   #上下 PID
-  ud_kp: 0.0002
-  ud_ki: 0.0000
+  ud_kp: 0.002
+  ud_ki: 0.00001
   ud_kd: 0.0
   #前后 PID
-  fb_kp: 0.000006
-  fb_ki: 0.00
+  fb_kp: 0.000003
+  fb_ki: 0.00001
   fb_kd: 0.0

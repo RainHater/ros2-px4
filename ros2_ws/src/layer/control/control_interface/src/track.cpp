@@ -26,7 +26,7 @@ Track::Track()
 
     m_pid.yaw.initialize(m_yaml.yaw.kp, m_yaml.yaw.ki, m_yaml.yaw.kd, false, 1.5708f, 1.5708f); 
     m_pid.ud.initialize(m_yaml.ud.kp, m_yaml.ud.ki, m_yaml.ud.kd, false, 0.5f, 0.5f); 
-    m_pid.fb.initialize(m_yaml.fb.kp, m_yaml.fb.ki, m_yaml.fb.kd, false, 0.5f, 0.5f);
+    m_pid.fb.initialize(m_yaml.fb.kp, m_yaml.fb.ki, m_yaml.fb.kd, false, 0.4f, 0.4f);
 }
 
 void Track::normal_track(track::NormalTrack& normal_info) {
@@ -39,7 +39,8 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     auto& pub_tra = *normal_info.pub_tra;
 
     double cur_time =  cur_ns / 1e6f;
-    float dt  = cur_time - m_pid.last_time;
+    // float dt  = cur_time - m_pid.last_time;
+    float dt  = 100;
     m_pid.last_time = cur_time;
 
     tf2_tool::EulerAngles angles;
@@ -59,6 +60,7 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     }else {
         cx = 960.0f;
         cy = 540.0f;
+        area = thre_area;
     }
 
     float cx_error = cx - m_camera.width / 2.0;
@@ -67,7 +69,7 @@ void Track::normal_track(track::NormalTrack& normal_info) {
 
     float yaw_output = m_pid.yaw.compute(cx_error, dt);
     float ud_output = m_pid.ud.compute(cy_error, dt);
-    float fb_output = m_pid.fb.compute(area_error, dt);
+    float fb_output = (area_error==0)?0.0f:m_pid.fb.compute(area_error, dt);
 
     pub_tra.yaw = NAN;
     pub_tra.velocity[0] = cosf(yaw) * fb_output;

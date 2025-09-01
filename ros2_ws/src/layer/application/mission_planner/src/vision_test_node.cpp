@@ -1,5 +1,7 @@
 #include "mission_planner/vision_test_node.h"
 #include <cmath>
+#include <yaml-cpp/yaml.h>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
@@ -111,7 +113,7 @@ void VisionTestNode::task_loop(){
                 justmove_info.pub_pose = &m_pub_msgs.trajectory_setpoint;
                 justmove_info.instant_time = get_clock()->now();
                 justmove_info.v = 0.1;
-                bool arrive = m_interface.movement.change_height(justmove_info, 0.5);
+                bool arrive = m_interface.movement.change_height(justmove_info, 1.5);
                 if (arrive){
                     m_fly = SWITCH_MODE;
                     RCLCPP_INFO(get_logger(), "上升完成!");

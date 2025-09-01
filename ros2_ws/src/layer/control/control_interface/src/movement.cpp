@@ -9,7 +9,7 @@ constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
 
 Movement::Movement()
  : m_log(rclcpp::get_logger("控制无人机(movement.cpp)"))
-{   
+{    
     m_land.state = 0;
 
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
@@ -122,14 +122,9 @@ bool Movement::justmove(movement::JustmoveInfo justmove_info, Waypts target) {
     double deltax = sub_pose.position[0]-m_justmove.target_pose.x;
     double deltay = sub_pose.position[1]-m_justmove.target_pose.y;
     double deltaz = sub_pose.position[2]-m_justmove.target_pose.z;
-    float horizontal_dist = std::hypot(deltax, deltay);
-    float vertical_dist = std::abs(deltaz);
-    bool hor_arrive = (horizontal_dist < m_yaml.hor_th);
-    bool ver_arrive = (vertical_dist < m_yaml.ver_th);
-    bool time_arrive = now_s - m_justmove.start_time > m_justmove.total_time;
-    bool pose_arrive = hor_arrive && ver_arrive;
 
-    bool arrive = time_arrive && pose_arrive;
+    double delta = sqrt(pow(deltax,2)+pow(deltay,2)+pow(deltaz,2));
+    bool arrive = (instant_time.seconds() - m_justmove.start_time > m_justmove.total_time) && delta < m_yaml.delta;
 
     if(!arrive){
         double out_x = m_justmove.start_pose.x + m_justmove.dt * m_justmove.vx;
@@ -153,16 +148,14 @@ bool Movement::justmove(movement::JustmoveInfo justmove_info, Waypts target) {
         pub_pose->yaw = m_justmove.dw;
 
         RCLCPP_INFO(m_log, 
-            "position[0]: %f, position[1]: %f, position[2]: %f"
-            "current[0]: %f, current[1]: %f, current[2]: %f"
-            "hor_arrive: %d, ver_arrive: %d",
+            "position[0]: %f, position[1]: %f, position[2]: %f, "
+            "current[0]: %f, current[1]: %f, current[2]: %f",
             pub_pose->position[0],
             pub_pose->position[1],
             pub_pose->position[2],
             sub_pose.position[0],
             sub_pose.position[1],
-            sub_pose.position[2],
-            hor_arrive, ver_arrive
+            sub_pose.position[2]
         );
     }else {
         m_justmove.state = 0;
@@ -197,8 +190,13 @@ bool Movement::move_by_offset(
     return arrive;
 }
 
-bool Movement::change_height(movement::JustmoveInfo justmove_info, double high) {   
-    Waypts target = {0, 0, -high};
+bool Movement::change_height(movement::JustmoveInfo justmove_info, double high) { 
+    auto& sub_pose = justmove_info.sub_pose;
+    auto c_x = sub_pose.position[0];
+    auto c_y = sub_pose.position[1];
+    auto c_z = sub_pose.position[2];
+
+    Waypts target = {c_x, c_y, c_z + (-high)};
     justmove_info.auto_angle = false;
 
     bool arrive = justmove(justmove_info, target);
