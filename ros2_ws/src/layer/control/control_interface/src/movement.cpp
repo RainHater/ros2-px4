@@ -153,17 +153,16 @@ bool Movement::justmove(movement::JustmoveInfo justmove_info, Waypts target) {
         pub_pose->yaw = m_justmove.dw;
 
         RCLCPP_INFO(m_log, 
-            "position[0]: %f, position[1]: %f, position[2]: %f",
+            "position[0]: %f, position[1]: %f, position[2]: %f"
+            "current[0]: %f, current[1]: %f, current[2]: %f"
+            "hor_arrive: %d, ver_arrive: %d",
             pub_pose->position[0],
             pub_pose->position[1],
-            pub_pose->position[2]
-        );
-
-        RCLCPP_INFO(m_log, 
-            "current[0]: %f, current[1]: %f, current[2]: %f",
+            pub_pose->position[2],
             sub_pose.position[0],
             sub_pose.position[1],
-            sub_pose.position[2]
+            sub_pose.position[2],
+            hor_arrive, ver_arrive
         );
     }else {
         m_justmove.state = 0;
