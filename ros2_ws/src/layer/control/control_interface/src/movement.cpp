@@ -14,11 +14,12 @@ Movement::Movement()
 
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["movement"];
-    m_yaml.HORIZONTAL_DIST_THRESHOLD = config["HORIZONTAL_DIST_THRESHOLD"].as<float>();
-    m_yaml.VERTICAL_DIST_THRESHOLD = config["VERTICAL_DIST_THRESHOLD"].as<float>();
+    m_yaml.hor_th = config["hor_th"].as<float>();
+    m_yaml.ver_th = config["ver_th"].as<float>();
     m_yaml.delta = config["delta"].as<float>();
     m_yaml.land_correction = config["land_correction"].as<float>();
-    m_yaml.land_start_time = config["land_start_time"].as<int>();
+    m_yaml.land_start_time = config["land_start_time"].as<float>();
+    m_yaml.move_time_out = config["move_time_out"].as<float>();
 }
 
 bool Movement::move_to_gps_target(
@@ -54,8 +55,8 @@ bool Movement::move_to_gps_target(
 
     float horizontal_dist = std::hypot(dx, dy);
     float vertical_dist = std::abs(dz);
-    bool hor_arrive = (horizontal_dist < m_yaml.HORIZONTAL_DIST_THRESHOLD);
-    bool ver_arrive = (vertical_dist < m_yaml.VERTICAL_DIST_THRESHOLD);
+    bool hor_arrive = (horizontal_dist < m_yaml.hor_th);
+    bool ver_arrive = (vertical_dist < m_yaml.ver_th);
 
     pub_pose.position = convert_pose;
     pub_pose.yaw = NAN;
@@ -74,6 +75,7 @@ bool Movement::justmove(movement::JustmoveInfo justmove_info, Waypts target) {
     auto& instant_time = justmove_info.instant_time;
     auto& v = justmove_info.v;
     auto& auto_angle = justmove_info.auto_angle;
+    auto now_s = instant_time.seconds();
 
     if(m_justmove.state == 0) {
         m_justmove.start_pose.x = sub_pose.position[0];
@@ -108,20 +110,26 @@ bool Movement::justmove(movement::JustmoveInfo justmove_info, Waypts target) {
             m_justmove.dw = angle.yaw;
         }
      
-        m_justmove.start_time = instant_time.seconds();
+        m_justmove.start_time = now_s;
         m_justmove.state = 1;
         RCLCPP_INFO(m_log, 
             "控制开始"
         );
     }
 
-    m_justmove.dt = instant_time.seconds() - m_justmove.start_time;
+    m_justmove.dt = now_s - m_justmove.start_time;
 
     double deltax = sub_pose.position[0]-m_justmove.target_pose.x;
     double deltay = sub_pose.position[1]-m_justmove.target_pose.y;
     double deltaz = sub_pose.position[2]-m_justmove.target_pose.z;
-    double delta = sqrt(pow(deltax,2)+pow(deltay,2)+pow(deltaz,2));
-    bool arrive = (instant_time.seconds() - m_justmove.start_time > m_justmove.total_time) && delta < m_yaml.delta;
+    float horizontal_dist = std::hypot(deltax, deltay);
+    float vertical_dist = std::abs(deltaz);
+    bool hor_arrive = (horizontal_dist < m_yaml.hor_th);
+    bool ver_arrive = (vertical_dist < m_yaml.ver_th);
+    bool time_arrive = now_s - m_justmove.start_time > m_justmove.total_time;
+    bool pose_arrive = hor_arrive && ver_arrive;
+
+    bool arrive = time_arrive && pose_arrive;
 
     if(!arrive){
         double out_x = m_justmove.start_pose.x + m_justmove.dt * m_justmove.vx;

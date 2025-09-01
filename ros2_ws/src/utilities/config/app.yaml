@@ -1,14 +1,16 @@
 movement:
   #水平距离阈值
-  HORIZONTAL_DIST_THRESHOLD: 0.9
+  hor_th: 0.9
   #垂直距离阈值
-  VERTICAL_DIST_THRESHOLD: 0.4
+  ver_th: 0.4
   #飞行阈值
   delta: 0.6
   #降落高度修正
   land_correction: 0.05
   #降落到地面时间
-  land_start_time: 3
+  land_start_time: 3.0
+  #移动位置超时时间
+  move_time_out: 3.0
 track:
   #yaw PID
   yaw_kp: 0.002

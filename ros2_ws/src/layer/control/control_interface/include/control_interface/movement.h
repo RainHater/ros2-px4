@@ -87,8 +87,8 @@ private:
         common_msgs::msg::ArmOffboardStatus start_state;
         Waypts start_position;
         double dw;
+        double start_time;
         int state;
-        uint64_t start_time;
     };
 
     struct GPSInfo{
@@ -113,11 +113,12 @@ private:
     };
 
     struct YamlInfo{
-        float HORIZONTAL_DIST_THRESHOLD = 0.9;
-        float VERTICAL_DIST_THRESHOLD = 0.4;
-        float delta = 0.5;
-        float land_correction = 0.05;
-        int land_start_time = 3;
+        float hor_th = 0.9f;
+        float ver_th = 0.4f;
+        float delta = 0.5f;
+        float land_correction = 0.05f;
+        float land_start_time = 3.0f;
+        float move_time_out = 3.0f;
     };
 private:
     rclcpp::Logger m_log;
