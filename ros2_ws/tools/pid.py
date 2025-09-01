@@ -57,6 +57,7 @@ class PIDController:
             kd_output = self.m_kd * derivative
 
             self.m_output = kp_output + ki_output + kd_output
+            print(f'output: {self.m_output}')
             # 输出限幅
             self.m_output = max(min(self.m_output, self.m_output_limit), -self.m_output_limit)
 

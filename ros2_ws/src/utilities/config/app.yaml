@@ -19,6 +19,6 @@ track:
   ud_ki: 0.0000
   ud_kd: 0.0
   #前后 PID
-  fb_kp: 0.0002
+  fb_kp: 0.000006
   fb_ki: 0.00
   fb_kd: 0.0

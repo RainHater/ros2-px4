@@ -48,7 +48,6 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float cx = 0.0f;
     float cy = 0.0f;
     float area = 0.0f;
-    float area_speed = 0.0f;
     float thre_area = (1920.0 / 2.4) * (1080.0/1);
     float yaw = angles.yaw;
 
@@ -57,12 +56,6 @@ void Track::normal_track(track::NormalTrack& normal_info) {
         cx = detection.cx;
         cy = detection.cy;
         area = abs((detection.x_max - detection.x_min) * (detection.y_max - detection.y_min));  
-        if (area < thre_area){
-            area_speed = 0.3f;
-        }
-        else if (area > thre_area) {
-            area_speed = -0.1f;
-        }
     }else {
         cx = 960.0f;
         cy = 540.0f;
@@ -70,16 +63,17 @@ void Track::normal_track(track::NormalTrack& normal_info) {
 
     float cx_error = cx - m_camera.width / 2.0;
     float cy_error = cy - m_camera.height / 2.0;
+    float area_error = thre_area - area;
 
-
-    float cx_output = m_pid.yaw.compute(cx_error, dt);
-    float cy_output = m_pid.ud.compute(cy_error, dt);
+    float yaw_output = m_pid.yaw.compute(cx_error, dt);
+    float ud_output = m_pid.ud.compute(cy_error, dt);
+    float fb_output = m_pid.fb.compute(area_error, dt);
 
     pub_tra.yaw = NAN;
-    pub_tra.velocity[0] = cosf(yaw) * area_speed;
-    pub_tra.velocity[1] = sinf(yaw) * area_speed;
-    pub_tra.velocity[2] = cy_output;
-    pub_tra.yawspeed = cx_output;
+    pub_tra.velocity[0] = cosf(yaw) * fb_output;
+    pub_tra.velocity[1] = sinf(yaw) * fb_output;
+    pub_tra.velocity[2] = ud_output;
+    pub_tra.yawspeed = yaw_output;
 
     if (!m_pid.last_pos_init){
         m_pid.last_postition = sub_pose.position;
@@ -90,16 +84,14 @@ void Track::normal_track(track::NormalTrack& normal_info) {
         m_pid.last_postition = sub_pose.position;
         pub_tra.position = m_pid.last_postition;
         m_logger.info(m_log, 
-            "cx: %f, cx_error: %f, cx_out: %f, "
-            "cy: %f, cy_error: %f, cy_out: %f, "
-            "dt: %f, area_speed: %f, area: %f", 
-            cx, cx_error, 
-            pub_tra.yawspeed,
-            cy, cy_error,
-            pub_tra.velocity[2],
-            dt, 
-            pub_tra.velocity[0], 
-            area
+            "dt: %f, "
+            "cx: %f, cx_error: %f, yaw_out: %f, "
+            "cy: %f, cy_error: %f, ud_out: %f, "
+            "area: %f, area_error: %f, fb_out: %f",
+            dt,
+            cx, cx_error, pub_tra.yawspeed,
+            cy, cy_error, pub_tra.velocity[2],
+            area, area_error, fb_output
         );
     }else {
         pub_tra.position = m_pid.last_postition;

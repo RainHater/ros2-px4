@@ -4,12 +4,7 @@ import argparse
 from pid import PIDController
 
 def get_pattern():
-    # pattern = r"cx:\s*(\d+),.*?yawspeed:\s*([-]?\d+\.\d+)"
     pattern = r"(\w+):\s*([-+]?\d+(?:\.\d+)?)"
-    # matches = re.findall(pattern, line)
-
-    # data = {k: float(v) for k, v in matches}
-    # print(data)
     return pattern
 
 if __name__ == '__main__':
@@ -32,9 +27,11 @@ if __name__ == '__main__':
 
     yaw_pid = PIDController()
     ud_pid = PIDController()
+    fb_pid = PIDController()
 
     yaw_pid.initialize(yaw_kp, yaw_ki, yaw_kd, False, 0.785, 0.785)
     ud_pid.initialize(ud_kp, ud_ki, ud_kd, False, 0.5, 0.5)
+    fb_pid.initialize(fb_kp, fb_ki, fb_kd, False, 0.5, 0.5)
 
     pattern = get_pattern()
 
@@ -59,8 +56,11 @@ if __name__ == '__main__':
         dt = row['dt']
         area_speed = row['area_speed']
         area = row['area']
-
-        print(f'area: {area}')
+        
+        error = 864000.0 - area
+        output = fb_pid.compute(error, dt)
+        print(f'area: {area}, output: {output}')
+    
     # for mat in matches:
     #     pixel_offset = float(mat[0]) - 1920.0 / 2.0
     #     angle_offset = (pixel_offset)

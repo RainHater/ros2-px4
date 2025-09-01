@@ -6,8 +6,8 @@ import numpy as np
 from datetime import datetime
 
 # 输入日志文件路径
-log_file = "ros2_ws/src/tools/track.log"
-plt_out_path = "ros2_ws/src/tools/output/track"
+log_file = "tools/logs/20000101_080306.log"
+plt_out_path = "tools/output"
 
 # 基准线（可以自定义）
 baseline_cx = 0.0   # cx_error 基准
@@ -15,13 +15,16 @@ baseline_cy = 0.0   # cy_error 基准
 
 # 正则模式
 pattern = re.compile(
+    r"dt:\s*([-+]?\d*\.?\d+),\s*"
     r"cx:\s*([-+]?\d*\.?\d+),\s*"
     r"cx_error:\s*([-+]?\d*\.?\d+),\s*"
-    r"cx_out:\s*([-+]?\d*\.?\d+),\s*"
+    r"yaw_out:\s*([-+]?\d*\.?\d+),\s*"
     r"cy:\s*([-+]?\d*\.?\d+),\s*"
     r"cy_error:\s*([-+]?\d*\.?\d+),\s*"
-    r"cy_out:\s*([-+]?\d*\.?\d+),\s*"
-    r"dt:\s*([-+]?\d*\.?\d+)"
+    r"ud_out:\s*([-+]?\d*\.?\d+),\s*"
+    r"area:\s*([-+]?\d*\.?\d+),\s*"
+    r"area_error:\s*([-+]?\d*\.?\d+),\s*"
+    r"fb_out:\s*([-+]?\d*\.?\d+)*"
 )
 
 def csv_write(out_folder, name, col_l: list, data_l: list):
@@ -51,14 +54,18 @@ def plt_write(out_folder, name, data_l: list):
 # 读取日志
 cx_list = []
 cy_list = []
+area = []
 with open(log_file, "r") as f:
     for line in f:
         match = pattern.search(line)
         if match:
             values = list(map(float, match.groups()))
-            cx_list.append([values[0], values[1], values[2], values[6]])
-            cy_list.append([values[3], values[4], values[5], values[6]])
- 
+            cx_list.append([values[1], values[2], values[3], values[0]])
+            cy_list.append([values[4], values[5], values[6], values[0]])
+            area.append([values[7], values[8], values[9],values[0]])
+
+# print(f'area: {area}')
+
 # 如果有数据就画图
 timestamp = datetime.now().strftime("%Y-%m-%d_%H%M")
 out_folder = f"{plt_out_path}/{timestamp}"
