@@ -19,9 +19,9 @@
 #include "control_interface/track.h"
 #include "control_interface/rc_signal.h"
 
-class VisionTestNode : public rclcpp::Node{
+class VisualTrack : public rclcpp::Node{
 public:
-    VisionTestNode();
+    VisualTrack();
     void initialize();
 protected:
     void init_pub();
@@ -71,6 +71,11 @@ private:
         Track track;
         RcSignal rc_signal;
     };
+
+    struct YamlInfo{
+        float visual_track = 1.5f;
+        bool outdoor_flag = false;
+    };
 private:
     rclcpp::TimerBase::SharedPtr m_timer;
     FlyStep m_fly;
@@ -78,6 +83,7 @@ private:
     SubInfo m_sub;
     PubMsgInfo m_pub_msgs;
     InterfaceInfo m_interface;
+    YamlInfo m_yaml;
     std::string m_yaml_path;
 };
 

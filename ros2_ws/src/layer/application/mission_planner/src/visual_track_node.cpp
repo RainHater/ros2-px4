@@ -1,4 +1,5 @@
-#include "mission_planner/vision_test_node.h"
+#include "mission_planner/visual_track_node.h"
+
 #include <cmath>
 #include <yaml-cpp/yaml.h>
 #include <ament_index_cpp/get_package_share_directory.hpp>
@@ -9,25 +10,31 @@ constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
 constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
 constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD_DISABLED;
 
-VisionTestNode::VisionTestNode()
-    : rclcpp::Node("vision_test_node")
+VisualTrack::VisualTrack()
+    : rclcpp::Node("visual_track")
 {       
     m_fly = IDLE;
-    RCLCPP_INFO(get_logger(), "vision_test_node 节点启动...");
+
+    std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
+    YAML::Node config = YAML::LoadFile(yaml_path)["visual_track"];
+    m_yaml.visual_track = config["lift_height"].as<float>();
+    m_yaml.outdoor_flag = config["outdoor_flag"].as<bool>();
+
+    RCLCPP_INFO(get_logger(), "visual_track 节点启动...");
 }
 
-void VisionTestNode::initialize(){
+void VisualTrack::initialize(){
 
     init_pub();
     init_sub();
     
     m_timer = create_wall_timer(
         std::chrono::milliseconds(100),
-        std::bind(&VisionTestNode::task_loop, this)
+        std::bind(&VisualTrack::task_loop, this)
     );
 }
 
-void VisionTestNode::init_pub(){
+void VisualTrack::init_pub(){
     rclcpp::QoS qos(rclcpp::KeepLast(1));
     qos.best_effort();
     qos.durability_volatile();
@@ -42,7 +49,7 @@ void VisionTestNode::init_pub(){
     );
 }
 
-void VisionTestNode::init_sub(){
+void VisualTrack::init_sub(){
     rclcpp::QoS qos_best_effort(rclcpp::KeepLast(10));
     qos_best_effort.best_effort();
     rclcpp::QoS qos_reliable(rclcpp::KeepLast(1));
@@ -85,7 +92,7 @@ void VisionTestNode::init_sub(){
     );
 }
 
-void VisionTestNode::task_loop(){
+void VisualTrack::task_loop(){
     auto rc_mode = m_interface.rc_signal.get_rc(m_sub.manual_control_setpoint.get_msg());
 
     if (rc_mode == rc_signal::LAND && m_fly != END){
@@ -113,7 +120,11 @@ void VisionTestNode::task_loop(){
                 justmove_info.pub_pose = &m_pub_msgs.trajectory_setpoint;
                 justmove_info.instant_time = get_clock()->now();
                 justmove_info.v = 0.1;
-                bool arrive = m_interface.movement.change_height(justmove_info, 1.5);
+                bool arrive = m_interface.movement.change_height(
+                        justmove_info, 
+                        m_yaml.visual_track, 
+                        m_yaml.outdoor_flag
+                    );
                 if (arrive){
                     m_fly = SWITCH_MODE;
                     RCLCPP_INFO(get_logger(), "上升完成!");
@@ -135,7 +146,6 @@ void VisionTestNode::task_loop(){
         }
         case Hover:{
             auto has_received = m_sub.yolo_detections.has_change();
-            // RCLCPP_INFO(get_logger(), "has_received %d", has_received);
             if (has_received){
                 track::NormalTrack normal_track;
                 normal_track.detections = m_sub.yolo_detections.get_msg();
@@ -183,7 +193,7 @@ void VisionTestNode::task_loop(){
     }
 }
 
-void VisionTestNode::calculate_yaw(
+void VisualTrack::calculate_yaw(
     int cx, 
     int image_width, 
     float fov_deg,
@@ -208,7 +218,7 @@ void VisionTestNode::calculate_yaw(
 int main(int argc, char *argv[]) {
     setvbuf(stdout, NULL, _IONBF, BUFSIZ);
     rclcpp::init(argc, argv);
-    auto node = std::make_shared<VisionTestNode>();
+    auto node = std::make_shared<VisualTrack>();
     node->initialize();
     rclcpp::spin(node);
     rclcpp::shutdown();

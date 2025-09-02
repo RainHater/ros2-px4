@@ -164,6 +164,38 @@ bool Movement::justmove(movement::JustmoveInfo justmove_info, Waypts target) {
     return arrive;
 }
 
+bool Movement::justmove_outdoor(movement::JustmoveInfo justmove_info, Waypts target){
+    auto& sub_pose = justmove_info.sub_pose;
+    auto& pub_pose = justmove_info.pub_pose;
+    auto& auto_angle = justmove_info.auto_angle;
+
+    if (auto_angle){
+        m_justmove.dw = atan2(m_justmove.vy, m_justmove.vx);
+    }else {
+        tf2_tool::EulerAngles angle;
+        tf2_tool::get_euler_angles(sub_pose, angle);
+        m_justmove.dw = angle.yaw;
+    }
+    
+    pub_pose->position[0] = target.x;
+    pub_pose->position[1] = target.y;
+    pub_pose->position[2] = target.z;
+    pub_pose->yaw = m_justmove.dw;
+
+    double deltax = sub_pose.position[0]-target.x;
+    double deltay = sub_pose.position[1]-target.y;
+    double deltaz = sub_pose.position[2]-target.z;
+
+    float horizontal_dist = std::hypot(deltax, deltay);
+    float vertical_dist = std::abs(deltaz);
+    bool hor_arrive = (horizontal_dist < m_yaml.hor_th);
+    bool ver_arrive = (vertical_dist < m_yaml.ver_th);
+
+    bool arrive = hor_arrive && ver_arrive;
+
+    return arrive;
+}
+
 bool Movement::move_by_offset(
     movement::JustmoveInfo justmove_info, 
     Offset target,
@@ -190,17 +222,21 @@ bool Movement::move_by_offset(
     return arrive;
 }
 
-bool Movement::change_height(movement::JustmoveInfo justmove_info, double high) { 
+bool Movement::change_height(movement::JustmoveInfo justmove_info, double high, bool outdoor){
     auto& sub_pose = justmove_info.sub_pose;
     auto c_x = sub_pose.position[0];
     auto c_y = sub_pose.position[1];
     auto c_z = sub_pose.position[2];
+    bool arrive = false;
 
     Waypts target = {c_x, c_y, c_z + (-high)};
     justmove_info.auto_angle = false;
 
-    bool arrive = justmove(justmove_info, target);
-
+    if (outdoor){
+        arrive = justmove_outdoor(justmove_info, target);
+    }else {
+        arrive = justmove(justmove_info, target);
+    }
     return arrive;
 }
 

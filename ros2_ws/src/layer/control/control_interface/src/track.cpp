@@ -7,7 +7,7 @@
 
 Track::Track()
  :  m_log(rclcpp::get_logger("跟踪(track.cpp)")),
-    m_logger("/home/sunrise/ros2_logs/track.log")
+    m_logger("/home/sunrise/ros2_px4/ros2_logs/track")
 {   
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["track"];

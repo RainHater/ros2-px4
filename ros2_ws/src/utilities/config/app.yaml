@@ -11,6 +11,7 @@ movement:
   land_start_time: 3.0
   #移动位置超时时间
   move_time_out: 3.0
+
 track:
   #yaw PID
   yaw_kp: 0.002
@@ -24,3 +25,9 @@ track:
   fb_kp: 0.000003
   fb_ki: 0.00001
   fb_kd: 0.0
+
+#跟踪
+visual_track:
+  lift_height: 1.5
+  outdoor_flag: true
+  

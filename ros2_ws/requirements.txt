@@ -9,4 +9,3 @@ lark-parser
 apriltag
 lxml
 pyyaml
-matplotlib

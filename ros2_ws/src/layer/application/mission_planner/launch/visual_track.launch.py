@@ -28,8 +28,8 @@ def generate_launch_description():
 
     vision_test_node = Node(
         package='mission_planner',
-        executable='vision_test_node',
-        name='vision_test_node',
+        executable='visual_track_node',
+        name='visual_track_node',
         output='screen'
     )
 

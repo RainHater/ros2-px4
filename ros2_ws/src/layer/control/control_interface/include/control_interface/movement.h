@@ -68,7 +68,8 @@ public:
 
     //根据局部整体坐标移动
     bool justmove(movement::JustmoveInfo justmove_info, Waypts target);
-
+    //室外
+    bool justmove_outdoor(movement::JustmoveInfo justmove_info, Waypts target);
     //根据当前坐标进行移动
     bool move_by_offset(
         movement::JustmoveInfo justmove_info, 
@@ -77,7 +78,7 @@ public:
     );
 
     //起飞高度
-    bool change_height(movement::JustmoveInfo justmove_info, double high);
+    bool change_height(movement::JustmoveInfo justmove_info, double high, bool outdoor);
 
     bool land_mode(movement::LandModeInfo land_mode_info, float v = 0.5f);
 

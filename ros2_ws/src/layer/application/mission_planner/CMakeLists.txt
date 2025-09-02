@@ -53,6 +53,6 @@ function(register_node target_name)
   install(TARGETS ${target_name} DESTINATION lib/${PROJECT_NAME})
 endfunction()
 
-register_node(vision_test_node)
+register_node(visual_track_node)
 
 ament_package()
