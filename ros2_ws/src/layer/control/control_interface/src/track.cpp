@@ -20,6 +20,7 @@ Track::Track()
     m_yaml.fb.kp = config["fb_kp"].as<float>();
     m_yaml.fb.ki = config["fb_ki"].as<float>();
     m_yaml.fb.kd = config["fb_kd"].as<float>();
+    m_yaml.area_th = config["area_th"].as<float>();
 
     m_camera.width = 1920;
     m_camera.height = 1080;
@@ -49,7 +50,7 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float cx = 0.0f;
     float cy = 0.0f;
     float area = 0.0f;
-    float thre_area = (1920.0 / 2.4) * (1080.0/1);
+    float thre_area = (1920.0 * 1080.0)*m_yaml.area_th;
     float yaw = angles.yaw;
 
     if (detect_flag){

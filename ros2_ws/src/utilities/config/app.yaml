@@ -11,6 +11,8 @@ movement:
   land_start_time: 3.0
   #移动位置超时时间
   move_time_out: 3.0
+  #降落阈值
+  land_th: 0.2
 
 track:
   #yaw PID
@@ -25,6 +27,8 @@ track:
   fb_kp: 0.000003
   fb_ki: 0.00001
   fb_kd: 0.0
+  #跟踪面积
+  area_th: 0.41
 
 #跟踪
 visual_track:

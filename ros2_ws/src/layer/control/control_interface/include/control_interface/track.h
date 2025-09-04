@@ -56,6 +56,7 @@ private:
         PidInfo yaw = {0.003f, 0.00001f, 0.0f};
         PidInfo ud = {0.003f, 0.00001f, 0.0f};
         PidInfo fb = {0.003f, 0.00001f, 0.0f};
+        float area_th = 0.41f;
     };
 private:
     rclcpp::Logger m_log;

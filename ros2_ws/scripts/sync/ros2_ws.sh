@@ -31,6 +31,9 @@ sshpass -p "${TARGET_PASSWORD}" rsync -aAXv \
 
 sshpass -p "${TARGET_PASSWORD}" rsync -aAXv \
     "${SOURCE_PATH}/utilities/share/utilities/config/app.yaml" \
+    "${SOURCE_PATH}/mipi_detect/share/mipi_detect/config/m_params.yaml" \
+    "${SOURCE_PATH}/mipi_detect/share/mipi_detect/config/params.yaml" \
+    "${SOURCE_PATH}/mipi_detect/share/mipi_detect/config/config.json" \
     "${TOP_DIR}/scripts/target/yaml_update.sh" \
     "${TARGET_USER}@${TARGET_IP}:${TARGET_PATH}"
 

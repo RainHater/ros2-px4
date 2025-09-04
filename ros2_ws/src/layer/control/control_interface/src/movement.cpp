@@ -20,6 +20,7 @@ Movement::Movement()
     m_yaml.land_correction = config["land_correction"].as<float>();
     m_yaml.land_start_time = config["land_start_time"].as<float>();
     m_yaml.move_time_out = config["move_time_out"].as<float>();
+    m_yaml.land_th = config["land_th"].as<float>();
 }
 
 bool Movement::move_to_gps_target(
@@ -193,6 +194,17 @@ bool Movement::justmove_outdoor(movement::JustmoveInfo justmove_info, Waypts tar
 
     bool arrive = hor_arrive && ver_arrive;
 
+    RCLCPP_INFO(m_log, 
+        "position[0]: %f, position[1]: %f, position[2]: %f, "
+        "current[0]: %f, current[1]: %f, current[2]: %f",
+        pub_pose->position[0],
+        pub_pose->position[1],
+        pub_pose->position[2],
+        sub_pose.position[0],
+        sub_pose.position[1],
+        sub_pose.position[2]
+    );
+
     return arrive;
 }
 
@@ -227,16 +239,24 @@ bool Movement::change_height(movement::JustmoveInfo justmove_info, double high, 
     auto c_x = sub_pose.position[0];
     auto c_y = sub_pose.position[1];
     auto c_z = sub_pose.position[2];
-    bool arrive = false;
-
-    Waypts target = {c_x, c_y, c_z + (-high)};
     justmove_info.auto_angle = false;
 
+    bool arrive = false;
+    if (m_change_height.state==0){
+        m_change_height.start_pos = {c_x, c_y, c_z + (-high)};
+        m_change_height.state = 1;
+    }  
+
     if (outdoor){
-        arrive = justmove_outdoor(justmove_info, target);
+        arrive = justmove_outdoor(justmove_info, m_change_height.start_pos);
     }else {
-        arrive = justmove(justmove_info, target);
+        arrive = justmove(justmove_info, m_change_height.start_pos);
     }
+
+    if (arrive){
+       m_change_height.state = 0;
+    } 
+
     return arrive;
 }
 
@@ -278,9 +298,10 @@ bool Movement::land_mode(movement::LandModeInfo land_mode_info, float v) {
             break;
         }
         case 2:{
-            auto dist_bottom = local_position.get_msg().dist_bottom;
-            auto dist_bottom_valid = local_position.get_msg().dist_bottom_valid;
-            auto start_dist_bottom = local_position.get_first_msg().dist_bottom;
+            // auto dist_bottom = local_position.get_msg().dist_bottom;
+            auto dist_bittom = -sub_pose.position[2];
+            // auto dist_bottom_valid = local_position.get_msg().dist_bottom_valid;
+            // auto start_dist_bottom = local_position.get_first_msg().dist_bottom;
 
             pub_pose->position[0] = m_land.start_position.x;
             pub_pose->position[1] = m_land.start_position.y;
@@ -289,7 +310,7 @@ bool Movement::land_mode(movement::LandModeInfo land_mode_info, float v) {
             pub_pose->velocity[1] = NAN;
             pub_pose->velocity[2] = v;
             pub_pose->yaw = m_land.dw;
-            if (dist_bottom_valid && dist_bottom < (start_dist_bottom-m_yaml.land_correction)){
+            if (dist_bittom < m_yaml.land_th){
                 m_land.start_time = instant_time.seconds();
                 m_land.state = 3;
                 RCLCPP_INFO(m_log, 
@@ -298,7 +319,7 @@ bool Movement::land_mode(movement::LandModeInfo land_mode_info, float v) {
             }
             RCLCPP_INFO(m_log, 
                 "当前位置 dist_bottom: %f",
-                dist_bottom
+                dist_bittom
             );
             break;
         }

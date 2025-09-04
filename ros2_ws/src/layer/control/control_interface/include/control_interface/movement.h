@@ -113,6 +113,11 @@ private:
         uint8_t state;
     };
 
+    struct ChangeHeightInfo{
+        Waypts start_pos;
+        uint8_t state = 0;
+    };
+
     struct YamlInfo{
         float hor_th = 0.9f;
         float ver_th = 0.4f;
@@ -120,12 +125,14 @@ private:
         float land_correction = 0.05f;
         float land_start_time = 3.0f;
         float move_time_out = 3.0f;
+        float land_th = 0.2f;
     };
 private:
     rclcpp::Logger m_log;
     LandInfo m_land;
     GPSInfo m_gps_nav;
     JustmoveInfo m_justmove;
+    ChangeHeightInfo m_change_height;
     YamlInfo m_yaml;
 };
 
