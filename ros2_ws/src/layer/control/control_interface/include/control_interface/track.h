@@ -1,8 +1,6 @@
 #ifndef _TRACK_H
 #define _TRACK_H
 
-#include <px4_msgs/msg/detail/sensor_combined__struct.hpp>
-#include <px4_msgs/msg/detail/vehicle_attitude__struct.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
@@ -11,12 +9,15 @@
 #include <px4_msgs/msg/vehicle_angular_velocity.hpp>
 #include <px4_msgs/msg/sensor_combined.hpp>
 
+#include <px4_ros_com/frame_transforms.h>
+
 #include <builtin_interfaces/msg/time.hpp>
 
 #include "identify/msg/yolo_detections.hpp"
 
 #include "utilities/tf2_tool.hpp"
 #include "utilities/logger_tool.hpp"
+#include "utilities/type_tool.hpp"
 
 #include "control_interface/pid.h"
 

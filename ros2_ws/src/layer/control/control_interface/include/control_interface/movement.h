@@ -13,6 +13,8 @@
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_global_position.hpp>
 
+#include <px4_ros_com/frame_transforms.h>
+
 #include "common_msgs/msg/arm_offboard_status.hpp"
 
 #include "utilities/topic_tool.hpp"

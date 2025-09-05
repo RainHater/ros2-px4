@@ -1,7 +1,10 @@
 #include "control_interface/track.h"
 
 #include <cmath>
+#include <array>
+#include <utilities/type_tool.hpp>
 #include <yaml-cpp/yaml.h>
+#include <Eigen/Geometry>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
 Track::Track()
@@ -44,13 +47,14 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float dt  = 100;
     // m_pid.last_time = cur_time;
 
-    tf2_tool::EulerAngles angles;
-    tf2_tool::get_euler_angles(sub_pose, angles);
+    std::array<double, 4> dou_q = type_tool::float_array_to_double(sub_pose.q);
+    Eigen::Quaterniond eigen_q(dou_q[0], dou_q[1], dou_q[2], dou_q[3]);
+    auto cur_yaw = px4_ros_com::frame_transforms::utils::quaternion::quaternion_get_yaw(eigen_q);
 
     float cx = 0.0f;
     float cy = 0.0f;
     float area = 0.0f;
-    float yaw = angles.yaw;
+    float yaw = cur_yaw;
 
     if (detect_flag){
         auto& detection = normal_info.detections.detections[0];

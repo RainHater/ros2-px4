@@ -16,6 +16,8 @@ find_package(common_msgs REQUIRED)
 find_package(utilities REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(identify REQUIRED)
+find_package(px4_ros_com REQUIRED)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -35,6 +37,7 @@ set(ALL_DEPENDENCIES
   common_msgs
   utilities
   identify
+  px4_ros_com
 )
 
 set(ALL_SRC
