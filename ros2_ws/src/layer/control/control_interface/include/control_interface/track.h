@@ -58,13 +58,17 @@ private:
         PidInfo fb = {0.003f, 0.00001f, 0.0f};
         float area_th = 0.41f;
     };
+
+    struct NormalTrack{
+        float thre_area;
+    };
 private:
     rclcpp::Logger m_log;
     LoggerTool m_logger;
     PidCalInfo m_pid;
     YamlInfo m_yaml;
     CameraInfo m_camera;
-    
+    NormalTrack m_normal_track;
 };
 
 #endif

@@ -7,7 +7,7 @@
 
 Track::Track()
  :  m_log(rclcpp::get_logger("跟踪(track.cpp)")),
-    m_logger("/home/sunrise/ros2_px4/ros2_logs/track")
+    m_logger("/home/sunrise/ros2_px4/logs/track")
 {   
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["track"];
@@ -25,6 +25,8 @@ Track::Track()
     m_camera.width = 1920;
     m_camera.height = 1080;
 
+    m_normal_track.thre_area = m_camera.width*m_camera.height*m_yaml.area_th;
+
     m_pid.yaw.initialize(m_yaml.yaw.kp, m_yaml.yaw.ki, m_yaml.yaw.kd, false, 1.5708f, 1.5708f); 
     m_pid.ud.initialize(m_yaml.ud.kp, m_yaml.ud.ki, m_yaml.ud.kd, false, 0.5f, 0.5f); 
     m_pid.fb.initialize(m_yaml.fb.kp, m_yaml.fb.ki, m_yaml.fb.kd, false, 0.4f, 0.4f);
@@ -39,10 +41,9 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     // auto& sensor_combined = normal_info.sensor_combined;
     auto& pub_tra = *normal_info.pub_tra;
 
-    double cur_time =  cur_ns / 1e6f;
-    // float dt  = cur_time - m_pid.last_time;
+    // double cur_time =  cur_ns / 1e6f;
     float dt  = 100;
-    m_pid.last_time = cur_time;
+    // m_pid.last_time = cur_time;
 
     tf2_tool::EulerAngles angles;
     tf2_tool::get_euler_angles(sub_pose, angles);
@@ -50,7 +51,6 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float cx = 0.0f;
     float cy = 0.0f;
     float area = 0.0f;
-    float thre_area = (1920.0 * 1080.0)*m_yaml.area_th;
     float yaw = angles.yaw;
 
     if (detect_flag){
@@ -61,16 +61,16 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     }else {
         cx = 960.0f;
         cy = 540.0f;
-        area = thre_area;
+        area = m_normal_track.thre_area;
     }
 
     float cx_error = cx - m_camera.width / 2.0;
     float cy_error = cy - m_camera.height / 2.0;
-    float area_error = thre_area - area;
+    float area_error = m_normal_track.thre_area - area;
 
     float yaw_output = m_pid.yaw.compute(cx_error, dt);
     float ud_output = m_pid.ud.compute(cy_error, dt);
-    float fb_output = (area_error==0)?0.0f:m_pid.fb.compute(area_error, dt);
+    float fb_output = m_pid.fb.compute(area_error, dt);
 
     pub_tra.yaw = NAN;
     pub_tra.velocity[0] = cosf(yaw) * fb_output;

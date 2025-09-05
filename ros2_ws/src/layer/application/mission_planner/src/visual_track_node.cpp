@@ -132,6 +132,13 @@ void VisualTrack::task_loop(){
             }
             break;
         }
+        case WAIT_VISION: {
+            auto has_received = m_sub.yolo_detections.has_change();
+            if (has_received){
+                m_fly = SWITCH_MODE;
+            }
+            break;
+        }
         case SWITCH_MODE: {
             m_interface.mode_control.unlock(
                 ARM_ENABLE, VELOCITY, 
@@ -145,16 +152,33 @@ void VisualTrack::task_loop(){
             break;
         }
         case Hover:{
-            auto has_received = m_sub.yolo_detections.has_change();
-            if (has_received){
-                track::NormalTrack normal_track;
-                normal_track.detections = m_sub.yolo_detections.get_msg();
-                normal_track.sub_pose = m_sub.vehicle_odometry.get_msg();
-                normal_track.sub_attitude = m_sub.vehicle_attitude.get_msg();
-                normal_track.sensor_combined = m_sub.sensor_combined.get_msg();
-                normal_track.pub_tra = &m_pub_msgs.trajectory_setpoint;
-                m_interface.track.normal_track(normal_track);
-            }
+            // if (m_test == false){
+            //     m_pub_msgs.trajectory_setpoint.position[0] = m_sub.vehicle_odometry.get_msg().position[0];
+            //     m_pub_msgs.trajectory_setpoint.position[1] = m_sub.vehicle_odometry.get_msg().position[1];
+            //     m_pub_msgs.trajectory_setpoint.position[2] = m_sub.vehicle_odometry.get_msg().position[2];
+            //     m_test = true;
+            // }
+            m_pub_msgs.trajectory_setpoint.position[0] = NAN;
+            m_pub_msgs.trajectory_setpoint.position[1] = NAN;
+            m_pub_msgs.trajectory_setpoint.position[2] = NAN;
+
+            m_pub_msgs.trajectory_setpoint.acceleration[0] = NAN;
+            m_pub_msgs.trajectory_setpoint.acceleration[1] = NAN;
+            m_pub_msgs.trajectory_setpoint.acceleration[2] = NAN;
+
+            m_pub_msgs.trajectory_setpoint.velocity[0] = 0.0f;
+            m_pub_msgs.trajectory_setpoint.velocity[1] = 0.0f;
+            m_pub_msgs.trajectory_setpoint.velocity[2] = 0.0f;
+            // auto has_received = m_sub.yolo_detections.has_change();
+            // if (has_received){
+            //     track::NormalTrack normal_track;
+            //     normal_track.detections = m_sub.yolo_detections.get_msg();
+            //     normal_track.sub_pose = m_sub.vehicle_odometry.get_msg();
+            //     normal_track.sub_attitude = m_sub.vehicle_attitude.get_msg();
+            //     normal_track.sensor_combined = m_sub.sensor_combined.get_msg();
+            //     normal_track.pub_tra = &m_pub_msgs.trajectory_setpoint;
+            //     m_interface.track.normal_track(normal_track);
+            // }
             break;
         }
         case LAND:{
@@ -188,9 +212,7 @@ void VisualTrack::task_loop(){
     m_pub_msgs.trajectory_setpoint.timestamp = timestamp;
 
     m_pub.offboard_mode->publish(m_pub_msgs.offboard_mode);
-    if (m_sub.offboard_mode.get_msg().arm == ARM_ENABLE){
-        m_pub.trajectory_setpoint->publish(m_pub_msgs.trajectory_setpoint);
-    }
+    m_pub.trajectory_setpoint->publish(m_pub_msgs.trajectory_setpoint);
 }
 
 void VisualTrack::calculate_yaw(

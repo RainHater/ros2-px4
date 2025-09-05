@@ -39,6 +39,7 @@ private:
     enum FlyStep{
         IDLE,
         RISE,
+        WAIT_VISION,
         SWITCH_MODE,
         Hover,
         LAND,
@@ -85,6 +86,7 @@ private:
     InterfaceInfo m_interface;
     YamlInfo m_yaml;
     std::string m_yaml_path;
+    bool m_test = false;
 };
 
 #endif
