@@ -142,18 +142,18 @@ void FlightModeManagerNode::arm_and_set_offboard() {
         }
 
         case READY: {
-            pub_px4_offboard_mode();
             // 可执行飞行任务，或者等待任务触发
-            if (!mode.target.has_change()) 
-                return;
-            if (target_mode.arm == ARM_DISABLED){
-                disarm();
-                pub_vehicle_command(VEHICLE_CMD_DO_SET_MODE, 1, px4_msgs::msg::VehicleCommand::VEHICLE_CMD_NAV_LAND);
-                m_flight_state = IDLE;
-                RCLCPP_INFO(get_logger(), "已上锁 arm");
-                return;
+            if (mode.target.has_change()) {
+                if (target_mode.arm == ARM_DISABLED){
+                    disarm();
+                    pub_vehicle_command(VEHICLE_CMD_DO_SET_MODE, 1, px4_msgs::msg::VehicleCommand::VEHICLE_CMD_NAV_LAND);
+                    m_flight_state = IDLE;
+                    RCLCPP_INFO(get_logger(), "已上锁 arm");
+                    return;
+                }
+                mode.current = target_mode;
             }
-            mode.current = target_mode;
+            pub_px4_offboard_mode();
             break;
         }
         case FAILED: {
@@ -178,15 +178,24 @@ void FlightModeManagerNode::pub_px4_offboard_mode() {
     auto mode = m_arm_offboard_mode.target.get_msg().offboard;
     
     px4_msgs::msg::OffboardControlMode msg{};
-    msg.position = (mode & POSITION) != 0;
-    msg.velocity = (mode & VELOCITY) != 0;
-    msg.acceleration = (mode & ACCELERATION) != 0;
-    msg.attitude = (mode & ATTITUDE) != 0;
-    msg.body_rate = (mode & BODY_RATE) != 0;
-    msg.thrust_and_torque = (mode & THRUST_AND_TORQUE) != 0;
-    msg.direct_actuator = (mode & DIRECT_ACTUATOR) != 0;
+    msg.position = (bool)((mode & POSITION) != 0);
+    msg.velocity = (bool)((mode & VELOCITY) != 0);
+    msg.acceleration = (bool)((mode & ACCELERATION) != 0);
+    msg.attitude = (bool)((mode & ATTITUDE) != 0);
+    msg.body_rate = (bool)((mode & BODY_RATE) != 0);
+    msg.thrust_and_torque = (bool)((mode & THRUST_AND_TORQUE) != 0);
+    msg.direct_actuator = (bool)((mode & DIRECT_ACTUATOR) != 0);
     msg.timestamp = get_clock()->now().nanoseconds() / 1000;
     m_pub.offboard_control_mode->publish(msg);
+    
+    // RCLCPP_INFO(this->get_logger(), "mode: %d", mode);
+    // RCLCPP_INFO(this->get_logger(), "position: %d", msg.position);
+    // RCLCPP_INFO(this->get_logger(), "velocity: %d", msg.velocity);
+    // RCLCPP_INFO(this->get_logger(), "acceleration: %d", msg.acceleration);
+    // RCLCPP_INFO(this->get_logger(), "attitude: %d", msg.attitude);
+    // RCLCPP_INFO(this->get_logger(), "body_rate: %d", msg.body_rate);
+    // RCLCPP_INFO(this->get_logger(), "thrust_and_torque: %d", msg.thrust_and_torque);
+    // RCLCPP_INFO(this->get_logger(), "direct_actuator: %d", msg.direct_actuator);
 }
 
 void FlightModeManagerNode::pub_current_mode(){

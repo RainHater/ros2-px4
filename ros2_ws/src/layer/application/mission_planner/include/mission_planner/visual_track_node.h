@@ -39,8 +39,6 @@ private:
     enum FlyStep{
         IDLE,
         RISE,
-        WAIT_VISION,
-        SWITCH_MODE,
         Hover,
         LAND,
         END,
