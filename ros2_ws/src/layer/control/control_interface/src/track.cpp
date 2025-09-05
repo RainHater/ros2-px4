@@ -85,7 +85,10 @@ void Track::normal_track(track::NormalTrack& normal_info) {
 
     if (detect_flag){
         m_pid.last_postition = sub_pose.position;
-        pub_tra.position = m_pid.last_postition;
+        // pub_tra.position = m_pid.last_postition;
+        pub_tra.position[0] = NAN;
+        pub_tra.position[1] = NAN;
+        pub_tra.position[2] = NAN;
         m_logger.info(m_log, 
             "dt: %f, "
             "cx: %f, cx_error: %f, yaw_out: %f, "
@@ -95,6 +98,16 @@ void Track::normal_track(track::NormalTrack& normal_info) {
             cx, cx_error, pub_tra.yawspeed,
             cy, cy_error, pub_tra.velocity[2],
             area, area_error, fb_output
+        );
+        RCLCPP_INFO(m_log, 
+            "position[0]: %f, position[1]: %f, position[2]: %f, "
+            "current[0]: %f, current[1]: %f, current[2]: %f",
+            pub_tra.position[0],
+            pub_tra.position[1],
+            pub_tra.position[2],
+            sub_pose.position[0],
+            sub_pose.position[1],
+            sub_pose.position[2]
         );
     }else {
         pub_tra.position = m_pid.last_postition;

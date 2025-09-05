@@ -126,9 +126,18 @@ void VisualTrack::task_loop(){
                         m_yaml.outdoor_flag
                     );
                 if (arrive){
-                    m_fly = Hover;
+                    m_fly = WAIT;
                     RCLCPP_INFO(get_logger(), "上升完成!");
                 }
+            }
+            break;
+        }
+
+        case WAIT: {
+            auto has_received = m_sub.yolo_detections.has_received();
+            if (has_received){
+                m_fly = Hover;
+                RCLCPP_INFO(get_logger(), "数据有效!");
             }
             break;
         }

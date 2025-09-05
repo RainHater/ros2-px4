@@ -32,6 +32,6 @@ track:
 
 #跟踪
 visual_track:
-  lift_height: 1.5
+  lift_height: 1
   outdoor_flag: true
   
