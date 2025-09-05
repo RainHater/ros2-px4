@@ -143,6 +143,8 @@ void VisualTrack::task_loop(){
         }
         case Hover:{
             auto has_received = m_sub.yolo_detections.has_change();
+            auto sub_postition = m_sub.vehicle_odometry.get_msg().position;
+            m_interface.track.update_last_postition(sub_postition);
             if (has_received){
                 track::NormalTrack normal_track;
                 normal_track.detections = m_sub.yolo_detections.get_msg();

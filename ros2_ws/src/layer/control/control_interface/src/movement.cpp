@@ -310,13 +310,13 @@ bool Movement::land_mode(movement::LandModeInfo land_mode_info, float v) {
             pub_pose->velocity[1] = NAN;
             pub_pose->velocity[2] = v;
             pub_pose->yaw = m_land.dw;
-            if (dist_bittom < m_yaml.land_th){
-                m_land.start_time = instant_time.seconds();
-                m_land.state = 3;
-                RCLCPP_INFO(m_log, 
-                    "降落完成!"
-                );
-            }
+            // if (dist_bittom < m_yaml.land_th){
+            //     m_land.start_time = instant_time.seconds();
+            //     m_land.state = 3;
+            //     RCLCPP_INFO(m_log, 
+            //         "降落完成!"
+            //     );
+            // }
             RCLCPP_INFO(m_log, 
                 "当前位置 dist_bottom: %f",
                 dist_bittom

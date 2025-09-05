@@ -35,6 +35,7 @@ public:
     Track();
 
     void normal_track(track::NormalTrack& normal_info);
+    void update_last_postition(std::array<float, 3> pos);
 private:
 
     struct CameraInfo{
@@ -50,6 +51,7 @@ private:
         std::array<float, 3> last_postition;
         double last_time;
         bool last_pos_init = false;
+        bool last_pos_update = false;
     };
 
     struct YamlInfo{

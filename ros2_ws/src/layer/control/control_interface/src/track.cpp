@@ -1,7 +1,6 @@
 #include "control_interface/track.h"
 
 #include <cmath>
-#include <utilities/tf2_tool.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
@@ -85,31 +84,37 @@ void Track::normal_track(track::NormalTrack& normal_info) {
 
     if (detect_flag){
         m_pid.last_postition = sub_pose.position;
-        // pub_tra.position = m_pid.last_postition;
+        m_pid.last_pos_update = true;
         pub_tra.position[0] = NAN;
         pub_tra.position[1] = NAN;
         pub_tra.position[2] = NAN;
+
+        m_logger.info(m_log, "--跟踪-------------------");
+        m_logger.info(m_log, "dt: %f", dt);
+        m_logger.info(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, pub_tra.yawspeed);
+        m_logger.info(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, pub_tra.velocity[2]);
+        m_logger.info(m_log, "area: %f, area_error: %f, fb_out: %f", area, area_error, fb_output);
         m_logger.info(m_log, 
-            "dt: %f, "
-            "cx: %f, cx_error: %f, yaw_out: %f, "
-            "cy: %f, cy_error: %f, ud_out: %f, "
-            "area: %f, area_error: %f, fb_out: %f",
-            dt,
-            cx, cx_error, pub_tra.yawspeed,
-            cy, cy_error, pub_tra.velocity[2],
-            area, area_error, fb_output
-        );
-        RCLCPP_INFO(m_log, 
-            "position[0]: %f, position[1]: %f, position[2]: %f, "
-            "current[0]: %f, current[1]: %f, current[2]: %f",
+            "position[0]: %f, position[1]: %f, position[2]: %f", 
             pub_tra.position[0],
             pub_tra.position[1],
-            pub_tra.position[2],
+            pub_tra.position[2]
+        );
+        m_logger.info(m_log, 
+            "current[0]: %f, current[1]: %f, current[2]: %f", 
             sub_pose.position[0],
             sub_pose.position[1],
             sub_pose.position[2]
         );
+        m_logger.info(m_log, "-------------------------");
     }else {
+        m_pid.last_pos_update = false;
         pub_tra.position = m_pid.last_postition;
+    }
+}
+
+void Track::update_last_postition(std::array<float, 3> pos){
+    if (m_pid.last_pos_update){
+        m_pid.last_postition = pos;
     }
 }
