@@ -15,6 +15,7 @@ VisualTrack::VisualTrack()
 {       
     m_fly = IDLE;
 
+    //读取yaml配置文件
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["visual_track"];
     m_yaml.visual_track = config["lift_height"].as<float>();
@@ -183,33 +184,15 @@ void VisualTrack::task_loop(){
     }
 
     auto timestamp = get_clock()->now().nanoseconds() / 1000;
-    m_pub_msgs.trajectory_setpoint.timestamp = timestamp;
+    m_pub_msgs.offboard_mode.timestamp = timestamp;
+   
     m_pub.offboard_mode->publish(m_pub_msgs.offboard_mode);
+
     if (m_sub.offboard_mode.get_msg().arm == ARM_ENABLE){
+        m_pub_msgs.trajectory_setpoint.timestamp = timestamp;
+
         m_pub.trajectory_setpoint->publish(m_pub_msgs.trajectory_setpoint);
     }
-}
-
-void VisualTrack::calculate_yaw(
-    int cx, 
-    int image_width, 
-    float fov_deg,
-    px4_msgs::msg::VehicleOdometry current,
-    px4_msgs::msg::TrajectorySetpoint &pose)
-{
-    tf2_tool::EulerAngles angles;
-    tf2_tool::get_euler_angles(current, angles);
-    float dx = cx - image_width / 2.0f;
-    float half_width = image_width / 2.0f;
-
-    float angle_offset_rad = (dx / half_width) * (fov_deg * M_PI / 180.0f / 2.0f);
-    float target_yaw_rad = angles.yaw + angle_offset_rad;
-
-    pose.yaw = target_yaw_rad;
-    RCLCPP_INFO(get_logger(), 
-        "当前yaw: %f, 转动yaw: %f, 目标yaw: %f",
-        angles.yaw, angle_offset_rad, target_yaw_rad
-    );
 }
 
 int main(int argc, char *argv[]) {

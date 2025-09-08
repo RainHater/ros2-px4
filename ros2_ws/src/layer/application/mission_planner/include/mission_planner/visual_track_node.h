@@ -28,13 +28,6 @@ protected:
     void init_sub();
 protected:
     void task_loop();
-    void calculate_yaw(
-        int cx, 
-        int image_width, 
-        float fov_deg,
-        px4_msgs::msg::VehicleOdometry current,
-        px4_msgs::msg::TrajectorySetpoint &pose
-    );
 private:
     enum FlyStep{
         IDLE,

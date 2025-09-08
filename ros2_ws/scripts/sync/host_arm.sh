@@ -7,6 +7,7 @@ TOP_DIR=$(pwd)
 echo "当前目录: ${TOP_DIR}"
 
 TARGET_IP="100.76.77.51"
+# TARGET_IP="192.168.0.203"
 TARGET_USER="sunrise"
 TARGET_PASSWORD="sunrise"
 TARGET_PATH="/home/${TARGET_USER}/ros2_px4/ros2_ws"
