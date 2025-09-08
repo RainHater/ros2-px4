@@ -23,27 +23,31 @@ Movement::Movement()
     m_yaml.land_th = config["land_th"].as<float>();
 }
 
-bool Movement::move_to_gps_target(
-    double lat, double lon, float alt,
-    px4_msgs::msg::TrajectorySetpoint &pub_pose,
-    px4_msgs::msg::VehicleGlobalPosition init_gps,
-    px4_msgs::msg::VehicleOdometry sub_tra)
-{     
+bool Movement::move_to_gps_target(movement::MoveToGPSTarget msgs_info) {
+    auto& init = msgs_info.init;
+    auto& origin = msgs_info.origin;
+    auto& target = msgs_info.target;
+    auto& sub_tra = msgs_info.sub_tra;
+    auto& pub_pose = msgs_info.pub_pose;
+
     if (m_gps_nav.state == 0){
         float x = 0.0, y = 0.0;
-        double init_lat = init_gps.lat;
-        double init_lon = init_gps.lon;
-        float init_alt = init_gps.alt;
+        double init_lat = init.lat;
+        double init_lon = init.lon;
+        double init_alt = init.alt;
+        double target_lat = target.lat;
+        double target_lon = target.lon;
+        double target_alt = target.alt;
         
         geo_tool::gps_to_local(
         init_lat, init_lon,
-            lat, lon, 
+            target_lat, target_lon, 
             x, y
         );
 
         m_gps_nav.target[0] = x;
         m_gps_nav.target[1] = y;
-        m_gps_nav.target[2] = init_alt - alt;
+        m_gps_nav.target[2] = init_alt - target_alt;
 
         m_gps_nav.state = 1;
     }
@@ -59,8 +63,8 @@ bool Movement::move_to_gps_target(
     bool hor_arrive = (horizontal_dist < m_yaml.hor_th);
     bool ver_arrive = (vertical_dist < m_yaml.ver_th);
 
-    pub_pose.position = convert_pose;
-    pub_pose.yaw = NAN;
+    pub_pose->position = convert_pose;
+    pub_pose->yaw = NAN;
 
     bool arrive = hor_arrive && ver_arrive;
     if (arrive){

@@ -35,43 +35,41 @@ class Track{
 public:
     Track();
 
+    //普通跟踪
     void normal_track(track::NormalTrack& normal_info);
+    //更新定点值
     void update_last_postition(std::array<float, 3> pos);
 private:
-
+    //相机参数
     struct CameraInfo{
         float hfov;
         float width;
         float height;
     };
-
-    struct PidCalInfo{
+    //普通跟踪计算
+    struct NormalTrackInfo{
         PIDController yaw;
         PIDController ud;
         PIDController fb;
-        std::array<float, 3> last_postition;
         double last_time;
+        float thre_area;
+        std::array<float, 3> last_postition;
         bool last_pos_init = false;
         bool last_pos_update = false;
     };
-
+    //yaml 配置文件
     struct YamlInfo{
         PidInfo yaw = {0.003f, 0.00001f, 0.0f};
         PidInfo ud = {0.003f, 0.00001f, 0.0f};
         PidInfo fb = {0.003f, 0.00001f, 0.0f};
         float area_th = 0.41f;
     };
-
-    struct NormalTrack{
-        float thre_area;
-    };
 private:
     rclcpp::Logger m_log;
     LoggerTool m_logger;
-    PidCalInfo m_pid;
+    NormalTrackInfo m_normal_track;
     YamlInfo m_yaml;
     CameraInfo m_camera;
-    NormalTrack m_normal_track;
 };
 
 #endif

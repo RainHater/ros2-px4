@@ -1,6 +1,7 @@
 #ifndef _MOVEMENT_H
 #define _MOVEMENT_H
 
+#include <array>
 #include <rclcpp/rclcpp.hpp>
 
 #include <eigen3/Eigen/Core>
@@ -54,6 +55,14 @@ struct LandModeInfo{
     ModeControl mode_control;
     rclcpp::Time instant_time;
 };
+
+struct MoveToGPSTarget{
+    geo_tool::GeoCoordinate init;
+    geo_tool::GeoCoordinate origin;
+    geo_tool::GeoCoordinate target;
+    px4_msgs::msg::VehicleOdometry sub_tra;
+    px4_msgs::msg::TrajectorySetpoint* pub_pose;
+};
 };
 
 class Movement{
@@ -61,13 +70,7 @@ public:
     Movement();
 
     //飞往目标经纬度
-    bool move_to_gps_target(
-        double lat, double lon, float alt,
-        px4_msgs::msg::TrajectorySetpoint &pub_pose,
-        px4_msgs::msg::VehicleGlobalPosition init_gps,
-        px4_msgs::msg::VehicleOdometry sub_tra
-    );
-
+    bool move_to_gps_target(movement::MoveToGPSTarget msgs_info);
     //根据局部整体坐标移动
     bool justmove(movement::JustmoveInfo justmove_info, Waypts target);
     //室外

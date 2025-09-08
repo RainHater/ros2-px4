@@ -29,9 +29,9 @@ Track::Track()
 
     m_normal_track.thre_area = m_camera.width*m_camera.height*m_yaml.area_th;
 
-    m_pid.yaw.initialize(m_yaml.yaw.kp, m_yaml.yaw.ki, m_yaml.yaw.kd, false, 1.5708f, 1.5708f); 
-    m_pid.ud.initialize(m_yaml.ud.kp, m_yaml.ud.ki, m_yaml.ud.kd, false, 0.5f, 0.5f); 
-    m_pid.fb.initialize(m_yaml.fb.kp, m_yaml.fb.ki, m_yaml.fb.kd, false, 0.4f, 0.4f);
+    m_normal_track.yaw.initialize(m_yaml.yaw.kp, m_yaml.yaw.ki, m_yaml.yaw.kd, false, 1.5708f, 1.5708f); 
+    m_normal_track.ud.initialize(m_yaml.ud.kp, m_yaml.ud.ki, m_yaml.ud.kd, false, 0.5f, 0.5f); 
+    m_normal_track.fb.initialize(m_yaml.fb.kp, m_yaml.fb.ki, m_yaml.fb.kd, false, 0.4f, 0.4f);
 }
 
 void Track::normal_track(track::NormalTrack& normal_info) {
@@ -42,11 +42,9 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     // auto& sub_attitude = normal_info.sub_attitude;
     // auto& sensor_combined = normal_info.sensor_combined;
     auto& pub_tra = *normal_info.pub_tra;
-
-    // double cur_time =  cur_ns / 1e6f;
     float dt  = 100;
-    // m_pid.last_time = cur_time;
 
+    //获取yaw
     std::array<double, 4> dou_q = type_tool::float_array_to_double(sub_pose.q);
     Eigen::Quaterniond eigen_q(dou_q[0], dou_q[1], dou_q[2], dou_q[3]);
     auto cur_yaw = px4_ros_com::frame_transforms::utils::quaternion::quaternion_get_yaw(eigen_q);
@@ -71,9 +69,9 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float cy_error = cy - m_camera.height / 2.0;
     float area_error = m_normal_track.thre_area - area;
 
-    float yaw_output = m_pid.yaw.compute(cx_error, dt);
-    float ud_output = m_pid.ud.compute(cy_error, dt);
-    float fb_output = m_pid.fb.compute(area_error, dt);
+    float yaw_output = m_normal_track.yaw.compute(cx_error, dt);
+    float ud_output = m_normal_track.ud.compute(cy_error, dt);
+    float fb_output = m_normal_track.fb.compute(area_error, dt);
 
     pub_tra.yaw = NAN;
     pub_tra.velocity[0] = cosf(yaw) * fb_output;
@@ -81,14 +79,14 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     pub_tra.velocity[2] = ud_output;
     pub_tra.yawspeed = yaw_output;
 
-    if (!m_pid.last_pos_init){
-        m_pid.last_postition = sub_pose.position;
-        m_pid.last_pos_init = true;
+    if (!m_normal_track.last_pos_init){
+        m_normal_track.last_postition = sub_pose.position;
+        m_normal_track.last_pos_init = true;
     }
 
     if (detect_flag){
-        m_pid.last_postition = sub_pose.position;
-        m_pid.last_pos_update = true;
+        m_normal_track.last_postition = sub_pose.position;
+        m_normal_track.last_pos_update = true;
         pub_tra.position[0] = NAN;
         pub_tra.position[1] = NAN;
         pub_tra.position[2] = NAN;
@@ -110,15 +108,16 @@ void Track::normal_track(track::NormalTrack& normal_info) {
             sub_pose.position[1],
             sub_pose.position[2]
         );
+        m_logger.info(m_log, "cur_yaw: %f", yaw);
         m_logger.info(m_log, "-------------------------");
     }else {
-        m_pid.last_pos_update = false;
-        pub_tra.position = m_pid.last_postition;
+        m_normal_track.last_pos_update = false;
+        pub_tra.position = m_normal_track.last_postition;
     }
 }
 
 void Track::update_last_postition(std::array<float, 3> pos){
-    if (m_pid.last_pos_update){
-        m_pid.last_postition = pos;
+    if (m_normal_track.last_pos_update){
+        m_normal_track.last_postition = pos;
     }
 }
