@@ -4,7 +4,6 @@
 [submodule "px4/PX4-Autopilot"]
 	path = px4/PX4-Autopilot
 	url = https://github.com/PX4/PX4-Autopilot.git
-	branch = release/1.15
 [submodule "px4/DDS"]
 	path = px4/DDS
 	url = https://github.com/eProsima/Micro-XRCE-DDS-Agent.git
@@ -12,11 +11,9 @@
 [submodule "ros2_ws/src/layer/interface/msgs/px4_msgs"]
 	path = ros2_ws/src/layer/interface/msgs/px4_msgs
 	url = https://github.com/PX4/px4_msgs.git
-	branch = release/1.15
 [submodule "ros2_ws/src/layer/interface/px4_ros_com"]
 	path = ros2_ws/src/layer/interface/px4_ros_com
 	url = https://github.com/PX4/px4_ros_com.git
-	branch = release/1.15
 [submodule "ros2_ws/src/layer/perception/vision"]
 	path = ros2_ws/src/layer/perception/vision
 	url = https://github.com/zhangzijie-pro/vision_pkg.git
