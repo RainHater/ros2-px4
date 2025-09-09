@@ -309,7 +309,7 @@ bool Movement::land_mode(movement::LandModeInfo land_mode_info, float v) {
 
             pub_pose->position[0] = m_land.start_position.x;
             pub_pose->position[1] = m_land.start_position.y;
-            pub_pose->position[2] = NAN;
+            pub_pose->position[2] = 0.0;
             pub_pose->velocity[0] = NAN;
             pub_pose->velocity[1] = NAN;
             pub_pose->velocity[2] = v;

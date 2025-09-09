@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <array>
+#include <rclcpp/logging.hpp>
 #include <utilities/type_tool.hpp>
 #include <yaml-cpp/yaml.h>
 #include <Eigen/Geometry>
@@ -74,14 +75,17 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float fb_output = m_normal_track.fb.compute(area_error, dt);
 
     pub_tra.yaw = NAN;
-    pub_tra.velocity[0] = cosf(yaw) * fb_output;
-    pub_tra.velocity[1] = sinf(yaw) * fb_output;
-    pub_tra.velocity[2] = ud_output;
     pub_tra.yawspeed = yaw_output;
 
     if (!m_normal_track.last_pos_init){
         m_normal_track.last_postition = sub_pose.position;
         m_normal_track.last_pos_init = true;
+        RCLCPP_INFO(m_log, 
+            "上一次位置: position[0]: %f, position[1]: %f, position[2]: %f", 
+            m_normal_track.last_postition[0],
+            m_normal_track.last_postition[1],
+            m_normal_track.last_postition[2]
+        );
     }
 
     if (detect_flag){
@@ -90,29 +94,40 @@ void Track::normal_track(track::NormalTrack& normal_info) {
         pub_tra.position[0] = NAN;
         pub_tra.position[1] = NAN;
         pub_tra.position[2] = NAN;
+        pub_tra.velocity[0] = cosf(yaw) * fb_output;
+        pub_tra.velocity[1] = sinf(yaw) * fb_output;
+        pub_tra.velocity[2] = ud_output;
 
-        m_logger.info(m_log, "--跟踪-------------------");
-        m_logger.info(m_log, "dt: %f", dt);
-        m_logger.info(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, pub_tra.yawspeed);
-        m_logger.info(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, pub_tra.velocity[2]);
-        m_logger.info(m_log, "area: %f, area_error: %f, fb_out: %f", area, area_error, fb_output);
-        m_logger.info(m_log, 
-            "position[0]: %f, position[1]: %f, position[2]: %f", 
-            pub_tra.position[0],
-            pub_tra.position[1],
-            pub_tra.position[2]
-        );
-        m_logger.info(m_log, 
+        RCLCPP_INFO(m_log, "--跟踪-------------------");
+        RCLCPP_INFO(m_log, "dt: %f", dt);
+        RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, pub_tra.yawspeed);
+        RCLCPP_INFO(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, pub_tra.velocity[2]);
+        RCLCPP_INFO(m_log, "area: %f, area_error: %f, fb_out: %f", area, area_error, fb_output);
+        RCLCPP_INFO(m_log, 
             "current[0]: %f, current[1]: %f, current[2]: %f", 
             sub_pose.position[0],
             sub_pose.position[1],
             sub_pose.position[2]
         );
-        m_logger.info(m_log, "cur_yaw: %f", yaw);
-        m_logger.info(m_log, "-------------------------");
+        RCLCPP_INFO(m_log, "cur_yaw: %f", yaw);
+        RCLCPP_INFO(m_log, "-------------------------");
     }else {
         m_normal_track.last_pos_update = false;
         pub_tra.position = m_normal_track.last_postition;
+        RCLCPP_INFO(m_log, "--未跟踪-------------------");
+        RCLCPP_INFO(m_log, 
+            "position[0]: %f, position[1]: %f, position[2]: %f", 
+            pub_tra.position[0],
+            pub_tra.position[1],
+            pub_tra.position[2]
+        );
+        RCLCPP_INFO(m_log, 
+            "current[0]: %f, current[1]: %f, current[2]: %f", 
+            sub_pose.position[0],
+            sub_pose.position[1],
+            sub_pose.position[2]
+        );
+        RCLCPP_INFO(m_log, "-------------------------");
     }
 }
 

@@ -127,6 +127,15 @@ void VisualTrack::task_loop(){
                         m_yaml.outdoor_flag
                     );
                 if (arrive){
+                    if (justmove_info.sub_pose.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_NED){
+                        RCLCPP_INFO(get_logger(),
+                            "当前为 NED 坐标系"
+                        );
+                    }else if (justmove_info.sub_pose.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD){
+                        RCLCPP_INFO(get_logger(),
+                            "当前为 FRD 坐标系"
+                        );
+                    }
                     m_fly = WAIT;
                     RCLCPP_INFO(get_logger(), "上升完成!");
                 }
