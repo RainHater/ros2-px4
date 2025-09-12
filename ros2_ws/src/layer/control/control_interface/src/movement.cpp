@@ -25,7 +25,7 @@ Movement::Movement()
 
 bool Movement::move_to_gps_target(movement::MoveToGPSTarget msgs_info) {
     auto& init = msgs_info.init;
-    auto& origin = msgs_info.origin;
+    // auto& origin = msgs_info.origin;
     auto& target = msgs_info.target;
     auto& sub_tra = msgs_info.sub_tra;
     auto& pub_pose = msgs_info.pub_pose;
@@ -88,16 +88,6 @@ bool Movement::justmove(movement::JustmoveInfo justmove_info, Waypts target) {
         m_justmove.start_pose.z = sub_pose.position[2];
         m_justmove.target_pose = target;
 
-        if (sub_pose.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_NED){
-            RCLCPP_INFO(m_log,
-                "当前为 NED 坐标系"
-            );
-        }else if (sub_pose.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD){
-            RCLCPP_INFO(m_log,
-                "当前为 FRD 坐标系"
-            );
-        }
-        
         double distancex = m_justmove.target_pose.x - m_justmove.start_pose.x;
         double distancey = m_justmove.target_pose.y - m_justmove.start_pose.y;
         double distancez = m_justmove.target_pose.z - m_justmove.start_pose.z;

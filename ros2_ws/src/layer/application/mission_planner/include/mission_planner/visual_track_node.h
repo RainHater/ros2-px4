@@ -32,6 +32,7 @@ private:
     enum FlyStep{
         IDLE,
         RISE,
+        SWITCH_MODE,
         WAIT,
         Hover,
         LAND,
@@ -68,6 +69,8 @@ private:
     struct YamlInfo{
         float visual_track = 1.5f;
         bool outdoor_flag = false;
+        bool switch_mode = false;
+        int track_mode = 0;
     };
 private:
     rclcpp::TimerBase::SharedPtr m_timer;
@@ -77,8 +80,6 @@ private:
     PubMsgInfo m_pub_msgs;
     InterfaceInfo m_interface;
     YamlInfo m_yaml;
-    std::string m_yaml_path;
-    bool m_test = false;
 };
 
 #endif

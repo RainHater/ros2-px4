@@ -34,4 +34,6 @@ track:
 visual_track:
   lift_height: 1
   outdoor_flag: true
-  mode: 1
+  switch_mode: true
+  track_mode: 0
+  

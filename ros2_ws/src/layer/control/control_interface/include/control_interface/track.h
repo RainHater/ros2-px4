@@ -1,6 +1,7 @@
 #ifndef _TRACK_H
 #define _TRACK_H
 
+#include <identify/msg/detail/yolo_detection__struct.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
@@ -37,6 +38,10 @@ public:
 
     //普通跟踪
     void normal_track(track::NormalTrack& normal_info);
+    //普通跟踪v1(位置)
+    void normal_track_v1(track::NormalTrack& normal_info);
+    void normal_track_v2(track::NormalTrack& normal_info);
+    void normal_track_v3(track::NormalTrack& normal_info);
     //更新定点值
     void update_last_postition(std::array<float, 3> pos);
 private:
@@ -56,6 +61,7 @@ private:
         std::array<float, 3> last_postition;
         bool last_pos_init = false;
         bool last_pos_update = false;
+        identify::msg::YoloDetection last_detection;
     };
     //yaml 配置文件
     struct YamlInfo{

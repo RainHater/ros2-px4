@@ -20,6 +20,8 @@ VisualTrack::VisualTrack()
     YAML::Node config = YAML::LoadFile(yaml_path)["visual_track"];
     m_yaml.visual_track = config["lift_height"].as<float>();
     m_yaml.outdoor_flag = config["outdoor_flag"].as<bool>();
+    m_yaml.switch_mode = config["switch_mode"].as<bool>();
+    m_yaml.track_mode = config["track_mode"].as<int>();
 
     RCLCPP_INFO(get_logger(), "visual_track 节点启动...");
 }
@@ -139,13 +141,29 @@ void VisualTrack::task_loop(){
                             "当前为 FRD 坐标系"
                         );
                     }
-                    m_fly = WAIT;
+                    auto switch_mode = m_yaml.switch_mode;
+                    if (switch_mode){
+                        m_fly = SWITCH_MODE;
+                    }else {
+                        m_fly = WAIT;
+                    }
                     RCLCPP_INFO(get_logger(), "上升完成!");
                 }
             }
             break;
         }
-
+        case SWITCH_MODE:{
+            m_interface.mode_control.unlock(
+                ARM_ENABLE, VELOCITY, 
+                m_sub.offboard_mode.get_msg(), 
+                m_pub_msgs.offboard_mode
+            );
+            if (m_interface.mode_control.wait_busy()){
+                m_fly = WAIT;
+                RCLCPP_INFO(get_logger(), "切换到速度模式!");
+            }
+            break;
+        }
         case WAIT: {
             auto has_received = m_sub.yolo_detections.has_received();
             if (has_received){
@@ -157,15 +175,26 @@ void VisualTrack::task_loop(){
         case Hover:{
             auto has_received = m_sub.yolo_detections.has_change();
             auto sub_postition = m_sub.vehicle_odometry.get_msg().position;
+            auto track_mode = m_yaml.track_mode;
+            
+            track::NormalTrack normal_track;
+            normal_track.detections = m_sub.yolo_detections.get_msg();
+            normal_track.sub_pose = m_sub.vehicle_odometry.get_msg();
+            normal_track.sub_attitude = m_sub.vehicle_attitude.get_msg();
+            normal_track.sensor_combined = m_sub.sensor_combined.get_msg();
+            normal_track.pub_tra = &m_pub_msgs.trajectory_setpoint;
+
             m_interface.track.update_last_postition(sub_postition);
             if (has_received){
-                track::NormalTrack normal_track;
-                normal_track.detections = m_sub.yolo_detections.get_msg();
-                normal_track.sub_pose = m_sub.vehicle_odometry.get_msg();
-                normal_track.sub_attitude = m_sub.vehicle_attitude.get_msg();
-                normal_track.sensor_combined = m_sub.sensor_combined.get_msg();
-                normal_track.pub_tra = &m_pub_msgs.trajectory_setpoint;
-                m_interface.track.normal_track(normal_track);
+                if (track_mode == 0){
+                    m_interface.track.normal_track(normal_track);
+                }else if (track_mode == 1){
+                    m_interface.track.normal_track_v1(normal_track);
+                }else if (track_mode == 2){
+                    m_interface.track.normal_track_v2(normal_track);
+                }else if (track_mode == 3){
+                    m_interface.track.normal_track_v3(normal_track);
+                }
             }
             break;
         }
