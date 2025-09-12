@@ -1,5 +1,6 @@
 #include "control_motion/flight_mode_manager_node.h"
 #include <cmath>
+#include <utilities/topic_name.hpp>
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
@@ -37,33 +38,36 @@ void FlightModeManagerNode::initialize(){
 }
 
 void FlightModeManagerNode::init_pub(){
+    auto& topics = utilities::TopicInfo::getInstance();
+    
     m_pub.offboard_control_mode = create_publisher<px4_msgs::msg::OffboardControlMode>(
-        topic_px4_in::OFFBOARD_CONTROL_MODE, 10);
+        topics.topic_px4_in().OFFBOARD_CONTROL_MODE, 10);
 
     m_pub.vehicle_command = create_publisher<px4_msgs::msg::VehicleCommand>(
-        topic_px4_in::VEHICLE_COMMAND, 10);
+        topics.topic_px4_in().VEHICLE_COMMAND, 10);
 
     m_pub.px4_mode_status_broadcaster = create_publisher<common_msgs::msg::ArmOffboardStatus>(
-        topic_out::PX4_MODE, 10);
+        topics.topic_out().PX4_MODE, 10);
 }
 
 void FlightModeManagerNode::init_sub(){
+    auto& topics = utilities::TopicInfo::getInstance();
     rclcpp::QoS qos(rclcpp::KeepLast(10));
     qos.best_effort();
 
     m_arm_offboard_mode.target.subscribe(
         shared_from_this(), 
-        topic_in::PX4_MODE, 10
+        topics.topic_in().PX4_MODE, 10
     );
 
     m_arm_offboard_mode.px4_mode.subscribe(
         shared_from_this(), 
-        topic_px4_out::VEHICLE_STATUS, qos
+        topics.topic_px4_out().VEHICLE_STATUS, qos
     );
 
     m_sub.battery_status.subscribe(
         shared_from_this(), 
-        topic_px4_out::BATTERY_STATUS, qos
+        topics.topic_px4_out().BATTERY_STATUS, qos
     );
 }
 

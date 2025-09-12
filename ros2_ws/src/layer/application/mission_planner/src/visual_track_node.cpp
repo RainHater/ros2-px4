@@ -36,60 +36,63 @@ void VisualTrack::initialize(){
 }
 
 void VisualTrack::init_pub(){
+    auto& topics = utilities::TopicInfo::getInstance();
     rclcpp::QoS qos(rclcpp::KeepLast(1));
     qos.best_effort();
     qos.durability_volatile();
     qos.transient_local();
 
     m_pub.offboard_mode = create_publisher<common_msgs::msg::ArmOffboardStatus>(
-        topic_in::PX4_MODE, 10
+        topics.topic_in().PX4_MODE, 10
     );
 
     m_pub.trajectory_setpoint = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
-        topic_px4_in::PX4_TRAJECTORY_SETPOINT, qos
+        topics.topic_px4_in().PX4_TRAJECTORY_SETPOINT, qos
     );
 }
 
 void VisualTrack::init_sub(){
+    auto& topics = utilities::TopicInfo::getInstance();
     rclcpp::QoS qos_best_effort(rclcpp::KeepLast(10));
-    qos_best_effort.best_effort();
     rclcpp::QoS qos_reliable(rclcpp::KeepLast(1));
+    
+    qos_best_effort.best_effort();
     qos_reliable.best_effort();
     qos_reliable.transient_local();
 
     m_sub.offboard_mode.subscribe(
         shared_from_this(), 
-        topic_out::PX4_MODE, 10
+        topics.topic_out().PX4_MODE, 10
     );
 
     m_sub.vehicle_odometry.subscribe(
         shared_from_this(), 
-        topic_px4_out::VEHICLE_ODOMETRY, qos_best_effort
+        topics.topic_px4_out().VEHICLE_ODOMETRY, qos_best_effort
     );
 
     m_sub.local_position.subscribe(
         shared_from_this(),
-        topic_px4_out::VEHICLE_LOCAL_POSITION, qos_best_effort
+        topics.topic_px4_out().VEHICLE_LOCAL_POSITION, qos_best_effort
     );
 
     m_sub.vehicle_attitude.subscribe(
         shared_from_this(), 
-        topic_px4_out::VEHICLE_ATTITUDE, qos_reliable
+        topics.topic_px4_out().VEHICLE_ATTITUDE, qos_reliable
     );
 
     m_sub.sensor_combined.subscribe(
         shared_from_this(), 
-        topic_px4_out::SENSOR_COMBINED, qos_reliable
+        topics.topic_px4_out().SENSOR_COMBINED, qos_reliable
     );
 
     m_sub.manual_control_setpoint.subscribe(
         shared_from_this(), 
-        topic_px4_out::MANUAL_CONTROL_SETPOINT, qos_reliable
+        topics.topic_px4_out().MANUAL_CONTROL_SETPOINT, qos_reliable
     );
 
     m_sub.yolo_detections.subscribe(
         shared_from_this(), 
-        topic_out::YOLO_DETECTIONS, 10
+        topics.topic_out().YOLO_DETECTIONS, 10
     );
 }
 

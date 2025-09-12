@@ -13,6 +13,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(common_msgs REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -37,6 +38,7 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 target_link_libraries(${PROJECT_NAME} INTERFACE 
   rclcpp::rclcpp
   tf2::tf2
+  yaml-cpp
 )
 
 # 安装头文件
@@ -62,6 +64,7 @@ ament_export_dependencies(
   rclcpp
   tf2
   common_msgs
+  yaml-cpp
 )
 
 ament_package()
