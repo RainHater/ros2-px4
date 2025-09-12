@@ -14,4 +14,4 @@ uint16 OFFBOARD_DISABLED        = 0x80
 
 uint8 arm                                   #arm 状态
 uint16 offboard                             #offboard 状态
-uint64 timestamp			                # time since system start (microseconds)
+uint64 timestamp			                #time since system start (microseconds)
