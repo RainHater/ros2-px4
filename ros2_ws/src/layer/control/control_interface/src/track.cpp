@@ -6,9 +6,9 @@
 #include <Eigen/Geometry>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
-Track::Track()
- :  m_log(rclcpp::get_logger("跟踪(track.cpp)")),
-    m_logger("/home/sunrise/ros2_px4/logs/track")
+Track::Track() 
+    : m_log(rclcpp::get_logger("跟踪(track.cpp)"))
+    , m_camera({70, 1920, 1080})
 {   
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["track"];
@@ -22,9 +22,6 @@ Track::Track()
     m_yaml.fb.ki = config["fb_ki"].as<float>();
     m_yaml.fb.kd = config["fb_kd"].as<float>();
     m_yaml.area_th = config["area_th"].as<float>();
-
-    m_camera.width = 1920;
-    m_camera.height = 1080;
 
     m_normal_track.thre_area = m_camera.width*m_camera.height*m_yaml.area_th;
 
@@ -44,8 +41,7 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float dt  = 100;
 
     //获取yaw
-    std::array<double, 4> dou_q = type_tool::float_array_to_double(sub_pose.q);
-    Eigen::Quaterniond eigen_q(dou_q[0], dou_q[1], dou_q[2], dou_q[3]);
+    auto eigen_q = px4_ros_com::frame_transforms::utils::quaternion::array_to_eigen_quat(sub_pose.q);
     auto cur_yaw = px4_ros_com::frame_transforms::utils::quaternion::quaternion_get_yaw(eigen_q);
 
     float cx = 0.0f;

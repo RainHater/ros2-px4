@@ -17,7 +17,6 @@
 #include "identify/msg/yolo_detections.hpp"
 
 #include "utilities/tf2_tool.hpp"
-#include "utilities/logger_tool.hpp"
 #include "utilities/type_tool.hpp"
 
 #include "control_interface/pid.h"
@@ -72,7 +71,6 @@ private:
     };
 private:
     rclcpp::Logger m_log;
-    LoggerTool m_logger;
     NormalTrackInfo m_normal_track;
     YamlInfo m_yaml;
     CameraInfo m_camera;
