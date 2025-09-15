@@ -1,17 +1,13 @@
 #include "control_interface/movement.h"
 
+#include <array>
 #include <yaml-cpp/yaml.h>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
-constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
-constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
-constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
-
+namespace movement{
 Movement::Movement()
  : m_log(rclcpp::get_logger("控制无人机(movement.cpp)"))
 {    
-    m_land.state = 0;
-
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["movement"];
     m_yaml.hor_th = config["hor_th"].as<float>();
@@ -23,163 +19,164 @@ Movement::Movement()
     m_yaml.land_th = config["land_th"].as<float>();
 }
 
-bool Movement::move_to_gps_target(movement::MoveToGPSTarget msgs_info) {
-    auto& init = msgs_info.init;
-    // auto& origin = msgs_info.origin;
-    auto& target = msgs_info.target;
-    auto& sub_tra = msgs_info.sub_tra;
-    auto& pub_pose = msgs_info.pub_pose;
+bool Movement::nav_move_to_target(
+    geo_tool::GeoCoordinate target_nav,
+    geo_tool::GeoCoordinate start_nav,
+    std::array<float, 3> cur_pos,
+    px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
+) {
+    bool arrive = false;
 
-    if (m_gps_nav.state == 0){
-        float x = 0.0, y = 0.0;
-        double init_lat = init.lat;
-        double init_lon = init.lon;
-        double init_alt = init.alt;
-        double target_lat = target.lat;
-        double target_lon = target.lon;
-        double target_alt = target.alt;
-        
-        geo_tool::gps_to_local(
-        init_lat, init_lon,
-            target_lat, target_lon, 
-            x, y
-        );
+    switch(m_move_nav.state){
+        case nav_move_to_target::IDLE: {
+            float x = 0.0, y = 0.0;
+            double init_lat = start_nav.lat;
+            double init_lon = start_nav.lon;
+            double init_alt = start_nav.alt;
+            double target_lat = target_nav.lat;
+            double target_lon = target_nav.lon;
+            double target_alt = target_nav.alt;
 
-        m_gps_nav.target[0] = x;
-        m_gps_nav.target[1] = y;
-        m_gps_nav.target[2] = init_alt - target_alt;
+            geo_tool::gps_to_local(
+            init_lat, init_lon,
+                target_lat, target_lon, 
+                x, y
+            );
 
-        m_gps_nav.state = 1;
-    }
+            m_move_nav.target_nav[0] = x;
+            m_move_nav.target_nav[1] = y;
+            m_move_nav.target_nav[2] = init_alt - target_alt;
 
-    std::array<float, 3> convert_pose = m_gps_nav.target;
-
-    float dx = convert_pose[0] - sub_tra.position[0];
-    float dy = convert_pose[1] - sub_tra.position[1];
-    float dz = convert_pose[2] - sub_tra.position[2];
-
-    float horizontal_dist = std::hypot(dx, dy);
-    float vertical_dist = std::abs(dz);
-    bool hor_arrive = (horizontal_dist < m_yaml.hor_th);
-    bool ver_arrive = (vertical_dist < m_yaml.ver_th);
-
-    pub_pose->position = convert_pose;
-    pub_pose->yaw = NAN;
-
-    bool arrive = hor_arrive && ver_arrive;
-    if (arrive){
-        m_gps_nav.state = 0;
-    }
-
-    return arrive;
-}
-
-bool Movement::justmove(movement::JustmoveInfo justmove_info, Waypts target) {   
-    auto& sub_pose = justmove_info.sub_pose;
-    auto& pub_pose = justmove_info.pub_pose;
-    auto& instant_time = justmove_info.instant_time;
-    auto& v = justmove_info.v;
-    auto& auto_angle = justmove_info.auto_angle;
-    auto now_s = instant_time.seconds();
-
-    if(m_justmove.state == 0) {
-        m_justmove.start_pose.x = sub_pose.position[0];
-        m_justmove.start_pose.y = sub_pose.position[1];
-        m_justmove.start_pose.z = sub_pose.position[2];
-        m_justmove.target_pose = target;
-
-        double distancex = m_justmove.target_pose.x - m_justmove.start_pose.x;
-        double distancey = m_justmove.target_pose.y - m_justmove.start_pose.y;
-        double distancez = m_justmove.target_pose.z - m_justmove.start_pose.z;
-        double distance  = sqrt(pow(distancex,2) + pow(distancey,2) + pow(distancez,2));
-
-        m_justmove.total_time = distance / v;
-        m_justmove.vx = distancex / m_justmove.total_time;
-        m_justmove.vy = distancey / m_justmove.total_time;
-        m_justmove.vz = distancez / m_justmove.total_time;
-        if (auto_angle){
-            m_justmove.dw = atan2(m_justmove.vy, m_justmove.vx);
-        }else {
-            tf2_tool::EulerAngles angle;
-            tf2_tool::get_euler_angles(sub_pose, angle);
-            m_justmove.dw = angle.yaw;
+            m_move_nav.state = nav_move_to_target::FLY;
+            break;
         }
-     
-        m_justmove.start_time = now_s;
-        m_justmove.state = 1;
-        RCLCPP_INFO(m_log, 
-            "控制开始"
-        );
-    }
+        case nav_move_to_target::FLY: {
+            std::array<float, 3> convert_pose = m_move_nav.target_nav;
+            float dx = convert_pose[0] - cur_pos[0];
+            float dy = convert_pose[1] - cur_pos[1];
+            float dz = convert_pose[2] - cur_pos[2];
 
-    m_justmove.dt = now_s - m_justmove.start_time;
+            float horizontal_dist = std::hypot(dx, dy);
+            float vertical_dist = std::abs(dz);
+            bool hor_arrive = (horizontal_dist < m_yaml.hor_th);
+            bool ver_arrive = (vertical_dist < m_yaml.ver_th);
 
-    double deltax = sub_pose.position[0]-m_justmove.target_pose.x;
-    double deltay = sub_pose.position[1]-m_justmove.target_pose.y;
-    double deltaz = sub_pose.position[2]-m_justmove.target_pose.z;
+            pub_pos_msgs.position = convert_pose;
+            pub_pos_msgs.yaw = NAN;
 
-    double delta = sqrt(pow(deltax,2)+pow(deltay,2)+pow(deltaz,2));
-    bool arrive = (instant_time.seconds() - m_justmove.start_time > m_justmove.total_time) && delta < m_yaml.delta;
-
-    if(!arrive){
-        double out_x = m_justmove.start_pose.x + m_justmove.dt * m_justmove.vx;
-        double out_y = m_justmove.start_pose.y + m_justmove.dt * m_justmove.vy;
-        double out_z = m_justmove.start_pose.z + m_justmove.dt * m_justmove.vz;
-
-        auto limit_to_destination = [](double out, double v, double dest) -> double {
-            if ((v > 0 && out > dest) || (v < 0 && out < dest)) {
-                return dest;
+            arrive = hor_arrive && ver_arrive;
+            if (arrive){
+                m_move_nav.state = nav_move_to_target::IDLE;
             }
-            return out;
-        };
+            break;
+        }
+    }
+    return arrive;
+}
 
-        out_x = limit_to_destination(out_x, m_justmove.vx, m_justmove.target_pose.x);
-        out_y = limit_to_destination(out_y, m_justmove.vy, m_justmove.target_pose.y);
-        out_z = limit_to_destination(out_z, m_justmove.vz, m_justmove.target_pose.z);
-        
-        pub_pose->position[0] = out_x;
-        pub_pose->position[1] = out_y;
-        pub_pose->position[2] = out_z;
-        pub_pose->yaw = m_justmove.dw;
+bool Movement::justmove(
+    std::array<float, 3> target_pos,
+    std::array<float, 3> cur_pos,
+    std::array<float, 4> flo_q,
+    rclcpp::Time instant_time,
+    px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs,
+    bool auto_angle,
+    float v
+){
+    auto now_s = instant_time.seconds();
+    auto arrive = false;
 
-        RCLCPP_INFO(m_log, 
-            "position[0]: %f, position[1]: %f, position[2]: %f, "
-            "current[0]: %f, current[1]: %f, current[2]: %f",
-            pub_pose->position[0],
-            pub_pose->position[1],
-            pub_pose->position[2],
-            sub_pose.position[0],
-            sub_pose.position[1],
-            sub_pose.position[2]
-        );
-    }else {
-        m_justmove.state = 0;
+    switch(m_justmove.state){
+        case justmove::IDLE: {
+            m_justmove.start_pos = cur_pos;
+            m_justmove.target_pos = target_pos;
+
+            double distancex = m_justmove.target_pos[0] - m_justmove.start_pos[0];
+            double distancey = m_justmove.target_pos[1] - m_justmove.start_pos[1];
+            double distancez = m_justmove.target_pos[2] - m_justmove.start_pos[2];
+            double distance  = sqrt(pow(distancex,2) + pow(distancey,2) + pow(distancez,2));
+
+            m_justmove.total_time = distance / v;
+            m_justmove.vx = distancex / m_justmove.total_time;
+            m_justmove.vy = distancey / m_justmove.total_time;
+            m_justmove.vz = distancez / m_justmove.total_time;
+
+            if (auto_angle){
+                m_justmove.dw = atan2(m_justmove.vy, m_justmove.vx);
+            }else {
+                m_justmove.dw = tf2_tool::flo_to_yaw(flo_q);
+            }
+
+            m_justmove.start_time = now_s;
+            m_justmove.state = justmove::FLY;
+
+            RCLCPP_INFO(m_log, 
+                "justmove IDLE 计算完成"
+            );
+
+            break;
+        }
+        case justmove::FLY: {
+            m_justmove.dt = now_s - m_justmove.start_time;
+
+            double deltax = cur_pos[0]-m_justmove.target_pos[0];
+            double deltay = cur_pos[1]-m_justmove.target_pos[1];
+            double deltaz = cur_pos[2]-m_justmove.target_pos[2];
+
+            double delta = sqrt(pow(deltax,2)+pow(deltay,2)+pow(deltaz,2));
+            arrive = (instant_time.seconds() - m_justmove.start_time > m_justmove.total_time) && delta < m_yaml.delta;
+
+            if(!arrive){
+                double out_x = m_justmove.start_pos[0] + m_justmove.dt * m_justmove.vx;
+                double out_y = m_justmove.start_pos[1] + m_justmove.dt * m_justmove.vy;
+                double out_z = m_justmove.start_pos[2] + m_justmove.dt * m_justmove.vz;
+
+                auto limit_to_destination = [](double out, double v, double dest) -> double {
+                    if ((v > 0 && out > dest) || (v < 0 && out < dest)) {
+                        return dest;
+                    }
+                    return out;
+                };
+
+                out_x = limit_to_destination(out_x, m_justmove.vx, m_justmove.target_pos[0]);
+                out_y = limit_to_destination(out_y, m_justmove.vy, m_justmove.target_pos[1]);
+                out_z = limit_to_destination(out_z, m_justmove.vz, m_justmove.target_pos[2]);
+                
+                pub_pos_msgs.position[0] = out_x;
+                pub_pos_msgs.position[1] = out_y;
+                pub_pos_msgs.position[2] = out_z;
+                pub_pos_msgs.yaw = m_justmove.dw;
+
+                log_printf_tool::printf_log_pos(m_log, pub_pos_msgs.position, cur_pos);
+            }else {
+                m_justmove.state = justmove::IDLE;
+            }
+            break;
+        }
     }
 
     return arrive;
 }
 
-bool Movement::justmove_outdoor(movement::JustmoveInfo justmove_info, Waypts target){
-    auto& sub_pose = justmove_info.sub_pose;
-    auto& pub_pose = justmove_info.pub_pose;
-    auto& auto_angle = justmove_info.auto_angle;
-
+bool Movement::justmove_outdoor(
+    std::array<float, 3> target_pos,
+    std::array<float, 3> cur_pos,
+    std::array<float, 4> flo_q,
+    px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs,
+    bool auto_angle
+){  
     if (auto_angle){
         m_justmove.dw = atan2(m_justmove.vy, m_justmove.vx);
     }else {
-        tf2_tool::EulerAngles angle;
-        tf2_tool::get_euler_angles(sub_pose, angle);
-        m_justmove.dw = angle.yaw;
+        m_justmove.dw = tf2_tool::flo_to_yaw(flo_q);
     }
-    
-    pub_pose->position[0] = target.x;
-    pub_pose->position[1] = target.y;
-    pub_pose->position[2] = target.z;
-    pub_pose->yaw = m_justmove.dw;
 
-    double deltax = sub_pose.position[0]-target.x;
-    double deltay = sub_pose.position[1]-target.y;
-    double deltaz = sub_pose.position[2]-target.z;
+    pub_pos_msgs.position = target_pos;
+    pub_pos_msgs.yaw = m_justmove.dw;
+
+    double deltax = cur_pos[0]-target_pos[0];
+    double deltay = cur_pos[1]-target_pos[1];
+    double deltaz = cur_pos[2]-target_pos[2];
 
     float horizontal_dist = std::hypot(deltax, deltay);
     float vertical_dist = std::abs(deltaz);
@@ -188,147 +185,137 @@ bool Movement::justmove_outdoor(movement::JustmoveInfo justmove_info, Waypts tar
 
     bool arrive = hor_arrive && ver_arrive;
 
-    RCLCPP_INFO(m_log, 
-        "position[0]: %f, position[1]: %f, position[2]: %f, "
-        "current[0]: %f, current[1]: %f, current[2]: %f",
-        pub_pose->position[0],
-        pub_pose->position[1],
-        pub_pose->position[2],
-        sub_pose.position[0],
-        sub_pose.position[1],
-        sub_pose.position[2]
-    );
+    log_printf_tool::printf_log_pos(m_log, pub_pos_msgs.position, cur_pos);
 
     return arrive;
 }
 
 bool Movement::move_by_offset(
-    movement::JustmoveInfo justmove_info, 
-    Offset target,
-    double angle)
-{
-    auto& sub_pose = justmove_info.sub_pose;
-
-    tf2_tool::EulerAngles angles;
-    tf2_tool::get_euler_angles(sub_pose, angles);
-    float yaw = geo_tool::normalize_angle(angles.yaw + geo_tool::deg2rad(angle));
-    float dx = target.forward * std::cos(yaw) - target.right * std::sin(yaw);
-    float dy = target.forward * std::sin(yaw) + target.right * std::cos(yaw);
-    float dz = -target.up;
-
-    Waypts end;
-    end.x = (sub_pose.position[0] + dx);
-    end.y = (sub_pose.position[1] + dy);
-    end.z = (sub_pose.position[2] + dz);
-
-    justmove_info.auto_angle = true;
-
-    bool arrive = justmove(justmove_info, end);
-
-    return arrive;
-}
-
-bool Movement::change_height(movement::JustmoveInfo justmove_info, double high, bool outdoor){
-    auto& sub_pose = justmove_info.sub_pose;
-    auto c_x = sub_pose.position[0];
-    auto c_y = sub_pose.position[1];
-    auto c_z = sub_pose.position[2];
-    justmove_info.auto_angle = false;
-
+    std::array<float, 3> target_pos,
+    std::array<float, 3> cur_pos,
+    std::array<float, 4> flo_q,
+    rclcpp::Time instant_time,
+    px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs,
+    float angle,
+    float v,
+    bool outdoor
+){
     bool arrive = false;
-    if (m_change_height.state==0){
-        m_change_height.start_pos = {c_x, c_y, c_z + (-high)};
-        m_change_height.state = 1;
-    }  
 
-    if (outdoor){
-        arrive = justmove_outdoor(justmove_info, m_change_height.start_pos);
-    }else {
-        arrive = justmove(justmove_info, m_change_height.start_pos);
-    }
+    switch(m_move_by_offset_info.cur_step){
+        case move_by_offset::IDLE: {
+            auto cur_yaw = tf2_tool::flo_to_yaw(flo_q);
+            float yaw = geo_tool::normalize_angle(cur_yaw + geo_tool::deg2rad(angle));
+            float dx = target_pos[0] * std::cos(yaw) - target_pos[1] * std::sin(yaw);
+            float dy = target_pos[0] * std::sin(yaw) + target_pos[1] * std::cos(yaw);
+            float dz = -target_pos[2];
 
-    if (arrive){
-       m_change_height.state = 0;
-    } 
-
-    return arrive;
-}
-
-bool Movement::land_mode(movement::LandModeInfo land_mode_info, float v) {   
-    auto& pub_pose = land_mode_info.pub_pose;
-    auto& pub_px4_mode = land_mode_info.pub_px4_mode;
-    auto& sub_pose = land_mode_info.sub_pose;
-    auto& sub_px4_mode = land_mode_info.sub_px4_mode;
-    auto& mode_control = land_mode_info.mode_control;
-    auto& local_position = land_mode_info.local_position;
-    auto& instant_time = land_mode_info.instant_time;
-    
-    bool finish = false;
-
-    switch(m_land.state){
-        case 0:{
-            m_land.start_state = sub_px4_mode;
-            m_land.state = 1;
+            std::array<float, 3> cal_pos;
+            cal_pos[0] = cur_pos[0] + dx;
+            cal_pos[1] = cur_pos[1] + dy;
+            cal_pos[2] = cur_pos[2] + dz;
+            m_move_by_offset_info.cal_pos = cal_pos;
+            m_move_by_offset_info.cur_step = move_by_offset::FLY;
             break;
         }
-        case 1:{
-            mode_control.unlock(
-                ARM_ENABLE,
-                (POSITION | VELOCITY),
-                sub_px4_mode, *pub_px4_mode
-            );
-            if (mode_control.wait_busy()){
-                tf2_tool::EulerAngles angle;
-                tf2_tool::get_euler_angles(sub_pose, angle);
-                m_land.start_position.x = sub_pose.position[0];
-                m_land.start_position.y = sub_pose.position[1];
-                m_land.dw = angle.yaw;
-                m_land.state = 2;
-                RCLCPP_INFO(m_log, 
-                    "切换模式成功, 开始降落, 起始 dist_bottom: %f",
-                    local_position.get_first_msg().dist_bottom
+        case move_by_offset::FLY: {
+            if (outdoor){
+                justmove_outdoor(
+                    m_move_by_offset_info.cal_pos,
+                    cur_pos,
+                    flo_q,
+                    pub_pos_msgs,
+                    true
+                );
+            }else {
+                arrive = justmove(
+                    m_move_by_offset_info.cal_pos,
+                    cur_pos,
+                    flo_q,
+                    instant_time,
+                    pub_pos_msgs,
+                    true,
+                    v
                 );
             }
-            break;
-        }
-        case 2:{
-            // auto dist_bottom = local_position.get_msg().dist_bottom;
-            auto dist_bittom = -sub_pose.position[2];
-            // auto dist_bottom_valid = local_position.get_msg().dist_bottom_valid;
-            // auto start_dist_bottom = local_position.get_first_msg().dist_bottom;
 
-            pub_pose->position[0] = m_land.start_position.x;
-            pub_pose->position[1] = m_land.start_position.y;
-            pub_pose->position[2] = 0.0;
-            pub_pose->velocity[0] = NAN;
-            pub_pose->velocity[1] = NAN;
-            pub_pose->velocity[2] = v;
-            pub_pose->yaw = m_land.dw;
-            // if (dist_bittom < m_yaml.land_th){
-            //     m_land.start_time = instant_time.seconds();
-            //     m_land.state = 3;
-            //     RCLCPP_INFO(m_log, 
-            //         "降落完成!"
-            //     );
-            // }
-            RCLCPP_INFO(m_log, 
-                "当前位置 dist_bottom: %f",
-                dist_bittom
-            );
-            break;
-        }
-        case 3:{
-            if (instant_time.seconds() - m_land.start_time >= m_yaml.land_start_time){
-                pub_px4_mode->offboard = m_land.start_state.offboard;
-                m_land.state = 4;
+            if (arrive){
+                m_move_by_offset_info.cur_step = move_by_offset::IDLE;
             }
             break;
         }
-        case 4:{
-            finish = true;
-            m_land.state = 0;
+    }
+
+    return arrive;
+}
+
+
+bool Movement::change_height(
+    std::array<float, 3> cur_pos,
+    std::array<float, 4> flo_q,
+    rclcpp::Time instant_time,
+    px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs,
+    float high, 
+    float v,
+    bool outdoor
+){  
+    bool arrive = false;
+
+    switch(m_change_height.state){
+        case change_height::IDLE:{
+            m_change_height.start_pos = {cur_pos[0], cur_pos[1], cur_pos[2] + (-high)};
+            m_change_height.state = change_height::FLY;
+            break;
+        }
+        case change_height::FLY:{
+            if (outdoor){
+                arrive = justmove_outdoor(
+                    m_change_height.start_pos,
+                    cur_pos,
+                    flo_q,
+                    pub_pos_msgs,
+                    true
+                );
+            }else {
+                arrive = justmove(
+                    m_change_height.start_pos,
+                    cur_pos,
+                    flo_q,
+                    instant_time,
+                    pub_pos_msgs,
+                    true,
+                    v
+                );
+            }
+            if (arrive){
+                m_change_height.state = change_height::IDLE;
+            }
             break;
         }
     }
-    return finish;
+
+    return arrive;
 }
+
+void Movement::land_mode(
+    std::array<float, 4> flo_q,
+    px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
+) {     
+    auto cur_yaw = tf2_tool::flo_to_yaw(flo_q);
+
+    pub_pos_msgs.position[0] = NAN;
+    pub_pos_msgs.position[1] = NAN;
+    pub_pos_msgs.position[2] = NAN;
+    pub_pos_msgs.velocity[0] = 0.0f;
+    pub_pos_msgs.velocity[1] = 0.0f;
+    pub_pos_msgs.velocity[2] = 0.5f;
+    pub_pos_msgs.yaw = cur_yaw;
+}
+
+double Movement::flo_to_yaw(std::array<float, 4> flo_q){
+    auto eigen_q = px4_ros_com::frame_transforms::utils::quaternion::array_to_eigen_quat(flo_q);
+    auto cur_yaw = px4_ros_com::frame_transforms::utils::quaternion::quaternion_get_yaw(eigen_q);
+
+    return cur_yaw;
+}
+};

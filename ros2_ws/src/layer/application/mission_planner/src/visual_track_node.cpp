@@ -18,7 +18,7 @@ VisualTrack::VisualTrack()
     //读取yaml配置文件
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["visual_track"];
-    m_yaml.visual_track = config["lift_height"].as<float>();
+    m_yaml.lift_height = config["lift_height"].as<float>();
     m_yaml.outdoor_flag = config["outdoor_flag"].as<bool>();
     m_yaml.switch_mode = config["switch_mode"].as<bool>();
     m_yaml.track_mode = config["track_mode"].as<int>();
@@ -101,7 +101,7 @@ void VisualTrack::init_sub(){
 void VisualTrack::task_loop(){
     auto rc_mode = m_interface.rc_signal.get_rc(m_sub.manual_control_setpoint.get_msg());
 
-    if (rc_mode == rc_signal::LAND && m_fly != END){
+    if (rc_mode == rc_signal::LAND){
         m_fly = LAND;
     }
 
@@ -121,26 +121,28 @@ void VisualTrack::task_loop(){
         case RISE:{
             auto msg_arrive = m_sub.vehicle_odometry.has_change();
             if (msg_arrive){
-                movement::JustmoveInfo justmove_info;
-                justmove_info.sub_pose = m_sub.vehicle_odometry.get_msg();
-                justmove_info.pub_pose = &m_pub_msgs.trajectory_setpoint;
-                justmove_info.instant_time = get_clock()->now();
-                justmove_info.v = 0.1;
+                std::array<float, 3> cur_pos = m_sub.vehicle_odometry.get_msg().position;
+                std::array<float, 4> flo_q = m_sub.vehicle_odometry.get_msg().q;
+
                 bool arrive = m_interface.movement.change_height(
-                        justmove_info, 
-                        m_yaml.visual_track, 
+                        cur_pos, 
+                        flo_q, 
+                        get_clock()->now(),
+                        m_pub_msgs.trajectory_setpoint,
+                        m_yaml.lift_height,
+                        0.5,
                         m_yaml.outdoor_flag
                     );
                 if (arrive){
-                    if (justmove_info.sub_pose.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_NED){
-                        RCLCPP_INFO(get_logger(),
-                            "当前为 NED 坐标系"
-                        );
-                    }else if (justmove_info.sub_pose.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD){
-                        RCLCPP_INFO(get_logger(),
-                            "当前为 FRD 坐标系"
-                        );
-                    }
+                    // if (justmove_info.sub_pose.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_NED){
+                    //     RCLCPP_INFO(get_logger(),
+                    //         "当前为 NED 坐标系"
+                    //     );
+                    // }else if (justmove_info.sub_pose.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD){
+                    //     RCLCPP_INFO(get_logger(),
+                    //         "当前为 FRD 坐标系"
+                    //     );
+                    // }
                     auto switch_mode = m_yaml.switch_mode;
                     if (switch_mode){
                         m_fly = SWITCH_MODE;
@@ -199,27 +201,9 @@ void VisualTrack::task_loop(){
             break;
         }
         case LAND:{
-            movement::LandModeInfo land_mode_info;
-            land_mode_info.mode_control = m_interface.mode_control;
-            land_mode_info.pub_px4_mode = &m_pub_msgs.offboard_mode;
-            land_mode_info.pub_pose = &m_pub_msgs.trajectory_setpoint;
-            land_mode_info.sub_px4_mode = m_sub.offboard_mode.get_msg();
-            land_mode_info.sub_pose = m_sub.vehicle_odometry.get_msg();
-            land_mode_info.local_position = m_sub.local_position;
-            land_mode_info.instant_time = get_clock()->now();
+            std::array<float, 4> flo_q = m_sub.vehicle_odometry.get_msg().q;
 
-            bool finish = m_interface.movement.land_mode(land_mode_info, 0.3);
-            if (finish){
-                m_fly = END;
-                RCLCPP_INFO(get_logger(), "降落完成!");
-            }
-            break;
-        }
-        case END:{
-            m_interface.mode_control.locked(
-                m_sub.offboard_mode.get_msg(), 
-                m_pub_msgs.offboard_mode
-            );
+            m_interface.movement.land_mode(flo_q, m_pub_msgs.trajectory_setpoint);
             break;
         }
     }

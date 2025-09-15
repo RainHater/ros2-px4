@@ -22,84 +22,27 @@
 #include "utilities/topic_name.hpp"
 #include "utilities/tf2_tool.hpp"
 #include "utilities/geo_tool.hpp"
+#include "utilities/log_printf_tool.hpp"
 
 #include "control_interface/mode_control.h"
 
-struct Waypts{
-    double x;
-    double y;
-    double z;
-};
-
-struct Offset{
-    double up;
-    double forward;
-    double right;
-};
-
 namespace movement{
-struct JustmoveInfo{
-    px4_msgs::msg::VehicleOdometry sub_pose;
-    px4_msgs::msg::TrajectorySetpoint* pub_pose;
-    rclcpp::Time instant_time;
-    double v = 0.5;
-    bool auto_angle = false;
-};
-
-struct LandModeInfo{
-    px4_msgs::msg::TrajectorySetpoint* pub_pose;
-    common_msgs::msg::ArmOffboardStatus* pub_px4_mode;
-    px4_msgs::msg::VehicleOdometry sub_pose;
-    common_msgs::msg::ArmOffboardStatus sub_px4_mode;
-    TopicListener<px4_msgs::msg::VehicleLocalPosition> local_position;
-    ModeControl mode_control;
-    rclcpp::Time instant_time;
-};
-
-struct MoveToGPSTarget{
-    geo_tool::GeoCoordinate init;
-    geo_tool::GeoCoordinate origin;
-    geo_tool::GeoCoordinate target;
-    px4_msgs::msg::VehicleOdometry sub_tra;
-    px4_msgs::msg::TrajectorySetpoint* pub_pose;
-};
-};
-
-class Movement{
-public:
-    Movement();
-
-    //飞往目标经纬度
-    bool move_to_gps_target(movement::MoveToGPSTarget msgs_info);
-    //根据局部整体坐标移动
-    bool justmove(movement::JustmoveInfo justmove_info, Waypts target);
-    //室外
-    bool justmove_outdoor(movement::JustmoveInfo justmove_info, Waypts target);
-    //根据当前坐标进行移动
-    bool move_by_offset(
-        movement::JustmoveInfo justmove_info, 
-        Offset target,
-        double angle = 0.0f
-    );
-
-    //起飞高度
-    bool change_height(movement::JustmoveInfo justmove_info, double high, bool outdoor);
-
-    bool land_mode(movement::LandModeInfo land_mode_info, float v = 0.5f);
-
-protected: 
-private:
-    struct LandInfo{
-        common_msgs::msg::ArmOffboardStatus start_state;
-        Waypts start_position;
-        double dw;
-        double start_time;
-        int state;
+namespace nav_move_to_target{
+    enum NavMoveToTargetStep{
+        IDLE,
+        FLY,
     };
 
-    struct GPSInfo{
-        std::array<float, 3> target;
-        uint8_t state;
+    struct NavMoveToTargetInfo{
+        std::array<float, 3> target_nav;
+        NavMoveToTargetStep state;
+    };
+}
+
+namespace justmove{
+    enum MovementStep{
+        IDLE,
+        FLY,
     };
 
     struct JustmoveInfo{
@@ -112,17 +55,93 @@ private:
         double start_time;
         double total_time;
 
-        Waypts start_pose;
-        Waypts target_pose;
+        std::array<float, 3> start_pos;
+        std::array<float, 3> target_pos;
 
-        uint8_t state;
+        MovementStep state;
+    };
+};
+
+namespace move_by_offset{
+    enum MoveByOffsetStep{
+        IDLE,
+        FLY,
+    };
+
+    struct MoveByOffsetInfo{
+        std::array<float, 3> cal_pos;
+        MoveByOffsetStep cur_step;
+    };
+}
+
+namespace change_height{
+    enum ChangeHeightStep{
+        IDLE,
+        FLY,
     };
 
     struct ChangeHeightInfo{
-        Waypts start_pos;
-        uint8_t state = 0;
+        std::array<float, 3> start_pos;
+        ChangeHeightStep state;
     };
+};
 
+class Movement{
+public:
+    Movement();
+
+    //飞往目标经纬度
+    bool nav_move_to_target(
+        geo_tool::GeoCoordinate target_nav,
+        geo_tool::GeoCoordinate start_nav,
+        std::array<float, 3> cur_pos,
+        px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
+    );
+    //根据局部整体坐标移动
+    bool justmove(
+        std::array<float, 3> target_pos,
+        std::array<float, 3> cur_pos,
+        std::array<float, 4> flo_q,
+        rclcpp::Time instant_time,
+        px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs,
+        bool auto_angle = false,
+        float v = 0.1f
+    );
+    //室外
+    bool justmove_outdoor(
+        std::array<float, 3> target_pos,
+        std::array<float, 3> cur_pos,
+        std::array<float, 4> flo_q,
+        px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs,
+        bool auto_angle = false
+    );
+    //根据当前坐标进行移动
+    bool move_by_offset(
+        std::array<float, 3> target_pos,
+        std::array<float, 3> cur_pos,
+        std::array<float, 4> flo_q,
+        rclcpp::Time instant_time,
+        px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs,
+        float angle = 0.0f,
+        float v = 0.1,
+        bool outdoor = false
+    );
+    //起飞高度
+    bool change_height(
+        std::array<float, 3> cur_pos,
+        std::array<float, 4> flo_q,
+        rclcpp::Time instant_time,
+        px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs,
+        float high, 
+        float v = 0.1f,
+        bool outdoor = false
+    );
+    //降落
+    void land_mode(
+        std::array<float, 4> flo_q,
+        px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
+    );
+private:
     struct YamlInfo{
         float hor_th = 0.9f;
         float ver_th = 0.4f;
@@ -134,11 +153,12 @@ private:
     };
 private:
     rclcpp::Logger m_log;
-    LandInfo m_land;
-    GPSInfo m_gps_nav;
-    JustmoveInfo m_justmove;
-    ChangeHeightInfo m_change_height;
     YamlInfo m_yaml;
+    justmove::JustmoveInfo m_justmove;
+    change_height::ChangeHeightInfo m_change_height;
+    nav_move_to_target::NavMoveToTargetInfo m_move_nav;
+    move_by_offset::MoveByOffsetInfo m_move_by_offset_info;
+};
 };
 
 #endif

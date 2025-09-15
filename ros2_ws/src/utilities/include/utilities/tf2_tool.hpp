@@ -3,6 +3,7 @@
 #include <px4_msgs/msg/vehicle_odometry.hpp>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
+#include <px4_ros_com/frame_transforms.h>
 
 namespace tf2_tool {
 struct EulerAngles {
@@ -10,6 +11,13 @@ struct EulerAngles {
     double pitch;
     double yaw;
 };
+
+inline double flo_to_yaw(std::array<float, 4> flo_q){
+    auto eigen_q = px4_ros_com::frame_transforms::utils::quaternion::array_to_eigen_quat(flo_q);
+    auto cur_yaw = px4_ros_com::frame_transforms::utils::quaternion::quaternion_get_yaw(eigen_q);
+
+    return cur_yaw;
+}
 
 //获取角度
 inline void get_euler_angles(

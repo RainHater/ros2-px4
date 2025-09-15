@@ -36,7 +36,6 @@ private:
         WAIT,
         Hover,
         LAND,
-        END,
     };
 
     struct PubInfo{
@@ -61,13 +60,13 @@ private:
 
     struct InterfaceInfo{
         ModeControl mode_control;
-        Movement movement; 
         Track track;
         RcSignal rc_signal;
+        movement::Movement movement; 
     };
 
     struct YamlInfo{
-        float visual_track = 1.5f;
+        float lift_height = 1.5f;
         bool outdoor_flag = false;
         bool switch_mode = false;
         int track_mode = 0;

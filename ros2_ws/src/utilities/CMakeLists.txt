@@ -14,6 +14,7 @@ find_package(rclcpp REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(common_msgs REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(px4_ros_com REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -39,6 +40,7 @@ target_link_libraries(${PROJECT_NAME} INTERFACE
   rclcpp::rclcpp
   tf2::tf2
   yaml-cpp
+  px4_ros_com
 )
 
 # 安装头文件
@@ -65,6 +67,7 @@ ament_export_dependencies(
   tf2
   common_msgs
   yaml-cpp
+  px4_ros_com
 )
 
 ament_package()
