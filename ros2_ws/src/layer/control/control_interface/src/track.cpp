@@ -32,12 +32,12 @@ Track::Track()
 }
 
 void Track::normal_track(
-    identify::msg::YoloDetections detections,
+    bool is_target_valid,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
+    std::vector<identify::msg::YoloDetection> det_targets,
     px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
 ) {
-    auto detect_flag = detections.detect_flag;
     auto cur_yaw = tf2_tool::flo_to_yaw(flo_q);
     auto dt  = 100.0f;
 
@@ -46,8 +46,8 @@ void Track::normal_track(
     float area = 0.0f;
     float yaw = cur_yaw;
 
-    if (detect_flag){
-        auto detection = detections.detections[0];
+    if (is_target_valid){
+        auto detection = det_targets[0];
         cx = detection.cx;
         cy = detection.cy;
         area = abs((detection.x_max - detection.x_min) * (detection.y_max - detection.y_min));  
@@ -74,7 +74,7 @@ void Track::normal_track(
     pub_pos_msgs.velocity[1] = sinf(yaw) * fb_output;
     pub_pos_msgs.velocity[2] = ud_output;
 
-    if (detect_flag){
+    if (is_target_valid){
         RCLCPP_INFO(m_log, "-----------跟踪----------");
         RCLCPP_INFO(m_log, "dt: %f", dt);
         RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, pub_pos_msgs.yawspeed);
@@ -91,12 +91,13 @@ void Track::normal_track(
 }
 
 void Track::normal_track_v1(
-    identify::msg::YoloDetections detections,
+    bool is_target_valid,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
+    std::vector<identify::msg::YoloDetection> det_targets,
     px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
 ) {
-    auto detect_flag = detections.detect_flag;
+    auto detect_flag = is_target_valid;
     auto cur_yaw = tf2_tool::flo_to_yaw(flo_q);
     auto dt  = 100.0f;
 
@@ -106,7 +107,7 @@ void Track::normal_track_v1(
     float yaw = cur_yaw;
 
     if (detect_flag){
-        auto detection = detections.detections[0];
+        auto detection = det_targets[0];
         cx = detection.cx;
         cy = detection.cy;
         area = abs((detection.x_max - detection.x_min) * (detection.y_max - detection.y_min));  
@@ -161,12 +162,13 @@ void Track::normal_track_v1(
 }
 
 void Track::normal_track_v2(
-    identify::msg::YoloDetections detections,
+    bool is_target_valid,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
+    std::vector<identify::msg::YoloDetection> det_targets,
     px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
 ) {
-    auto detect_flag = detections.detect_flag;
+    auto detect_flag = is_target_valid;
     auto cur_yaw = tf2_tool::flo_to_yaw(flo_q);
     auto dt  = 100.0f;    
 
@@ -175,7 +177,7 @@ void Track::normal_track_v2(
     float area = 0.0f;
     float yaw = cur_yaw;
 
-    auto detection = detections.detections[0];
+    auto detection = det_targets[0];
     if (detect_flag){
         m_normal_track.last_detection = detection;
     }else {
@@ -230,12 +232,13 @@ void Track::normal_track_v2(
 }
 
 void Track::normal_track_v3(
-    identify::msg::YoloDetections detections,
+    bool is_target_valid,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
+    std::vector<identify::msg::YoloDetection> det_targets,
     px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
 ) {
-    auto detect_flag = detections.detect_flag;
+    auto detect_flag = is_target_valid;
     auto cur_yaw = tf2_tool::flo_to_yaw(flo_q);
     auto dt  = 100.0f;
 
@@ -244,7 +247,7 @@ void Track::normal_track_v3(
     float area = 0.0f;
     float yaw = cur_yaw;
 
-    auto detection = detections.detections[0];
+    auto detection = det_targets[0];
     if (detect_flag){
         m_normal_track.last_detection = detection;
     }else {

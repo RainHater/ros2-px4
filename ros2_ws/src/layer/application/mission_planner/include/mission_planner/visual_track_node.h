@@ -1,6 +1,8 @@
 #ifndef _SIMPLE_INDOOR_CONTROL_TASK_H
 #define _SIMPLE_INDOOR_CONTROL_TASK_H
 
+#include <array>
+#include <identify/msg/detail/yolo_detections__struct.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
@@ -24,10 +26,14 @@ public:
     VisualTrack();
     void initialize();
 protected:
-    void init_pub();
-    void init_sub();
+    void initPub();
+    void initSub();
 protected:
-    void task_loop();
+    void taskLoop();
+
+    //消息回调函数
+    void vehicleOdometryCallback(const std::shared_ptr<px4_msgs::msg::VehicleOdometry> msg);
+    void yoloDetectionsCallback(const std::shared_ptr<identify::msg::YoloDetections> msg);
 private:
     enum FlyStep{
         IDLE,
@@ -45,12 +51,11 @@ private:
 
     struct SubInfo{
         TopicListener<common_msgs::msg::ArmOffboardStatus> offboard_mode;
-        TopicListener<px4_msgs::msg::VehicleOdometry> vehicle_odometry;
         TopicListener<px4_msgs::msg::VehicleLocalPosition> local_position;
-        TopicListener<px4_msgs::msg::VehicleAttitude> vehicle_attitude;
         TopicListener<px4_msgs::msg::ManualControlSetpoint> manual_control_setpoint;
-        TopicListener<px4_msgs::msg::SensorCombined> sensor_combined;
-        TopicListener<identify::msg::YoloDetections> yolo_detections;
+
+        rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr vehicle_odometry;
+        rclcpp::Subscription<identify::msg::YoloDetections>::SharedPtr yolo_detections;
     };
 
     struct PubMsgInfo{
@@ -63,6 +68,18 @@ private:
         RcSignal rc_signal;
         track::Track track;
         movement::Movement movement; 
+    };
+
+    struct DroneDataInfo{
+        std::array<float, 3> cur_pos;
+        std::array<float, 4> flo_q;
+        //多个检测目标
+        std::vector<identify::msg::YoloDetection> det_targets;
+        uint8_t cur_coor;
+        //检测是否有效
+        bool is_target_valid;
+        //检测是否变化
+        bool is_detection_changed;
     };
 
     struct YamlInfo{
@@ -79,6 +96,7 @@ private:
     PubMsgInfo m_pub_msgs;
     InterfaceInfo m_interface;
     YamlInfo m_yaml;
+    DroneDataInfo m_drone_data;
 };
 
 #endif

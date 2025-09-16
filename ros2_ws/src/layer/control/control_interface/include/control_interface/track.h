@@ -6,7 +6,6 @@
 
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_odometry.hpp>
-#include <px4_msgs/msg/vehicle_attitude.hpp>
 #include <px4_msgs/msg/vehicle_angular_velocity.hpp>
 #include <px4_msgs/msg/sensor_combined.hpp>
 
@@ -29,28 +28,32 @@ public:
 
     //普通跟踪
     void normal_track(
-        identify::msg::YoloDetections detections,
+        bool is_target_valid,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
+        std::vector<identify::msg::YoloDetection> det_targets,
         px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
     );
     //普通跟踪v1(位置)
     void normal_track_v1(
-        identify::msg::YoloDetections detections,
+        bool is_target_valid,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
+        std::vector<identify::msg::YoloDetection> det_targets,
         px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
     );
     void normal_track_v2(
-        identify::msg::YoloDetections detections,
+        bool is_target_valid,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
+        std::vector<identify::msg::YoloDetection> det_targets,
         px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
     );
     void normal_track_v3(
-        identify::msg::YoloDetections detections,
+        bool is_target_valid,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
+        std::vector<identify::msg::YoloDetection> det_targets,
         px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
     );
     //更新定点值

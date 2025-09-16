@@ -10,6 +10,8 @@ constexpr auto POSITION = common_msgs::msg::ArmOffboardStatus::POSITION;
 constexpr auto VELOCITY = common_msgs::msg::ArmOffboardStatus::VELOCITY;
 constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD_DISABLED;
 
+using std::placeholders::_1;
+
 VisualTrack::VisualTrack()
     : rclcpp::Node("visual_track")
 {       
@@ -27,16 +29,16 @@ VisualTrack::VisualTrack()
 
 void VisualTrack::initialize(){
 
-    init_pub();
-    init_sub();
+    initPub();
+    initSub();
     
     m_timer = create_wall_timer(
         std::chrono::milliseconds(100),
-        std::bind(&VisualTrack::task_loop, this)
+        std::bind(&VisualTrack::taskLoop, this)
     );
 }
 
-void VisualTrack::init_pub(){
+void VisualTrack::initPub(){
     auto& topics = utilities::TopicInfo::getInstance();
     rclcpp::QoS qos(rclcpp::KeepLast(1));
     qos.best_effort();
@@ -52,7 +54,7 @@ void VisualTrack::init_pub(){
     );
 }
 
-void VisualTrack::init_sub(){
+void VisualTrack::initSub(){
     auto& topics = utilities::TopicInfo::getInstance();
     rclcpp::QoS qos_best_effort(rclcpp::KeepLast(10));
     rclcpp::QoS qos_reliable(rclcpp::KeepLast(1));
@@ -66,38 +68,30 @@ void VisualTrack::init_sub(){
         topics.topic_out().PX4_MODE, 10
     );
 
-    m_sub.vehicle_odometry.subscribe(
-        shared_from_this(), 
-        topics.topic_px4_out().VEHICLE_ODOMETRY, qos_best_effort
-    );
-
     m_sub.local_position.subscribe(
         shared_from_this(),
         topics.topic_px4_out().VEHICLE_LOCAL_POSITION, qos_best_effort
-    );
-
-    m_sub.vehicle_attitude.subscribe(
-        shared_from_this(), 
-        topics.topic_px4_out().VEHICLE_ATTITUDE, qos_reliable
-    );
-
-    m_sub.sensor_combined.subscribe(
-        shared_from_this(), 
-        topics.topic_px4_out().SENSOR_COMBINED, qos_reliable
     );
 
     m_sub.manual_control_setpoint.subscribe(
         shared_from_this(), 
         topics.topic_px4_out().MANUAL_CONTROL_SETPOINT, qos_reliable
     );
-
-    m_sub.yolo_detections.subscribe(
-        shared_from_this(), 
-        topics.topic_out().YOLO_DETECTIONS, 10
+    
+    m_sub.vehicle_odometry = create_subscription<px4_msgs::msg::VehicleOdometry>(
+        topics.topic_px4_out().VEHICLE_ODOMETRY,
+        qos_best_effort,
+        std::bind(&VisualTrack::vehicleOdometryCallback, this, _1)
     );
+
+    m_sub.yolo_detections = create_subscription<identify::msg::YoloDetections>(
+        topics.topic_out().YOLO_DETECTIONS,
+        10,
+        std::bind(&VisualTrack::yoloDetectionsCallback, this, _1)
+    );    
 }
 
-void VisualTrack::task_loop(){
+void VisualTrack::taskLoop(){
     auto rc_mode = m_interface.rc_signal.get_rc(m_sub.manual_control_setpoint.get_msg());
 
     if (rc_mode == rc_signal::LAND){
@@ -118,39 +112,36 @@ void VisualTrack::task_loop(){
             break;
         }
         case RISE:{
-            auto msg_arrive = m_sub.vehicle_odometry.has_change();
-            if (msg_arrive){
-                auto vehicle_odometry = m_sub.vehicle_odometry.get_msg();
-                std::array<float, 3> cur_pos = vehicle_odometry.position;
-                std::array<float, 4> flo_q = vehicle_odometry.q;
+            auto cur_pos = m_drone_data.cur_pos;
+            auto flo_q = m_drone_data.flo_q;
 
-                bool arrive = m_interface.movement.change_height(
-                        cur_pos, 
-                        flo_q, 
-                        get_clock()->now(),
-                        m_pub_msgs.trajectory_setpoint,
-                        m_yaml.lift_height,
-                        0.5,
-                        m_yaml.outdoor_flag
+            bool arrive = m_interface.movement.change_height(
+                    cur_pos, 
+                    flo_q, 
+                    get_clock()->now(),
+                    m_pub_msgs.trajectory_setpoint,
+                    m_yaml.lift_height,
+                    0.5,
+                    m_yaml.outdoor_flag
+                );
+            if (arrive){
+                auto cur_coor = m_drone_data.cur_coor;
+                if (cur_coor == px4_msgs::msg::VehicleOdometry::POSE_FRAME_NED){
+                    RCLCPP_INFO(get_logger(),
+                        "当前为 NED 坐标系"
                     );
-                if (arrive){
-                    if (vehicle_odometry.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_NED){
-                        RCLCPP_INFO(get_logger(),
-                            "当前为 NED 坐标系"
-                        );
-                    }else if (vehicle_odometry.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD){
-                        RCLCPP_INFO(get_logger(),
-                            "当前为 FRD 坐标系"
-                        );
-                    }
-                    auto switch_mode = m_yaml.switch_mode;
-                    if (switch_mode){
-                        m_fly = SWITCH_MODE;
-                    }else {
-                        m_fly = WAIT;
-                    }
-                    RCLCPP_INFO(get_logger(), "上升完成!");
+                }else if (cur_coor == px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD){
+                    RCLCPP_INFO(get_logger(),
+                        "当前为 FRD 坐标系"
+                    );
                 }
+                auto switch_mode = m_yaml.switch_mode;
+                if (switch_mode){
+                    m_fly = SWITCH_MODE;
+                }else {
+                    m_fly = WAIT;
+                }
+                RCLCPP_INFO(get_logger(), "上升完成!");
             }
             break;
         }
@@ -167,49 +158,52 @@ void VisualTrack::task_loop(){
             break;
         }
         case WAIT: {
-            auto has_received = m_sub.yolo_detections.has_received();
-            if (has_received){
+            if (m_drone_data.is_detection_changed){
                 m_fly = Hover;
                 RCLCPP_INFO(get_logger(), "数据有效!");
             }
             break;
         }
         case Hover:{
-            auto has_received = m_sub.yolo_detections.has_change();
             auto track_mode = m_yaml.track_mode;
-            auto detections = m_sub.yolo_detections.get_msg();
-            auto cur_pos = m_sub.vehicle_odometry.get_msg().position;
-            auto flo_q = m_sub.vehicle_odometry.get_msg().q;
-
+            auto det_targets = m_drone_data.det_targets;
+            auto cur_pos = m_drone_data.cur_pos;
+            auto flo_q = m_drone_data.flo_q;
+            auto is_target_valid = m_drone_data.is_target_valid;
 
             m_interface.track.update_last_postition(cur_pos);
-            if (has_received){
+            if (m_drone_data.is_detection_changed){
+                m_drone_data.is_detection_changed = false;
                 if (track_mode == 0){
                     m_interface.track.normal_track(
-                        detections,
+                        is_target_valid,
                         cur_pos,
                         flo_q,
+                        det_targets,
                         m_pub_msgs.trajectory_setpoint
                     );
                 }else if (track_mode == 1){
                     m_interface.track.normal_track_v1(
-                        detections,
+                        is_target_valid,
                         cur_pos,
                         flo_q,
+                        det_targets,
                         m_pub_msgs.trajectory_setpoint
                     );
                 }else if (track_mode == 2){
                     m_interface.track.normal_track_v2(
-                        detections,
+                        is_target_valid,
                         cur_pos,
                         flo_q,
+                        det_targets,
                         m_pub_msgs.trajectory_setpoint
                     );
                 }else if (track_mode == 3){
                     m_interface.track.normal_track_v3(
-                        detections,
+                        is_target_valid,
                         cur_pos,
                         flo_q,
+                        det_targets,
                         m_pub_msgs.trajectory_setpoint
                     );
                 }
@@ -217,7 +211,7 @@ void VisualTrack::task_loop(){
             break;
         }
         case LAND:{
-            std::array<float, 4> flo_q = m_sub.vehicle_odometry.get_msg().q;
+            auto flo_q = m_drone_data.flo_q;
 
             m_interface.movement.land_mode(flo_q, m_pub_msgs.trajectory_setpoint);
             break;
@@ -234,6 +228,22 @@ void VisualTrack::task_loop(){
 
         m_pub.trajectory_setpoint->publish(m_pub_msgs.trajectory_setpoint);
     }
+}
+
+void VisualTrack::vehicleOdometryCallback(
+    const std::shared_ptr<px4_msgs::msg::VehicleOdometry> msg
+){
+    m_drone_data.cur_pos = msg->position;
+    m_drone_data.flo_q = msg->q;
+    m_drone_data.cur_coor = msg->pose_frame;
+}
+
+void VisualTrack::yoloDetectionsCallback(
+    const std::shared_ptr<identify::msg::YoloDetections> msg
+){
+    m_drone_data.det_targets = msg->detections;
+    m_drone_data.is_target_valid = msg->detect_flag;
+    m_drone_data.is_detection_changed = true;
 }
 
 int main(int argc, char *argv[]) {
