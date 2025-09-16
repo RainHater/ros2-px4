@@ -4,7 +4,7 @@
 
 - **操作系统**：Ubuntu 22.04 LTS
 - **ROS2版本**：[Ros Humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
-- **PX4版本**：v1.15
+- **PX4版本**：v1.16
 - **飞控型号**：[H743V2_AIO（微空科技）](https://micoair.cn/docs/MicoAir743v2AIO45A-yi-ti-fei-kong-yong-hu-shou-ce)
 - **飞控机架**：[MDV30（微空科技）](https://micoair.cn/docs/wei-kong-MVD30-3-cun-quan-quan-ji-jia)
 - **通信中间件**：[Micro XRCE-DDS Agent](https://docs.px4.io/main/zh/middleware/uxrce_dds.html)
@@ -147,5 +147,5 @@ sudo systemctl restart serial-getty@ttyS1.service
 sudo apt install --reinstall libstdc++-12-dev
 ```
 
-> _日期：2025-08-08_  
+> _日期：2025-09-16_  
 > _作者：xuguocai_  
