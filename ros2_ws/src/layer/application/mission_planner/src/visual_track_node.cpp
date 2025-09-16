@@ -15,7 +15,6 @@ VisualTrack::VisualTrack()
 {       
     m_fly = IDLE;
 
-    //读取yaml配置文件
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["visual_track"];
     m_yaml.lift_height = config["lift_height"].as<float>();
@@ -121,8 +120,9 @@ void VisualTrack::task_loop(){
         case RISE:{
             auto msg_arrive = m_sub.vehicle_odometry.has_change();
             if (msg_arrive){
-                std::array<float, 3> cur_pos = m_sub.vehicle_odometry.get_msg().position;
-                std::array<float, 4> flo_q = m_sub.vehicle_odometry.get_msg().q;
+                auto vehicle_odometry = m_sub.vehicle_odometry.get_msg();
+                std::array<float, 3> cur_pos = vehicle_odometry.position;
+                std::array<float, 4> flo_q = vehicle_odometry.q;
 
                 bool arrive = m_interface.movement.change_height(
                         cur_pos, 
@@ -134,15 +134,15 @@ void VisualTrack::task_loop(){
                         m_yaml.outdoor_flag
                     );
                 if (arrive){
-                    // if (justmove_info.sub_pose.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_NED){
-                    //     RCLCPP_INFO(get_logger(),
-                    //         "当前为 NED 坐标系"
-                    //     );
-                    // }else if (justmove_info.sub_pose.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD){
-                    //     RCLCPP_INFO(get_logger(),
-                    //         "当前为 FRD 坐标系"
-                    //     );
-                    // }
+                    if (vehicle_odometry.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_NED){
+                        RCLCPP_INFO(get_logger(),
+                            "当前为 NED 坐标系"
+                        );
+                    }else if (vehicle_odometry.pose_frame == px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD){
+                        RCLCPP_INFO(get_logger(),
+                            "当前为 FRD 坐标系"
+                        );
+                    }
                     auto switch_mode = m_yaml.switch_mode;
                     if (switch_mode){
                         m_fly = SWITCH_MODE;
@@ -176,26 +176,42 @@ void VisualTrack::task_loop(){
         }
         case Hover:{
             auto has_received = m_sub.yolo_detections.has_change();
-            auto sub_postition = m_sub.vehicle_odometry.get_msg().position;
             auto track_mode = m_yaml.track_mode;
-            
-            track::NormalTrack normal_track;
-            normal_track.detections = m_sub.yolo_detections.get_msg();
-            normal_track.sub_pose = m_sub.vehicle_odometry.get_msg();
-            normal_track.sub_attitude = m_sub.vehicle_attitude.get_msg();
-            normal_track.sensor_combined = m_sub.sensor_combined.get_msg();
-            normal_track.pub_tra = &m_pub_msgs.trajectory_setpoint;
+            auto detections = m_sub.yolo_detections.get_msg();
+            auto cur_pos = m_sub.vehicle_odometry.get_msg().position;
+            auto flo_q = m_sub.vehicle_odometry.get_msg().q;
 
-            m_interface.track.update_last_postition(sub_postition);
+
+            m_interface.track.update_last_postition(cur_pos);
             if (has_received){
                 if (track_mode == 0){
-                    m_interface.track.normal_track(normal_track);
+                    m_interface.track.normal_track(
+                        detections,
+                        cur_pos,
+                        flo_q,
+                        m_pub_msgs.trajectory_setpoint
+                    );
                 }else if (track_mode == 1){
-                    m_interface.track.normal_track_v1(normal_track);
+                    m_interface.track.normal_track_v1(
+                        detections,
+                        cur_pos,
+                        flo_q,
+                        m_pub_msgs.trajectory_setpoint
+                    );
                 }else if (track_mode == 2){
-                    m_interface.track.normal_track_v2(normal_track);
+                    m_interface.track.normal_track_v2(
+                        detections,
+                        cur_pos,
+                        flo_q,
+                        m_pub_msgs.trajectory_setpoint
+                    );
                 }else if (track_mode == 3){
-                    m_interface.track.normal_track_v3(normal_track);
+                    m_interface.track.normal_track_v3(
+                        detections,
+                        cur_pos,
+                        flo_q,
+                        m_pub_msgs.trajectory_setpoint
+                    );
                 }
             }
             break;

@@ -6,9 +6,10 @@
 #include <Eigen/Geometry>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
+namespace track {
 Track::Track() 
     : m_log(rclcpp::get_logger("跟踪(track.cpp)"))
-    , m_camera({70, 1920, 1080})
+    , m_camera({1920, 1080, 70})
 {   
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["track"];
@@ -30,19 +31,15 @@ Track::Track()
     m_normal_track.fb.initialize(m_yaml.fb.kp, m_yaml.fb.ki, m_yaml.fb.kd, false, 0.4f, 0.4f);
 }
 
-void Track::normal_track(track::NormalTrack& normal_info) {
-
-    // auto& cur_ns = normal_info.detections.stamp.nanosec;
-    auto& detect_flag = normal_info.detections.detect_flag;
-    auto& sub_pose = normal_info.sub_pose;
-    // auto& sub_attitude = normal_info.sub_attitude;
-    // auto& sensor_combined = normal_info.sensor_combined;
-    auto& pub_tra = *normal_info.pub_tra;
-    float dt  = 100;
-
-    //获取yaw
-    auto eigen_q = px4_ros_com::frame_transforms::utils::quaternion::array_to_eigen_quat(sub_pose.q);
-    auto cur_yaw = px4_ros_com::frame_transforms::utils::quaternion::quaternion_get_yaw(eigen_q);
+void Track::normal_track(
+    identify::msg::YoloDetections detections,
+    std::array<float, 3> cur_pos,
+    std::array<float, 4> flo_q,
+    px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
+) {
+    auto detect_flag = detections.detect_flag;
+    auto cur_yaw = tf2_tool::flo_to_yaw(flo_q);
+    auto dt  = 100.0f;
 
     float cx = 0.0f;
     float cy = 0.0f;
@@ -50,7 +47,7 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float yaw = cur_yaw;
 
     if (detect_flag){
-        auto& detection = normal_info.detections.detections[0];
+        auto detection = detections.detections[0];
         cx = detection.cx;
         cy = detection.cy;
         area = abs((detection.x_max - detection.x_min) * (detection.y_max - detection.y_min));  
@@ -68,61 +65,40 @@ void Track::normal_track(track::NormalTrack& normal_info) {
     float ud_output = m_normal_track.ud.compute(cy_error, dt);
     float fb_output = m_normal_track.fb.compute(area_error, dt);
 
-    pub_tra.yaw = NAN;
-    pub_tra.yawspeed = yaw_output;
-    pub_tra.position[0] = NAN;
-    pub_tra.position[1] = NAN;
-    pub_tra.position[2] = NAN;
-    pub_tra.velocity[0] = cosf(yaw) * fb_output;
-    pub_tra.velocity[1] = sinf(yaw) * fb_output;
-    pub_tra.velocity[2] = ud_output;
+    pub_pos_msgs.yaw = NAN;
+    pub_pos_msgs.yawspeed = yaw_output;
+    pub_pos_msgs.position[0] = NAN;
+    pub_pos_msgs.position[1] = NAN;
+    pub_pos_msgs.position[2] = NAN;
+    pub_pos_msgs.velocity[0] = cosf(yaw) * fb_output;
+    pub_pos_msgs.velocity[1] = sinf(yaw) * fb_output;
+    pub_pos_msgs.velocity[2] = ud_output;
 
     if (detect_flag){
         RCLCPP_INFO(m_log, "-----------跟踪----------");
         RCLCPP_INFO(m_log, "dt: %f", dt);
-        RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, pub_tra.yawspeed);
-        RCLCPP_INFO(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, pub_tra.velocity[2]);
+        RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, pub_pos_msgs.yawspeed);
+        RCLCPP_INFO(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, ud_output);
         RCLCPP_INFO(m_log, "area: %f, area_error: %f, fb_out: %f", area, area_error, fb_output);
-        RCLCPP_INFO(m_log, 
-            "current[0]: %f, current[1]: %f, current[2]: %f", 
-            sub_pose.position[0],
-            sub_pose.position[1],
-            sub_pose.position[2]
-        );
         RCLCPP_INFO(m_log, "cur_yaw: %f", yaw);
+        log_printf_tool::printf_log_cur_pos(m_log, cur_pos);
         RCLCPP_INFO(m_log, "-------------------------");
     }else {
         RCLCPP_INFO(m_log, "-----------未跟踪----------");
-        RCLCPP_INFO(m_log, 
-            "position[0]: %f, position[1]: %f, position[2]: %f", 
-            pub_tra.position[0],
-            pub_tra.position[1],
-            pub_tra.position[2]
-        );
-        RCLCPP_INFO(m_log, 
-            "current[0]: %f, current[1]: %f, current[2]: %f", 
-            sub_pose.position[0],
-            sub_pose.position[1],
-            sub_pose.position[2]
-        );
+        log_printf_tool::printf_log_pos(m_log, pub_pos_msgs.position, cur_pos);
         RCLCPP_INFO(m_log, "-------------------------");
     }
 }
 
-void Track::normal_track_v1(track::NormalTrack& normal_info) {
-
-    // auto& cur_ns = normal_info.detections.stamp.nanosec;
-    auto& detect_flag = normal_info.detections.detect_flag;
-    auto& sub_pose = normal_info.sub_pose;
-    // auto& sub_attitude = normal_info.sub_attitude;
-    // auto& sensor_combined = normal_info.sensor_combined;
-    auto& pub_tra = *normal_info.pub_tra;
-    float dt  = 100;
-
-    //获取yaw
-    std::array<double, 4> dou_q = type_tool::float_array_to_double(sub_pose.q);
-    Eigen::Quaterniond eigen_q(dou_q[0], dou_q[1], dou_q[2], dou_q[3]);
-    auto cur_yaw = px4_ros_com::frame_transforms::utils::quaternion::quaternion_get_yaw(eigen_q);
+void Track::normal_track_v1(
+    identify::msg::YoloDetections detections,
+    std::array<float, 3> cur_pos,
+    std::array<float, 4> flo_q,
+    px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
+) {
+    auto detect_flag = detections.detect_flag;
+    auto cur_yaw = tf2_tool::flo_to_yaw(flo_q);
+    auto dt  = 100.0f;
 
     float cx = 0.0f;
     float cy = 0.0f;
@@ -130,7 +106,7 @@ void Track::normal_track_v1(track::NormalTrack& normal_info) {
     float yaw = cur_yaw;
 
     if (detect_flag){
-        auto& detection = normal_info.detections.detections[0];
+        auto detection = detections.detections[0];
         cx = detection.cx;
         cy = detection.cy;
         area = abs((detection.x_max - detection.x_min) * (detection.y_max - detection.y_min));  
@@ -148,84 +124,58 @@ void Track::normal_track_v1(track::NormalTrack& normal_info) {
     float ud_output = m_normal_track.ud.compute(cy_error, dt);
     float fb_output = m_normal_track.fb.compute(area_error, dt);
 
-    pub_tra.yaw = NAN;
-    pub_tra.yawspeed = yaw_output;
+    pub_pos_msgs.yaw = NAN;
+    pub_pos_msgs.yawspeed = yaw_output;
 
     if (!m_normal_track.last_pos_init){
-        m_normal_track.last_postition = sub_pose.position;
+        m_normal_track.last_pos = cur_pos;
         m_normal_track.last_pos_init = true;
-        RCLCPP_INFO(m_log, 
-            "上一次位置: position[0]: %f, position[1]: %f, position[2]: %f", 
-            m_normal_track.last_postition[0],
-            m_normal_track.last_postition[1],
-            m_normal_track.last_postition[2]
-        );
+        log_printf_tool::printf_log_title_pos(m_log, "上一次位置", m_normal_track.last_pos);
     }
 
     if (detect_flag){
-        m_normal_track.last_postition = sub_pose.position;
+        m_normal_track.last_pos = cur_pos;
         m_normal_track.last_pos_update = true;
-        pub_tra.position[0] = NAN;
-        pub_tra.position[1] = NAN;
-        pub_tra.position[2] = NAN;
-        pub_tra.velocity[0] = cosf(yaw) * fb_output;
-        pub_tra.velocity[1] = sinf(yaw) * fb_output;
-        pub_tra.velocity[2] = ud_output;
+        pub_pos_msgs.position[0] = NAN;
+        pub_pos_msgs.position[1] = NAN;
+        pub_pos_msgs.position[2] = NAN;
+        pub_pos_msgs.velocity[0] = cosf(yaw) * fb_output;
+        pub_pos_msgs.velocity[1] = sinf(yaw) * fb_output;
+        pub_pos_msgs.velocity[2] = ud_output;
 
         RCLCPP_INFO(m_log, "--跟踪-------------------");
         RCLCPP_INFO(m_log, "dt: %f", dt);
-        RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, pub_tra.yawspeed);
-        RCLCPP_INFO(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, pub_tra.velocity[2]);
+        RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, yaw_output);
+        RCLCPP_INFO(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, ud_output);
         RCLCPP_INFO(m_log, "area: %f, area_error: %f, fb_out: %f", area, area_error, fb_output);
-        RCLCPP_INFO(m_log, 
-            "current[0]: %f, current[1]: %f, current[2]: %f", 
-            sub_pose.position[0],
-            sub_pose.position[1],
-            sub_pose.position[2]
-        );
         RCLCPP_INFO(m_log, "cur_yaw: %f", yaw);
+        log_printf_tool::printf_log_cur_pos(m_log, cur_pos);
         RCLCPP_INFO(m_log, "-------------------------");
     }else {
         m_normal_track.last_pos_update = false;
-        pub_tra.position = m_normal_track.last_postition;
+        pub_pos_msgs.position = m_normal_track.last_pos;
         RCLCPP_INFO(m_log, "--未跟踪-------------------");
-        RCLCPP_INFO(m_log, 
-            "position[0]: %f, position[1]: %f, position[2]: %f", 
-            pub_tra.position[0],
-            pub_tra.position[1],
-            pub_tra.position[2]
-        );
-        RCLCPP_INFO(m_log, 
-            "current[0]: %f, current[1]: %f, current[2]: %f", 
-            sub_pose.position[0],
-            sub_pose.position[1],
-            sub_pose.position[2]
-        );
+        log_printf_tool::printf_log_pos(m_log, pub_pos_msgs.position, cur_pos);
         RCLCPP_INFO(m_log, "-------------------------");
     }
 }
 
-void Track::normal_track_v2(track::NormalTrack& normal_info) {
-
-    // auto& cur_ns = normal_info.detections.stamp.nanosec;
-    auto& detect_flag = normal_info.detections.detect_flag;
-    auto& sub_pose = normal_info.sub_pose;
-    // auto& sub_attitude = normal_info.sub_attitude;
-    // auto& sensor_combined = normal_info.sensor_combined;
-    auto& pub_tra = *normal_info.pub_tra;
-    float dt  = 100;
-
-    //获取yaw
-    std::array<double, 4> dou_q = type_tool::float_array_to_double(sub_pose.q);
-    Eigen::Quaterniond eigen_q(dou_q[0], dou_q[1], dou_q[2], dou_q[3]);
-    auto cur_yaw = px4_ros_com::frame_transforms::utils::quaternion::quaternion_get_yaw(eigen_q);
+void Track::normal_track_v2(
+    identify::msg::YoloDetections detections,
+    std::array<float, 3> cur_pos,
+    std::array<float, 4> flo_q,
+    px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
+) {
+    auto detect_flag = detections.detect_flag;
+    auto cur_yaw = tf2_tool::flo_to_yaw(flo_q);
+    auto dt  = 100.0f;    
 
     float cx = 0.0f;
     float cy = 0.0f;
     float area = 0.0f;
     float yaw = cur_yaw;
 
-    auto detection = normal_info.detections.detections[0];
+    auto detection = detections.detections[0];
     if (detect_flag){
         m_normal_track.last_detection = detection;
     }else {
@@ -243,84 +193,58 @@ void Track::normal_track_v2(track::NormalTrack& normal_info) {
     float ud_output = m_normal_track.ud.compute(cy_error, dt);
     float fb_output = m_normal_track.fb.compute(area_error, dt);
 
-    pub_tra.yaw = NAN;
-    pub_tra.yawspeed = yaw_output;
+    pub_pos_msgs.yaw = NAN;
+    pub_pos_msgs.yawspeed = yaw_output;
 
     if (!m_normal_track.last_pos_init){
-        m_normal_track.last_postition = sub_pose.position;
+        m_normal_track.last_pos = cur_pos;
         m_normal_track.last_pos_init = true;
-        RCLCPP_INFO(m_log, 
-            "上一次位置: position[0]: %f, position[1]: %f, position[2]: %f", 
-            m_normal_track.last_postition[0],
-            m_normal_track.last_postition[1],
-            m_normal_track.last_postition[2]
-        );
+        log_printf_tool::printf_log_title_pos(m_log, "上一次位置", m_normal_track.last_pos);
     }
 
     if (detect_flag){
-        m_normal_track.last_postition = sub_pose.position;
+        m_normal_track.last_pos = cur_pos;
         m_normal_track.last_pos_update = true;
-        pub_tra.position[0] = NAN;
-        pub_tra.position[1] = NAN;
-        pub_tra.position[2] = NAN;
-        pub_tra.velocity[0] = cosf(yaw) * fb_output;
-        pub_tra.velocity[1] = sinf(yaw) * fb_output;
-        pub_tra.velocity[2] = ud_output;
+        pub_pos_msgs.position[0] = NAN;
+        pub_pos_msgs.position[1] = NAN;
+        pub_pos_msgs.position[2] = NAN;
+        pub_pos_msgs.velocity[0] = cosf(yaw) * fb_output;
+        pub_pos_msgs.velocity[1] = sinf(yaw) * fb_output;
+        pub_pos_msgs.velocity[2] = ud_output;
 
         RCLCPP_INFO(m_log, "--跟踪-------------------");
         RCLCPP_INFO(m_log, "dt: %f", dt);
-        RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, pub_tra.yawspeed);
-        RCLCPP_INFO(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, pub_tra.velocity[2]);
-        RCLCPP_INFO(m_log, "area: %f, area_error: %f, fb_out: %f", area, area_error, fb_output);
-        RCLCPP_INFO(m_log, 
-            "current[0]: %f, current[1]: %f, current[2]: %f", 
-            sub_pose.position[0],
-            sub_pose.position[1],
-            sub_pose.position[2]
-        );
         RCLCPP_INFO(m_log, "cur_yaw: %f", yaw);
+        RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, yaw_output);
+        RCLCPP_INFO(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, ud_output);
+        RCLCPP_INFO(m_log, "area: %f, area_error: %f, fb_out: %f", area, area_error, fb_output);
+        log_printf_tool::printf_log_cur_pos(m_log, cur_pos);
         RCLCPP_INFO(m_log, "-------------------------");
     }else {
         m_normal_track.last_pos_update = false;
-        pub_tra.position = m_normal_track.last_postition;
+        pub_pos_msgs.position = m_normal_track.last_pos;
         RCLCPP_INFO(m_log, "--未跟踪-------------------");
-        RCLCPP_INFO(m_log, 
-            "position[0]: %f, position[1]: %f, position[2]: %f", 
-            pub_tra.position[0],
-            pub_tra.position[1],
-            pub_tra.position[2]
-        );
-        RCLCPP_INFO(m_log, 
-            "current[0]: %f, current[1]: %f, current[2]: %f", 
-            sub_pose.position[0],
-            sub_pose.position[1],
-            sub_pose.position[2]
-        );
+        log_printf_tool::printf_log_pos(m_log, pub_pos_msgs.position, cur_pos);
         RCLCPP_INFO(m_log, "-------------------------");
     }
 }
 
-void Track::normal_track_v3(track::NormalTrack& normal_info) {
-
-    // auto& cur_ns = normal_info.detections.stamp.nanosec;
-    auto& detect_flag = normal_info.detections.detect_flag;
-    auto& sub_pose = normal_info.sub_pose;
-    // auto& sub_attitude = normal_info.sub_attitude;
-    // auto& sensor_combined = normal_info.sensor_combined;
-    auto& pub_tra = *normal_info.pub_tra;
-    float dt  = 100;
-
-    //获取yaw
-    std::array<double, 4> dou_q = type_tool::float_array_to_double(sub_pose.q);
-    Eigen::Quaterniond eigen_q(dou_q[0], dou_q[1], dou_q[2], dou_q[3]);
-    auto cur_yaw = px4_ros_com::frame_transforms::utils::quaternion::quaternion_get_yaw(eigen_q);
+void Track::normal_track_v3(
+    identify::msg::YoloDetections detections,
+    std::array<float, 3> cur_pos,
+    std::array<float, 4> flo_q,
+    px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
+) {
+    auto detect_flag = detections.detect_flag;
+    auto cur_yaw = tf2_tool::flo_to_yaw(flo_q);
+    auto dt  = 100.0f;
 
     float cx = 0.0f;
     float cy = 0.0f;
     float area = 0.0f;
     float yaw = cur_yaw;
 
-    auto detection = normal_info.detections.detections[0];
+    auto detection = detections.detections[0];
     if (detect_flag){
         m_normal_track.last_detection = detection;
     }else {
@@ -338,49 +262,34 @@ void Track::normal_track_v3(track::NormalTrack& normal_info) {
     float ud_output = m_normal_track.ud.compute(cy_error, dt);
     float fb_output = m_normal_track.fb.compute(area_error, dt);
 
-    pub_tra.yaw = NAN;
-    pub_tra.yawspeed = yaw_output;
-    pub_tra.position[0] = NAN;
-    pub_tra.position[1] = NAN;
-    pub_tra.position[2] = NAN;
-    pub_tra.velocity[0] = cosf(yaw) * fb_output;
-    pub_tra.velocity[1] = sinf(yaw) * fb_output;
-    pub_tra.velocity[2] = ud_output;
+    pub_pos_msgs.yaw = NAN;
+    pub_pos_msgs.yawspeed = yaw_output;
+    pub_pos_msgs.position[0] = NAN;
+    pub_pos_msgs.position[1] = NAN;
+    pub_pos_msgs.position[2] = NAN;
+    pub_pos_msgs.velocity[0] = cosf(yaw) * fb_output;
+    pub_pos_msgs.velocity[1] = sinf(yaw) * fb_output;
+    pub_pos_msgs.velocity[2] = ud_output;
 
     if (detect_flag){
         RCLCPP_INFO(m_log, "-----------跟踪----------");
         RCLCPP_INFO(m_log, "dt: %f", dt);
-        RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, pub_tra.yawspeed);
-        RCLCPP_INFO(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, pub_tra.velocity[2]);
+        RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, yaw_output);
+        RCLCPP_INFO(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, ud_output);
         RCLCPP_INFO(m_log, "area: %f, area_error: %f, fb_out: %f", area, area_error, fb_output);
-        RCLCPP_INFO(m_log, 
-            "current[0]: %f, current[1]: %f, current[2]: %f", 
-            sub_pose.position[0],
-            sub_pose.position[1],
-            sub_pose.position[2]
-        );
         RCLCPP_INFO(m_log, "cur_yaw: %f", yaw);
+        log_printf_tool::printf_log_cur_pos(m_log, cur_pos); 
         RCLCPP_INFO(m_log, "-------------------------");
     }else {
         RCLCPP_INFO(m_log, "-----------未跟踪----------");
-        RCLCPP_INFO(m_log, 
-            "position[0]: %f, position[1]: %f, position[2]: %f", 
-            pub_tra.position[0],
-            pub_tra.position[1],
-            pub_tra.position[2]
-        );
-        RCLCPP_INFO(m_log, 
-            "current[0]: %f, current[1]: %f, current[2]: %f", 
-            sub_pose.position[0],
-            sub_pose.position[1],
-            sub_pose.position[2]
-        );
+        log_printf_tool::printf_log_pos(m_log, pub_pos_msgs.position, cur_pos);
         RCLCPP_INFO(m_log, "-------------------------");
     }
 }
 
 void Track::update_last_postition(std::array<float, 3> pos){
     if (m_normal_track.last_pos_update){
-        m_normal_track.last_postition = pos;
+        m_normal_track.last_pos = pos;
     }
+}
 }

@@ -311,11 +311,4 @@ void Movement::land_mode(
     pub_pos_msgs.velocity[2] = 0.5f;
     pub_pos_msgs.yaw = cur_yaw;
 }
-
-double Movement::flo_to_yaw(std::array<float, 4> flo_q){
-    auto eigen_q = px4_ros_com::frame_transforms::utils::quaternion::array_to_eigen_quat(flo_q);
-    auto cur_yaw = px4_ros_com::frame_transforms::utils::quaternion::quaternion_get_yaw(eigen_q);
-
-    return cur_yaw;
-}
 };

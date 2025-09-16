@@ -40,7 +40,6 @@ target_link_libraries(${PROJECT_NAME} INTERFACE
   rclcpp::rclcpp
   tf2::tf2
   yaml-cpp
-  px4_ros_com
 )
 
 # 安装头文件
@@ -67,7 +66,6 @@ ament_export_dependencies(
   tf2
   common_msgs
   yaml-cpp
-  px4_ros_com
 )
 
 ament_package()

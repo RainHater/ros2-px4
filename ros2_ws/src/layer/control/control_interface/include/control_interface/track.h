@@ -18,49 +18,60 @@
 
 #include "utilities/tf2_tool.hpp"
 #include "utilities/type_tool.hpp"
+#include "utilities/log_printf_tool.hpp"
 
 #include "control_interface/pid.h"
 
 namespace track {
-struct NormalTrack{
-    identify::msg::YoloDetections detections;
-    px4_msgs::msg::VehicleOdometry sub_pose;
-    px4_msgs::msg::VehicleAttitude sub_attitude;
-    px4_msgs::msg::SensorCombined sensor_combined;
-    px4_msgs::msg::TrajectorySetpoint* pub_tra;
-};
-}
-
 class Track{
 public:
     Track();
 
     //普通跟踪
-    void normal_track(track::NormalTrack& normal_info);
+    void normal_track(
+        identify::msg::YoloDetections detections,
+        std::array<float, 3> cur_pos,
+        std::array<float, 4> flo_q,
+        px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
+    );
     //普通跟踪v1(位置)
-    void normal_track_v1(track::NormalTrack& normal_info);
-    void normal_track_v2(track::NormalTrack& normal_info);
-    void normal_track_v3(track::NormalTrack& normal_info);
+    void normal_track_v1(
+        identify::msg::YoloDetections detections,
+        std::array<float, 3> cur_pos,
+        std::array<float, 4> flo_q,
+        px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
+    );
+    void normal_track_v2(
+        identify::msg::YoloDetections detections,
+        std::array<float, 3> cur_pos,
+        std::array<float, 4> flo_q,
+        px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
+    );
+    void normal_track_v3(
+        identify::msg::YoloDetections detections,
+        std::array<float, 3> cur_pos,
+        std::array<float, 4> flo_q,
+        px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
+    );
     //更新定点值
     void update_last_postition(std::array<float, 3> pos);
 private:
     //相机参数
     struct CameraInfo{
-        float hfov;
         float width;
         float height;
+        float hfov;
     };
     //普通跟踪计算
     struct NormalTrackInfo{
         PIDController yaw;
         PIDController ud;
         PIDController fb;
-        double last_time;
+        std::array<float, 3> last_pos;
+        identify::msg::YoloDetection last_detection;
         float thre_area;
-        std::array<float, 3> last_postition;
         bool last_pos_init = false;
         bool last_pos_update = false;
-        identify::msg::YoloDetection last_detection;
     };
     //yaml 配置文件
     struct YamlInfo{
@@ -75,5 +86,5 @@ private:
     YamlInfo m_yaml;
     CameraInfo m_camera;
 };
-
+}
 #endif

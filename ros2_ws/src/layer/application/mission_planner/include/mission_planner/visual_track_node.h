@@ -60,8 +60,8 @@ private:
 
     struct InterfaceInfo{
         ModeControl mode_control;
-        Track track;
         RcSignal rc_signal;
+        track::Track track;
         movement::Movement movement; 
     };
 
