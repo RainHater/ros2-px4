@@ -27,7 +27,7 @@ public:
     Track();
 
     //普通跟踪
-    void normal_track(
+    void normalTrack(
         bool is_target_valid,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
@@ -35,21 +35,21 @@ public:
         px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
     );
     //普通跟踪v1(位置)
-    void normal_track_v1(
+    void normalTrack_v1(
         bool is_target_valid,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
         std::vector<identify::msg::YoloDetection> det_targets,
         px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
     );
-    void normal_track_v2(
+    void normalTrack_v2(
         bool is_target_valid,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
         std::vector<identify::msg::YoloDetection> det_targets,
         px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
     );
-    void normal_track_v3(
+    void normalTrack_v3(
         bool is_target_valid,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
@@ -57,7 +57,7 @@ public:
         px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
     );
     //更新定点值
-    void update_last_postition(std::array<float, 3> pos);
+    void updateLastPostition(std::array<float, 3> pos);
 private:
     //相机参数
     struct CameraInfo{

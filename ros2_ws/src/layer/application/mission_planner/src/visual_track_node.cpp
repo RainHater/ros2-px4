@@ -14,9 +14,8 @@ using std::placeholders::_1;
 
 VisualTrack::VisualTrack()
     : rclcpp::Node("visual_track")
-{       
-    m_fly = IDLE;
-
+    , m_fly(IDLE)
+{
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["visual_track"];
     m_yaml.lift_height = config["lift_height"].as<float>();
@@ -45,11 +44,11 @@ void VisualTrack::initPub(){
     qos.durability_volatile();
     qos.transient_local();
 
-    m_pub.offboard_mode = create_publisher<common_msgs::msg::ArmOffboardStatus>(
+    m_pub.offb_mode = create_publisher<common_msgs::msg::ArmOffboardStatus>(
         topics.topic_in().PX4_MODE, 10
     );
 
-    m_pub.trajectory_setpoint = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
+    m_pub.traj = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
         topics.topic_px4_in().PX4_TRAJECTORY_SETPOINT, qos
     );
 }
@@ -63,49 +62,49 @@ void VisualTrack::initSub(){
     qos_reliable.best_effort();
     qos_reliable.transient_local();
 
-    m_sub.offboard_mode.subscribe(
-        shared_from_this(), 
-        topics.topic_out().PX4_MODE, 10
-    );
-
-    m_sub.local_position.subscribe(
-        shared_from_this(),
-        topics.topic_px4_out().VEHICLE_LOCAL_POSITION, qos_best_effort
-    );
-
-    m_sub.manual_control_setpoint.subscribe(
-        shared_from_this(), 
-        topics.topic_px4_out().MANUAL_CONTROL_SETPOINT, qos_reliable
-    );
-    
-    m_sub.vehicle_odometry = create_subscription<px4_msgs::msg::VehicleOdometry>(
+    m_sub.vehicle_odom = create_subscription<px4_msgs::msg::VehicleOdometry>(
         topics.topic_px4_out().VEHICLE_ODOMETRY,
         qos_best_effort,
         std::bind(&VisualTrack::vehicleOdometryCallback, this, _1)
     );
 
-    m_sub.yolo_detections = create_subscription<identify::msg::YoloDetections>(
+    m_sub.yolo_dets = create_subscription<identify::msg::YoloDetections>(
         topics.topic_out().YOLO_DETECTIONS,
         10,
         std::bind(&VisualTrack::yoloDetectionsCallback, this, _1)
-    );    
+    ); 
+
+    m_sub.manual_ctrl_sp = create_subscription<px4_msgs::msg::ManualControlSetpoint>(
+        topics.topic_px4_out().MANUAL_CONTROL_SETPOINT,
+        qos_reliable,
+        std::bind(&VisualTrack::manualControlSetpointCallback, this, _1)
+    ); 
+
+    m_sub.offb_mode = create_subscription<common_msgs::msg::ArmOffboardStatus>(
+        topics.topic_out().PX4_MODE,
+        10,
+        std::bind(&VisualTrack::offboardModeCallback, this, _1)
+    ); 
+
+    m_sub.global_pos = create_subscription<px4_msgs::msg::VehicleGlobalPosition>(
+        topics.topic_px4_out().VEHICLE_GLOBAL_POSITION,
+        qos_best_effort,
+        std::bind(&VisualTrack::globalPosCallback, this, _1)
+    ); 
 }
 
 void VisualTrack::taskLoop(){
-    auto rc_mode = m_interface.rc_signal.get_rc(m_sub.manual_control_setpoint.get_msg());
-
-    if (rc_mode == rc_signal::LAND){
-        m_fly = LAND;
-    }
+    auto cur_arm = m_drone_data.cur_arm;
+    auto cur_offb = m_drone_data.cur_offb;
 
     switch(m_fly){
         case IDLE:{
-            m_interface.mode_control.unlock(
+            m_iface.mode_ctrl.unlock(
                 ARM_ENABLE, POSITION, 
-                m_sub.offboard_mode.get_msg(), 
-                m_pub_msgs.offboard_mode
+                cur_arm, cur_offb,
+                m_pub_msgs.offb_mode
             );
-            if (m_interface.mode_control.wait_busy()){
+            if (m_iface.mode_ctrl.waitBusy()){
                 m_fly = RISE;
                 RCLCPP_INFO(get_logger(), "初始化完成!");
             }
@@ -115,11 +114,11 @@ void VisualTrack::taskLoop(){
             auto cur_pos = m_drone_data.cur_pos;
             auto flo_q = m_drone_data.flo_q;
 
-            bool arrive = m_interface.movement.change_height(
+            bool arrive = m_iface.movement.changeHeight(
                     cur_pos, 
                     flo_q, 
                     get_clock()->now(),
-                    m_pub_msgs.trajectory_setpoint,
+                    m_pub_msgs.traj,
                     m_yaml.lift_height,
                     0.5,
                     m_yaml.outdoor_flag
@@ -146,12 +145,12 @@ void VisualTrack::taskLoop(){
             break;
         }
         case SWITCH_MODE:{
-            m_interface.mode_control.unlock(
+            m_iface.mode_ctrl.unlock(
                 ARM_ENABLE, VELOCITY, 
-                m_sub.offboard_mode.get_msg(), 
-                m_pub_msgs.offboard_mode
+                cur_arm, cur_offb,
+                m_pub_msgs.offb_mode
             );
-            if (m_interface.mode_control.wait_busy()){
+            if (m_iface.mode_ctrl.waitBusy()){
                 m_fly = WAIT;
                 RCLCPP_INFO(get_logger(), "切换到速度模式!");
             }
@@ -171,40 +170,40 @@ void VisualTrack::taskLoop(){
             auto flo_q = m_drone_data.flo_q;
             auto is_target_valid = m_drone_data.is_target_valid;
 
-            m_interface.track.update_last_postition(cur_pos);
+            m_iface.track.updateLastPostition(cur_pos);
             if (m_drone_data.is_detection_changed){
                 m_drone_data.is_detection_changed = false;
                 if (track_mode == 0){
-                    m_interface.track.normal_track(
+                    m_iface.track.normalTrack(
                         is_target_valid,
                         cur_pos,
                         flo_q,
                         det_targets,
-                        m_pub_msgs.trajectory_setpoint
+                        m_pub_msgs.traj
                     );
                 }else if (track_mode == 1){
-                    m_interface.track.normal_track_v1(
+                    m_iface.track.normalTrack_v1(
                         is_target_valid,
                         cur_pos,
                         flo_q,
                         det_targets,
-                        m_pub_msgs.trajectory_setpoint
+                        m_pub_msgs.traj
                     );
                 }else if (track_mode == 2){
-                    m_interface.track.normal_track_v2(
+                    m_iface.track.normalTrack_v2(
                         is_target_valid,
                         cur_pos,
                         flo_q,
                         det_targets,
-                        m_pub_msgs.trajectory_setpoint
+                        m_pub_msgs.traj
                     );
                 }else if (track_mode == 3){
-                    m_interface.track.normal_track_v3(
+                    m_iface.track.normalTrack_v3(
                         is_target_valid,
                         cur_pos,
                         flo_q,
                         det_targets,
-                        m_pub_msgs.trajectory_setpoint
+                        m_pub_msgs.traj
                     );
                 }
             }
@@ -213,20 +212,19 @@ void VisualTrack::taskLoop(){
         case LAND:{
             auto flo_q = m_drone_data.flo_q;
 
-            m_interface.movement.land_mode(flo_q, m_pub_msgs.trajectory_setpoint);
+            m_iface.movement.landMode(flo_q, m_pub_msgs.traj);
             break;
         }
     }
 
     auto timestamp = get_clock()->now().nanoseconds() / 1000;
-    m_pub_msgs.offboard_mode.timestamp = timestamp;
+    m_pub_msgs.offb_mode.timestamp = timestamp;
    
-    m_pub.offboard_mode->publish(m_pub_msgs.offboard_mode);
+    m_pub.offb_mode->publish(m_pub_msgs.offb_mode);
 
-    if (m_sub.offboard_mode.get_msg().arm == ARM_ENABLE){
-        m_pub_msgs.trajectory_setpoint.timestamp = timestamp;
-
-        m_pub.trajectory_setpoint->publish(m_pub_msgs.trajectory_setpoint);
+    if (cur_arm == ARM_ENABLE){
+        m_pub_msgs.traj.timestamp = timestamp;
+        m_pub.traj->publish(m_pub_msgs.traj);
     }
 }
 
@@ -244,6 +242,29 @@ void VisualTrack::yoloDetectionsCallback(
     m_drone_data.det_targets = msg->detections;
     m_drone_data.is_target_valid = msg->detect_flag;
     m_drone_data.is_detection_changed = true;
+}
+
+void VisualTrack::manualControlSetpointCallback(
+    const std::shared_ptr<px4_msgs::msg::ManualControlSetpoint> msg
+){
+    if (msg->aux1 < 0){
+        m_fly = LAND;
+    }
+}
+
+void VisualTrack::offboardModeCallback(
+    const std::shared_ptr<common_msgs::msg::ArmOffboardStatus> msg
+){
+    m_drone_data.cur_arm = msg->arm;
+    m_drone_data.cur_offb = msg->offboard;
+}
+
+void VisualTrack::globalPosCallback(
+    const std::shared_ptr<px4_msgs::msg::VehicleGlobalPosition> msg
+){
+    m_drone_data.cur_gps.lat = msg->lat;
+    m_drone_data.cur_gps.lon = msg->lon;
+    m_drone_data.cur_gps.alt = msg->alt;
 }
 
 int main(int argc, char *argv[]) {

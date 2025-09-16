@@ -31,7 +31,7 @@ Track::Track()
     m_normal_track.fb.initialize(m_yaml.fb.kp, m_yaml.fb.ki, m_yaml.fb.kd, false, 0.4f, 0.4f);
 }
 
-void Track::normal_track(
+void Track::normalTrack(
     bool is_target_valid,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
@@ -90,7 +90,7 @@ void Track::normal_track(
     }
 }
 
-void Track::normal_track_v1(
+void Track::normalTrack_v1(
     bool is_target_valid,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
@@ -161,7 +161,7 @@ void Track::normal_track_v1(
     }
 }
 
-void Track::normal_track_v2(
+void Track::normalTrack_v2(
     bool is_target_valid,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
@@ -231,7 +231,7 @@ void Track::normal_track_v2(
     }
 }
 
-void Track::normal_track_v3(
+void Track::normalTrack_v3(
     bool is_target_valid,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
@@ -290,7 +290,7 @@ void Track::normal_track_v3(
     }
 }
 
-void Track::update_last_postition(std::array<float, 3> pos){
+void Track::updateLastPostition(std::array<float, 3> pos){
     if (m_normal_track.last_pos_update){
         m_normal_track.last_pos = pos;
     }

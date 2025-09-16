@@ -19,7 +19,7 @@ Movement::Movement()
     m_yaml.land_th = config["land_th"].as<float>();
 }
 
-bool Movement::nav_move_to_target(
+bool Movement::navMoveToTarget(
     geo_tool::GeoCoordinate target_nav,
     geo_tool::GeoCoordinate start_nav,
     std::array<float, 3> cur_pos,
@@ -158,7 +158,7 @@ bool Movement::justmove(
     return arrive;
 }
 
-bool Movement::justmove_outdoor(
+bool Movement::justmoveOut(
     std::array<float, 3> target_pos,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
@@ -190,7 +190,7 @@ bool Movement::justmove_outdoor(
     return arrive;
 }
 
-bool Movement::move_by_offset(
+bool Movement::moveByOffset(
     std::array<float, 3> target_pos,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
@@ -220,7 +220,7 @@ bool Movement::move_by_offset(
         }
         case move_by_offset::FLY: {
             if (outdoor){
-                justmove_outdoor(
+                justmoveOut(
                     m_move_by_offset_info.cal_pos,
                     cur_pos,
                     flo_q,
@@ -250,7 +250,7 @@ bool Movement::move_by_offset(
 }
 
 
-bool Movement::change_height(
+bool Movement::changeHeight(
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
     rclcpp::Time instant_time,
@@ -269,7 +269,7 @@ bool Movement::change_height(
         }
         case change_height::FLY:{
             if (outdoor){
-                arrive = justmove_outdoor(
+                arrive = justmoveOut(
                     m_change_height.start_pos,
                     cur_pos,
                     flo_q,
@@ -297,7 +297,7 @@ bool Movement::change_height(
     return arrive;
 }
 
-void Movement::land_mode(
+void Movement::landMode(
     std::array<float, 4> flo_q,
     px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
 ) {     
