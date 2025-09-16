@@ -5,61 +5,63 @@ constexpr auto OFFBOARD_DISABLED = common_msgs::msg::ArmOffboardStatus::OFFBOARD
 
 ModeControl::ModeControl()
  : m_log(rclcpp::get_logger("切换飞控模式(mode_control.cpp)"))
+ , is_busy(false)
 {
     
 }
 
 void ModeControl::unlock(
-    uint8_t arm_mode,
-    uint16_t offboard_mode,
-    common_msgs::msg::ArmOffboardStatus current,
-    common_msgs::msg::ArmOffboardStatus &pub_msg)
-{   
-    set_mode(
-        arm_mode, 
-        offboard_mode, 
-        current, 
-        pub_msg, 
-        "解锁"
+    uint8_t tar_arm, uint16_t tar_offb,
+    uint8_t cur_arm, uint16_t cur_offb,
+    common_msgs::msg::ArmOffboardStatus &pub_msg
+) {   
+    setMode(
+        "解锁",
+        tar_arm, 
+        tar_offb,
+        cur_arm,
+        cur_offb,
+        pub_msg
     );
 }
 
 void ModeControl::locked(
-    common_msgs::msg::ArmOffboardStatus current,
+    uint8_t cur_arm, uint16_t cur_offb,
     common_msgs::msg::ArmOffboardStatus &pub_msg)
 {   
-    set_mode(
+    setMode(
+        "上锁",
         ARM_DISABLED, 
         OFFBOARD_DISABLED, 
-        current, 
-        pub_msg, 
-        "上锁"
+        cur_arm, 
+        cur_offb,
+        pub_msg
     );
 }
 
-void ModeControl::set_mode(
-    uint8_t target_arm,
-    uint16_t target_offboard,
-    const common_msgs::msg::ArmOffboardStatus &current,
-    common_msgs::msg::ArmOffboardStatus &pub_msg,
-    const std::string &action_desc)
-{
-    if (!m_states.is_busy) {
-        pub_msg.arm = target_arm;
-        pub_msg.offboard = target_offboard;
+void ModeControl::setMode(
+    const std::string &action_desc,
+    uint8_t tar_arm, uint16_t tar_offb,
+    uint8_t cur_arm, uint16_t cur_offb,
+    common_msgs::msg::ArmOffboardStatus &pub_msg
+    
+) {
+    if (!is_busy) {
+        pub_msg.arm = tar_arm;
+        pub_msg.offboard = tar_offb;
         RCLCPP_INFO(m_log, 
             "[%s] 目标 arm: %d, offboard: %d, 当前 arm: %d, offboard: %d",
-            action_desc.c_str(), target_arm, target_offboard,
-            current.arm, current.offboard);
-        m_states.is_busy = true;
+            action_desc.c_str(), tar_arm, tar_offb,
+            cur_arm, cur_offb);
+        is_busy = true;
     }
 
-    if (current.arm == target_arm && current.offboard == target_offboard) {
-        m_states.is_busy = false;
+    if (cur_arm == tar_arm && cur_offb == tar_offb) {
+        is_busy = false;
         RCLCPP_INFO(m_log, "[%s] 模式切换成功!", action_desc.c_str());
     }
 }
 
-bool ModeControl::wait_busy(){
-    return !m_states.is_busy;
+bool ModeControl::waitBusy(){
+    return !is_busy;
 }

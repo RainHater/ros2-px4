@@ -19,9 +19,9 @@ Movement::Movement()
     m_yaml.land_th = config["land_th"].as<float>();
 }
 
-bool Movement::nav_move_to_target(
-    geo_tool::GeoCoordinate target_nav,
-    geo_tool::GeoCoordinate start_nav,
+bool Movement::navMoveToTarget(
+    convert_tool::GeoCoord   target_nav,
+    convert_tool::GeoCoord   start_nav,
     std::array<float, 3> cur_pos,
     px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
 ) {
@@ -37,7 +37,7 @@ bool Movement::nav_move_to_target(
             double target_lon = target_nav.lon;
             double target_alt = target_nav.alt;
 
-            geo_tool::gps_to_local(
+            convert_tool::gps_to_local(
             init_lat, init_lon,
                 target_lat, target_lon, 
                 x, y
@@ -104,7 +104,7 @@ bool Movement::justmove(
             if (auto_angle){
                 m_justmove.dw = atan2(m_justmove.vy, m_justmove.vx);
             }else {
-                m_justmove.dw = tf2_tool::flo_to_yaw(flo_q);
+                m_justmove.dw = convert_tool::flo_to_yaw(flo_q);
             }
 
             m_justmove.start_time = now_s;
@@ -158,7 +158,7 @@ bool Movement::justmove(
     return arrive;
 }
 
-bool Movement::justmove_outdoor(
+bool Movement::justmoveOut(
     std::array<float, 3> target_pos,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
@@ -168,7 +168,7 @@ bool Movement::justmove_outdoor(
     if (auto_angle){
         m_justmove.dw = atan2(m_justmove.vy, m_justmove.vx);
     }else {
-        m_justmove.dw = tf2_tool::flo_to_yaw(flo_q);
+        m_justmove.dw = convert_tool::flo_to_yaw(flo_q);
     }
 
     pub_pos_msgs.position = target_pos;
@@ -190,7 +190,7 @@ bool Movement::justmove_outdoor(
     return arrive;
 }
 
-bool Movement::move_by_offset(
+bool Movement::moveByOffset(
     std::array<float, 3> target_pos,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
@@ -204,8 +204,8 @@ bool Movement::move_by_offset(
 
     switch(m_move_by_offset_info.cur_step){
         case move_by_offset::IDLE: {
-            auto cur_yaw = tf2_tool::flo_to_yaw(flo_q);
-            float yaw = geo_tool::normalize_angle(cur_yaw + geo_tool::deg2rad(angle));
+            auto cur_yaw = convert_tool::flo_to_yaw(flo_q);
+            float yaw = convert_tool::normalize_angle(cur_yaw + convert_tool::deg2rad(angle));
             float dx = target_pos[0] * std::cos(yaw) - target_pos[1] * std::sin(yaw);
             float dy = target_pos[0] * std::sin(yaw) + target_pos[1] * std::cos(yaw);
             float dz = -target_pos[2];
@@ -220,7 +220,7 @@ bool Movement::move_by_offset(
         }
         case move_by_offset::FLY: {
             if (outdoor){
-                justmove_outdoor(
+                justmoveOut(
                     m_move_by_offset_info.cal_pos,
                     cur_pos,
                     flo_q,
@@ -250,7 +250,7 @@ bool Movement::move_by_offset(
 }
 
 
-bool Movement::change_height(
+bool Movement::changeHeight(
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
     rclcpp::Time instant_time,
@@ -269,7 +269,7 @@ bool Movement::change_height(
         }
         case change_height::FLY:{
             if (outdoor){
-                arrive = justmove_outdoor(
+                arrive = justmoveOut(
                     m_change_height.start_pos,
                     cur_pos,
                     flo_q,
@@ -297,11 +297,11 @@ bool Movement::change_height(
     return arrive;
 }
 
-void Movement::land_mode(
+void Movement::landMode(
     std::array<float, 4> flo_q,
     px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
 ) {     
-    auto cur_yaw = tf2_tool::flo_to_yaw(flo_q);
+    auto cur_yaw = convert_tool::flo_to_yaw(flo_q);
 
     pub_pos_msgs.position[0] = NAN;
     pub_pos_msgs.position[1] = NAN;

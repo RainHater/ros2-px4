@@ -12,7 +12,6 @@
 
 #include "common_msgs/msg/arm_offboard_status.hpp"
 
-#include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
 
 #include <stdint.h>
@@ -35,15 +34,20 @@ public:
     FlightModeManagerNode();
     void initialize();
 protected:
-    void init_pub();
-    void init_sub();
+    void initPub();
+    void initSub();
 protected:
     //解锁状态机
-    void arm_and_set_offboard();
+    void armAndSetOffboard();
     //向PX4发布Offboard模式
-    void pub_px4_offboard_mode();
+    void pubPx4OffboardMode();
     //向全局发布当前Offboard模式
-    void pub_current_mode();
+    void pubCurrentMode();
+
+    //消息回调函数
+    void battStatusCallback(const std::shared_ptr<px4_msgs::msg::BatteryStatus> msg);
+    void px4OffboardCallback(const std::shared_ptr<px4_msgs::msg::VehicleStatus> msg);
+    void setOffboardCallback(const std::shared_ptr<common_msgs::msg::ArmOffboardStatus> msg);
 //工具函数
 private:
     //Arm解锁
@@ -51,7 +55,7 @@ private:
     //Arm上锁
     void disarm();
     //发布一个 PX4 的 VehicleCommand 指令
-    void pub_vehicle_command(
+    void pubVehicleCommand(
         uint16_t command,
         float param1 = 0.0,
         float param2 = 0.0,
@@ -63,20 +67,25 @@ private:
     );
 protected:
     struct PubInfo{
-        rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command;
-        rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_control_mode;
-        rclcpp::Publisher<common_msgs::msg::ArmOffboardStatus>::SharedPtr px4_mode_status_broadcaster;
+        rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_cmd;
+        rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offb_ctrl_mode;
+        rclcpp::Publisher<common_msgs::msg::ArmOffboardStatus>::SharedPtr px4_mode_broad;
     };
 
     struct SubInfo{
-        TopicListener<px4_msgs::msg::BatteryStatus> battery_status;
+        rclcpp::Subscription<px4_msgs::msg::BatteryStatus>::SharedPtr batt_status;
+        rclcpp::Subscription<px4_msgs::msg::VehicleStatus>::SharedPtr px4_offb;
+        rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr set_offb;
     };
 
     struct ModeInfo{
-        TopicListener<common_msgs::msg::ArmOffboardStatus> target;
-        TopicListener<px4_msgs::msg::VehicleStatus> px4_mode;
-        common_msgs::msg::ArmOffboardStatus current;
         uint64_t setpoint_counter;
+        uint8_t cur_px4_offb;
+        uint8_t cur_px4_arm;
+        uint16_t cur_offb;
+        uint8_t cur_arm;
+        uint16_t tar_offb;
+        uint8_t tar_arm;
     };
 
 private:
@@ -84,7 +93,7 @@ private:
     FlightInitState m_flight_state;
     PubInfo m_pub;  
     SubInfo m_sub;
-    ModeInfo m_arm_offboard_mode;
+    ModeInfo m_offb_mode;
 };
 
 #endif

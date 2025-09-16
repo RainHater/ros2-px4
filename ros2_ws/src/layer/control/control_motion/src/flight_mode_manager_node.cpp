@@ -1,6 +1,4 @@
 #include "control_motion/flight_mode_manager_node.h"
-#include <cmath>
-#include <utilities/topic_name.hpp>
 
 constexpr auto ARM_ENABLE = common_msgs::msg::ArmOffboardStatus::ARM_ENABLE;
 constexpr auto ARM_DISABLED = common_msgs::msg::ArmOffboardStatus::ARM_DISABLED;
@@ -15,76 +13,75 @@ constexpr auto VEHICLE_CMD_COMPONENT_ARM_DISARM = px4_msgs::msg::VehicleCommand:
 constexpr auto PX4_CUSTOM_MAIN_MODE_OFFBOARD = 6;
 constexpr auto PX4_CUSTOM_MAIN_MODE_MISSION = 3;
 
+using std::placeholders::_1;
+
 FlightModeManagerNode::FlightModeManagerNode() 
     : Node("flight_mode_manager_node")
+    , m_flight_state(IDLE)
 {   
     RCLCPP_INFO(get_logger(), "flight_mode_manager_node 节点启动...");
 
-    m_arm_offboard_mode.current.arm = ARM_DISABLED;
-    m_arm_offboard_mode.current.offboard = OFFBOARD_DISABLED;
-    m_arm_offboard_mode.setpoint_counter = 0;
-    
-    m_flight_state = IDLE;
+    m_offb_mode.cur_arm = ARM_DISABLED;
+    m_offb_mode.cur_offb = OFFBOARD_DISABLED;
+    m_offb_mode.setpoint_counter = 0;
 }
 
 void FlightModeManagerNode::initialize(){
-    init_pub();
-    init_sub();
+    initPub();
+    initSub();
 
     m_timer = this->create_wall_timer(
         std::chrono::milliseconds(100), 
-        std::bind(&FlightModeManagerNode::arm_and_set_offboard, this)
+        std::bind(&FlightModeManagerNode::armAndSetOffboard, this)
     );
 }
 
-void FlightModeManagerNode::init_pub(){
+void FlightModeManagerNode::initPub(){
     auto& topics = utilities::TopicInfo::getInstance();
     
-    m_pub.offboard_control_mode = create_publisher<px4_msgs::msg::OffboardControlMode>(
+    m_pub.offb_ctrl_mode = create_publisher<px4_msgs::msg::OffboardControlMode>(
         topics.topic_px4_in().OFFBOARD_CONTROL_MODE, 10);
 
-    m_pub.vehicle_command = create_publisher<px4_msgs::msg::VehicleCommand>(
+    m_pub.vehicle_cmd = create_publisher<px4_msgs::msg::VehicleCommand>(
         topics.topic_px4_in().VEHICLE_COMMAND, 10);
 
-    m_pub.px4_mode_status_broadcaster = create_publisher<common_msgs::msg::ArmOffboardStatus>(
+    m_pub.px4_mode_broad = create_publisher<common_msgs::msg::ArmOffboardStatus>(
         topics.topic_out().PX4_MODE, 10);
 }
 
-void FlightModeManagerNode::init_sub(){
+void FlightModeManagerNode::initSub(){
     auto& topics = utilities::TopicInfo::getInstance();
     rclcpp::QoS qos(rclcpp::KeepLast(10));
     qos.best_effort();
 
-    m_arm_offboard_mode.target.subscribe(
-        shared_from_this(), 
-        topics.topic_in().PX4_MODE, 10
+    m_sub.batt_status = create_subscription<px4_msgs::msg::BatteryStatus>(
+        topics.topic_px4_out().BATTERY_STATUS,
+        qos,
+        std::bind(&FlightModeManagerNode::battStatusCallback, this, _1)
     );
 
-    m_arm_offboard_mode.px4_mode.subscribe(
-        shared_from_this(), 
-        topics.topic_px4_out().VEHICLE_STATUS, qos
+    m_sub.px4_offb = create_subscription<px4_msgs::msg::VehicleStatus>(
+        topics.topic_px4_out().VEHICLE_STATUS,
+        qos,
+        std::bind(&FlightModeManagerNode::px4OffboardCallback, this, _1)
     );
 
-    m_sub.battery_status.subscribe(
-        shared_from_this(), 
-        topics.topic_px4_out().BATTERY_STATUS, qos
+    m_sub.set_offb = create_subscription<common_msgs::msg::ArmOffboardStatus>(
+        topics.topic_in().PX4_MODE,
+        10,
+        std::bind(&FlightModeManagerNode::setOffboardCallback, this, _1)
     );
 }
 
-void FlightModeManagerNode::arm_and_set_offboard() {
-    auto &mode = m_arm_offboard_mode;
-    const auto &target_mode = mode.target.get_msg();
-
-    pub_current_mode();
+void FlightModeManagerNode::armAndSetOffboard() {
+    pubCurrentMode();
 
     switch (m_flight_state) {
         case IDLE: {
-            m_arm_offboard_mode.current.arm = ARM_DISABLED;
-            m_arm_offboard_mode.current.offboard = OFFBOARD_DISABLED;       
-            if (!mode.target.has_change()) 
-                return;
-            if (target_mode.arm == ARM_ENABLE) {
-                mode.setpoint_counter = 0;
+            m_offb_mode.cur_arm = ARM_DISABLED;
+            m_offb_mode.cur_offb = OFFBOARD_DISABLED;       
+            if (m_offb_mode.tar_arm == ARM_ENABLE) {
+                m_offb_mode.setpoint_counter = 0;
                 m_flight_state = SENDING_SETPOINT;
                 RCLCPP_INFO(get_logger(), "开始解锁offboard和arm");
             }
@@ -92,10 +89,10 @@ void FlightModeManagerNode::arm_and_set_offboard() {
         }
 
         case SENDING_SETPOINT: {
-            pub_px4_offboard_mode();
-            mode.setpoint_counter++;
-            if (mode.setpoint_counter >= 10) {
-                pub_vehicle_command(VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_OFFBOARD);
+            pubPx4OffboardMode();
+            m_offb_mode.setpoint_counter++;
+            if (m_offb_mode.setpoint_counter >= 10) {
+                pubVehicleCommand(VEHICLE_CMD_DO_SET_MODE, 1, PX4_CUSTOM_MAIN_MODE_OFFBOARD);
                 m_flight_state = WAITING_OFFBOARD_CONFIRM;
                 RCLCPP_INFO(get_logger(), "已发送10次 setpoint");
             }
@@ -103,15 +100,12 @@ void FlightModeManagerNode::arm_and_set_offboard() {
         }
 
         case WAITING_OFFBOARD_CONFIRM: {
-            if (!mode.px4_mode.has_change()) 
-                return;
-            const auto &px4_mode = mode.px4_mode.get_msg();
-            if (px4_mode.nav_state == NAVIGATION_STATE_OFFBOARD) {
+            if (m_offb_mode.cur_px4_offb == NAVIGATION_STATE_OFFBOARD) {
                 m_flight_state = ARMING;
                 RCLCPP_INFO(get_logger(), "已进入 offboard 模式");
             } else {
                 // 若未成功进入 Offboard，可尝试重新发送 setpoint
-                mode.setpoint_counter = 0;
+                m_offb_mode.setpoint_counter = 0;
                 m_flight_state = SENDING_SETPOINT;
                 RCLCPP_INFO(get_logger(), "进入 offboard 模式失败");
             }
@@ -119,26 +113,16 @@ void FlightModeManagerNode::arm_and_set_offboard() {
         }
 
         case ARMING: {
-            pub_vehicle_command(VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
+            pubVehicleCommand(VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
             m_flight_state = WAITING_ARM_CONFIRM;
             break;
         }
 
         case WAITING_ARM_CONFIRM: {
-            if (!mode.px4_mode.has_change()) 
-                return;
-            const auto &px4_mode = mode.px4_mode.get_msg();
-            if (px4_mode.arming_state == ARMING_STATE_ARMED) {
-                auto battery_status = m_sub.battery_status.get_first_msg();
-                float remaining  = battery_status.remaining;
+            if (m_offb_mode.cur_px4_arm == ARMING_STATE_ARMED) {
                 m_flight_state = READY;
-                RCLCPP_INFO(
-                    get_logger(), 
-                    "已解锁 arm, 当前电量 %.0f %%",
-                    (remaining * 100.0)  
-                );
             }else {
-                mode.setpoint_counter = 0;
+                m_offb_mode.setpoint_counter = 0;
                 m_flight_state = SENDING_SETPOINT;
                 RCLCPP_INFO(get_logger(), "解锁 arm 失败");
             }
@@ -147,17 +131,16 @@ void FlightModeManagerNode::arm_and_set_offboard() {
 
         case READY: {
             // 可执行飞行任务，或者等待任务触发
-            if (mode.target.has_change()) {
-                if (target_mode.arm == ARM_DISABLED){
-                    disarm();
-                    pub_vehicle_command(VEHICLE_CMD_DO_SET_MODE, 1, px4_msgs::msg::VehicleCommand::VEHICLE_CMD_NAV_LAND);
-                    m_flight_state = IDLE;
-                    RCLCPP_INFO(get_logger(), "已上锁 arm");
-                    return;
-                }
-                mode.current = target_mode;
+            if (m_offb_mode.tar_arm == ARM_DISABLED){
+                disarm();
+                pubVehicleCommand(VEHICLE_CMD_DO_SET_MODE, 1, px4_msgs::msg::VehicleCommand::VEHICLE_CMD_NAV_LAND);
+                m_flight_state = IDLE;
+                RCLCPP_INFO(get_logger(), "已上锁 arm");
+                return;
             }
-            pub_px4_offboard_mode();
+            m_offb_mode.cur_arm = m_offb_mode.tar_arm;
+            m_offb_mode.cur_offb = m_offb_mode.tar_offb;
+            pubPx4OffboardMode();
             break;
         }
         case FAILED: {
@@ -170,7 +153,7 @@ void FlightModeManagerNode::arm_and_set_offboard() {
     }
 }
 
-void FlightModeManagerNode::pub_px4_offboard_mode() {
+void FlightModeManagerNode::pubPx4OffboardMode() {
     using ArmOffboardStatus = common_msgs::msg::ArmOffboardStatus;
     auto POSITION = ArmOffboardStatus::POSITION;
     auto VELOCITY = ArmOffboardStatus::VELOCITY;
@@ -179,7 +162,7 @@ void FlightModeManagerNode::pub_px4_offboard_mode() {
     auto BODY_RATE = ArmOffboardStatus::BODY_RATE;
     auto THRUST_AND_TORQUE = ArmOffboardStatus::THRUST_AND_TORQUE;
     auto DIRECT_ACTUATOR = ArmOffboardStatus::DIRECT_ACTUATOR;
-    auto mode = m_arm_offboard_mode.target.get_msg().offboard;
+    auto mode = m_offb_mode.tar_offb;
     
     px4_msgs::msg::OffboardControlMode msg{};
     msg.position = (bool)((mode & POSITION) != 0);
@@ -190,24 +173,44 @@ void FlightModeManagerNode::pub_px4_offboard_mode() {
     msg.thrust_and_torque = (bool)((mode & THRUST_AND_TORQUE) != 0);
     msg.direct_actuator = (bool)((mode & DIRECT_ACTUATOR) != 0);
     msg.timestamp = get_clock()->now().nanoseconds() / 1000;
-    m_pub.offboard_control_mode->publish(msg);
-    
-    // RCLCPP_INFO(this->get_logger(), "mode: %d", mode);
-    // RCLCPP_INFO(this->get_logger(), "position: %d", msg.position);
-    // RCLCPP_INFO(this->get_logger(), "velocity: %d", msg.velocity);
-    // RCLCPP_INFO(this->get_logger(), "acceleration: %d", msg.acceleration);
-    // RCLCPP_INFO(this->get_logger(), "attitude: %d", msg.attitude);
-    // RCLCPP_INFO(this->get_logger(), "body_rate: %d", msg.body_rate);
-    // RCLCPP_INFO(this->get_logger(), "thrust_and_torque: %d", msg.thrust_and_torque);
-    // RCLCPP_INFO(this->get_logger(), "direct_actuator: %d", msg.direct_actuator);
+    m_pub.offb_ctrl_mode->publish(msg);
 }
 
-void FlightModeManagerNode::pub_current_mode(){
-    auto msg = m_arm_offboard_mode.current;
-    m_pub.px4_mode_status_broadcaster->publish(msg);
+void FlightModeManagerNode::pubCurrentMode(){
+    common_msgs::msg::ArmOffboardStatus msg;
+    msg.arm = m_offb_mode.cur_arm;
+    msg.offboard = m_offb_mode.cur_offb;
+    msg.timestamp = get_clock()->now().nanoseconds() / 1000;
+    m_pub.px4_mode_broad->publish(msg);
 }
 
-void FlightModeManagerNode::pub_vehicle_command(
+void FlightModeManagerNode::battStatusCallback(
+    const std::shared_ptr<px4_msgs::msg::BatteryStatus> msg
+){
+    auto remaining = msg->remaining;
+    RCLCPP_INFO(
+        get_logger(), 
+        "当前电量 %.0f %%",
+        (remaining * 100.0)  
+    );
+    m_sub.batt_status.reset();
+}
+
+void FlightModeManagerNode::px4OffboardCallback(
+    const std::shared_ptr<px4_msgs::msg::VehicleStatus> msg
+){
+    m_offb_mode.cur_px4_arm = msg->arming_state;
+    m_offb_mode.cur_px4_offb = msg->nav_state;
+}
+
+void FlightModeManagerNode::setOffboardCallback(
+    const std::shared_ptr<common_msgs::msg::ArmOffboardStatus> msg
+){
+    m_offb_mode.tar_arm = msg->arm;
+    m_offb_mode.tar_offb = msg->offboard;
+}
+
+void FlightModeManagerNode::pubVehicleCommand(
     uint16_t command,
     float param1,
     float param2,
@@ -232,15 +235,25 @@ void FlightModeManagerNode::pub_vehicle_command(
     msg.source_component = 1;
     msg.from_external = true;
     msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
-    m_pub.vehicle_command->publish(msg);
+    m_pub.vehicle_cmd->publish(msg);
 }
 
 void FlightModeManagerNode::arm() {
-    pub_vehicle_command(VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
+    pubVehicleCommand(VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0);
     RCLCPP_DEBUG(get_logger(), "Arm command send");
 }
 
 void FlightModeManagerNode::disarm() {
-    pub_vehicle_command(VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
+    pubVehicleCommand(VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0);
     RCLCPP_DEBUG(get_logger(), "Disarm command send");
+}
+
+int main(int argc, char *argv[]) {
+    setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<FlightModeManagerNode>();
+    node->initialize();
+    rclcpp::spin(node);
+    rclcpp::shutdown();
+    return 0;
 }

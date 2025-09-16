@@ -11,8 +11,6 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(common_msgs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(px4_ros_com REQUIRED)
 
@@ -38,7 +36,6 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 
 target_link_libraries(${PROJECT_NAME} INTERFACE 
   rclcpp::rclcpp
-  tf2::tf2
   yaml-cpp
 )
 
@@ -63,8 +60,6 @@ install(
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(
   rclcpp
-  tf2
-  common_msgs
   yaml-cpp
 )
 

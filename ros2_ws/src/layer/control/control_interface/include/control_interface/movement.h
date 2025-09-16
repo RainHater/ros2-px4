@@ -9,19 +9,14 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Geometry>
 
-#include <px4_msgs/msg/vehicle_odometry.hpp>
-#include <px4_msgs/msg/vehicle_local_position.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
-#include <px4_msgs/msg/vehicle_global_position.hpp>
 
 #include <px4_ros_com/frame_transforms.h>
 
 #include "common_msgs/msg/arm_offboard_status.hpp"
 
-#include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
-#include "utilities/tf2_tool.hpp"
-#include "utilities/geo_tool.hpp"
+#include "utilities/convert_tool.hpp"
 #include "utilities/log_printf_tool.hpp"
 
 #include "control_interface/mode_control.h"
@@ -91,9 +86,9 @@ public:
     Movement();
 
     //飞往目标经纬度
-    bool nav_move_to_target(
-        geo_tool::GeoCoordinate target_nav,
-        geo_tool::GeoCoordinate start_nav,
+    bool navMoveToTarget(
+        convert_tool::GeoCoord   target_nav,
+        convert_tool::GeoCoord   start_nav,
         std::array<float, 3> cur_pos,
         px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
     );
@@ -108,7 +103,7 @@ public:
         float v = 0.1f
     );
     //室外
-    bool justmove_outdoor(
+    bool justmoveOut(
         std::array<float, 3> target_pos,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
@@ -116,7 +111,7 @@ public:
         bool auto_angle = false
     );
     //根据当前坐标进行移动
-    bool move_by_offset(
+    bool moveByOffset(
         std::array<float, 3> target_pos,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
@@ -127,7 +122,7 @@ public:
         bool outdoor = false
     );
     //起飞高度
-    bool change_height(
+    bool changeHeight(
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
         rclcpp::Time instant_time,
@@ -137,7 +132,7 @@ public:
         bool outdoor = false
     );
     //降落
-    void land_mode(
+    void landMode(
         std::array<float, 4> flo_q,
         px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
     );

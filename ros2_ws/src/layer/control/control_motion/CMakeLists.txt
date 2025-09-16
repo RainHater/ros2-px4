@@ -31,19 +31,22 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include 
 )
 
-install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
-
-add_executable(${PROJECT_NAME} 
-  src/motion_controller.cpp
-  src/flight_mode_manager_node.cpp
-)
-ament_target_dependencies(${PROJECT_NAME}
-  rclcpp 
-  px4_msgs 
-  common_msgs
-  utilities
+install(DIRECTORY 
+  launch
+  DESTINATION share/${PROJECT_NAME}/
 )
 
-install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
+function(register_node target_name)
+  add_executable(${target_name} src/${target_name}.cpp)
+  ament_target_dependencies(${target_name}
+    rclcpp 
+    px4_msgs 
+    common_msgs
+    utilities
+  )
+  install(TARGETS ${target_name} DESTINATION lib/${PROJECT_NAME})
+endfunction()
+
+register_node(flight_mode_manager_node)
 
 ament_package()

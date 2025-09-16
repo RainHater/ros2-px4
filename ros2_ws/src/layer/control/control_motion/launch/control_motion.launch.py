@@ -2,13 +2,13 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 
 def generate_launch_description():
-    control_motion = Node(
+    flight_mode_manager_node = Node(
         package='control_motion',
-        executable='control_motion',
-        name='control_motion',
+        executable='flight_mode_manager_node',
+        name='flight_mode_manager_node',
         output='screen',
     )
 
     return LaunchDescription([
-        control_motion
+        flight_mode_manager_node
     ])

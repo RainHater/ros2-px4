@@ -5,30 +5,31 @@
 
 #include "common_msgs/msg/arm_offboard_status.hpp"
 
-#include "utilities/topic_tool.hpp"
 #include "utilities/topic_name.hpp"
 
 class ModeControl{
 public:
     ModeControl();
+    //切换模式或解锁
     void unlock(
-        uint8_t arm_mode,
-        uint16_t offboard_mode,
-        common_msgs::msg::ArmOffboardStatus current,
+        uint8_t tar_arm, uint16_t tar_offb,
+        uint8_t cur_arm, uint16_t cur_offb,
         common_msgs::msg::ArmOffboardStatus &pub_msg
     );
+    //上锁
     void locked(
-        common_msgs::msg::ArmOffboardStatus current,
+        uint8_t cur_arm, uint16_t cur_offb,
         common_msgs::msg::ArmOffboardStatus &pub_msg
     );
-    bool wait_busy();
+    //等待切换
+    bool waitBusy();
 protected:
-    void set_mode(
-        uint8_t target_arm,
-        uint16_t target_offboard,
-        const common_msgs::msg::ArmOffboardStatus &current,
-        common_msgs::msg::ArmOffboardStatus &pub_msg,
-        const std::string &action_desc
+    //设置模式
+    void setMode(
+        const std::string &action_desc,
+        uint8_t tar_arm, uint16_t tar_offb,
+        uint8_t cur_arm, uint16_t cur_offb,
+        common_msgs::msg::ArmOffboardStatus &pub_msg
     );
 private:
     struct StatusBits{
@@ -36,7 +37,7 @@ private:
     };
 private:
     rclcpp::Logger m_log;
-    StatusBits m_states;
+    bool is_busy;
 };
 
 #endif
