@@ -26,9 +26,9 @@ Track::Track()
 
     m_normal_track.thre_area = m_camera.width*m_camera.height*m_yaml.area_th;
 
-    m_normal_track.yaw.initialize(m_yaml.yaw.kp, m_yaml.yaw.ki, m_yaml.yaw.kd, false, 1.5708f, 1.5708f); 
-    m_normal_track.ud.initialize(m_yaml.ud.kp, m_yaml.ud.ki, m_yaml.ud.kd, false, 0.5f, 0.5f); 
-    m_normal_track.fb.initialize(m_yaml.fb.kp, m_yaml.fb.ki, m_yaml.fb.kd, false, 0.4f, 0.4f);
+    m_normal_track.yaw.initialize(m_yaml.yaw.kp, m_yaml.yaw.ki, m_yaml.yaw.kd, false, 1.5708f, 1.5708f, 0.05f, 0.02f, FilterType::LowPass2, FilterType::LowPass2); 
+    m_normal_track.ud.initialize(m_yaml.ud.kp, m_yaml.ud.ki, m_yaml.ud.kd, false, 0.5f, 0.5f, 0.05f, 0.02f, FilterType::LowPass2, FilterType::LowPass2); 
+    m_normal_track.fb.initialize(m_yaml.fb.kp, m_yaml.fb.ki, m_yaml.fb.kd, false, 0.4f, 0.4f, 0.05f, 0.02f, FilterType::LowPass2, FilterType::LowPass2);
 }
 
 void Track::normalTrack(
