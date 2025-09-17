@@ -12,8 +12,8 @@
 
 #include "identify/msg/yolo_detections.hpp"
 
-#include "utilities/topic_name.hpp"
-#include "utilities/convert_tool.hpp"
+#include "utilities/topic_name.h"
+#include "utilities/utilities.h"
 
 #include "control_interface/mode_control.h"
 #include "control_interface/movement.h"
@@ -75,7 +75,7 @@ private:
         //多个检测目标
         std::vector<identify::msg::YoloDetection> det_targets;
         //当前经纬度
-        convert_tool::GeoCoord   cur_gps;
+        utilities::convert::GeoCoord   cur_gps;
         //当前offboard模式
         uint16_t  cur_offb;
         //当前arm状态

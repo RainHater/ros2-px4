@@ -23,12 +23,18 @@ Track::Track()
     m_yaml.fb.ki = config["fb_ki"].as<float>();
     m_yaml.fb.kd = config["fb_kd"].as<float>();
     m_yaml.area_th = config["area_th"].as<float>();
+    m_yaml.is_filter = config["is_filter"].as<bool>();
 
     m_normal_track.thre_area = m_camera.width*m_camera.height*m_yaml.area_th;
 
-    m_normal_track.yaw.initialize(m_yaml.yaw.kp, m_yaml.yaw.ki, m_yaml.yaw.kd, false, 1.5708f, 1.5708f, 0.05f, 0.02f, FilterType::LowPass2, FilterType::LowPass2); 
-    m_normal_track.ud.initialize(m_yaml.ud.kp, m_yaml.ud.ki, m_yaml.ud.kd, false, 0.5f, 0.5f, 0.05f, 0.02f, FilterType::LowPass2, FilterType::LowPass2); 
-    m_normal_track.fb.initialize(m_yaml.fb.kp, m_yaml.fb.ki, m_yaml.fb.kd, false, 0.4f, 0.4f, 0.05f, 0.02f, FilterType::LowPass2, FilterType::LowPass2);
+    FilterType is_filter = FilterType::None;
+    if (m_yaml.is_filter){
+        is_filter = FilterType::LowPass2;
+    }
+
+    m_normal_track.yaw.initialize(m_yaml.yaw.kp, m_yaml.yaw.ki, m_yaml.yaw.kd, false, 1.5708f, 1.5708f, 0.05f, 0.02f, is_filter, is_filter); 
+    m_normal_track.ud.initialize(m_yaml.ud.kp, m_yaml.ud.ki, m_yaml.ud.kd, false, 0.5f, 0.5f, 0.05f, 0.02f, is_filter, is_filter); 
+    m_normal_track.fb.initialize(m_yaml.fb.kp, m_yaml.fb.ki, m_yaml.fb.kd, false, 0.4f, 0.4f, 0.05f, 0.02f, is_filter, is_filter);
 }
 
 void Track::normalTrack(
@@ -38,7 +44,7 @@ void Track::normalTrack(
     std::vector<identify::msg::YoloDetection> det_targets,
     px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
 ) {
-    auto cur_yaw = convert_tool::flo_to_yaw(flo_q);
+    auto cur_yaw = utilities::convert::flo_to_yaw(flo_q);
     auto dt  = 100.0f;
 
     float cx = 0.0f;
@@ -98,7 +104,7 @@ void Track::normalTrack_v1(
     px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
 ) {
     auto detect_flag = is_target_valid;
-    auto cur_yaw = convert_tool::flo_to_yaw(flo_q);
+    auto cur_yaw = utilities::convert::flo_to_yaw(flo_q);
     auto dt  = 100.0f;
 
     float cx = 0.0f;
@@ -169,7 +175,7 @@ void Track::normalTrack_v2(
     px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
 ) {
     auto detect_flag = is_target_valid;
-    auto cur_yaw = convert_tool::flo_to_yaw(flo_q);
+    auto cur_yaw = utilities::convert::flo_to_yaw(flo_q);
     auto dt  = 100.0f;    
 
     float cx = 0.0f;
@@ -239,7 +245,7 @@ void Track::normalTrack_v3(
     px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
 ) {
     auto detect_flag = is_target_valid;
-    auto cur_yaw = convert_tool::flo_to_yaw(flo_q);
+    auto cur_yaw = utilities::convert::flo_to_yaw(flo_q);
     auto dt  = 100.0f;
 
     float cx = 0.0f;

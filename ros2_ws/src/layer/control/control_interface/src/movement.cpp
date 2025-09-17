@@ -20,8 +20,8 @@ Movement::Movement()
 }
 
 bool Movement::navMoveToTarget(
-    convert_tool::GeoCoord   target_nav,
-    convert_tool::GeoCoord   start_nav,
+    utilities::convert::GeoCoord   target_nav,
+    utilities::convert::GeoCoord   start_nav,
     std::array<float, 3> cur_pos,
     px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
 ) {
@@ -37,7 +37,7 @@ bool Movement::navMoveToTarget(
             double target_lon = target_nav.lon;
             double target_alt = target_nav.alt;
 
-            convert_tool::gps_to_local(
+            utilities::convert::gps_to_local(
             init_lat, init_lon,
                 target_lat, target_lon, 
                 x, y
@@ -104,7 +104,7 @@ bool Movement::justmove(
             if (auto_angle){
                 m_justmove.dw = atan2(m_justmove.vy, m_justmove.vx);
             }else {
-                m_justmove.dw = convert_tool::flo_to_yaw(flo_q);
+                m_justmove.dw = utilities::convert::flo_to_yaw(flo_q);
             }
 
             m_justmove.start_time = now_s;
@@ -168,7 +168,7 @@ bool Movement::justmoveOut(
     if (auto_angle){
         m_justmove.dw = atan2(m_justmove.vy, m_justmove.vx);
     }else {
-        m_justmove.dw = convert_tool::flo_to_yaw(flo_q);
+        m_justmove.dw = utilities::convert::flo_to_yaw(flo_q);
     }
 
     pub_pos_msgs.position = target_pos;
@@ -204,8 +204,8 @@ bool Movement::moveByOffset(
 
     switch(m_move_by_offset_info.cur_step){
         case move_by_offset::IDLE: {
-            auto cur_yaw = convert_tool::flo_to_yaw(flo_q);
-            float yaw = convert_tool::normalize_angle(cur_yaw + convert_tool::deg2rad(angle));
+            auto cur_yaw = utilities::convert::flo_to_yaw(flo_q);
+            float yaw = utilities::convert::normalize_angle(cur_yaw + utilities::convert::deg2rad(angle));
             float dx = target_pos[0] * std::cos(yaw) - target_pos[1] * std::sin(yaw);
             float dy = target_pos[0] * std::sin(yaw) + target_pos[1] * std::cos(yaw);
             float dz = -target_pos[2];
@@ -274,7 +274,7 @@ bool Movement::changeHeight(
                     cur_pos,
                     flo_q,
                     pub_pos_msgs,
-                    true
+                    false
                 );
             }else {
                 arrive = justmove(
@@ -283,7 +283,7 @@ bool Movement::changeHeight(
                     flo_q,
                     instant_time,
                     pub_pos_msgs,
-                    true,
+                    false,
                     v
                 );
             }
@@ -301,7 +301,7 @@ void Movement::landMode(
     std::array<float, 4> flo_q,
     px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
 ) {     
-    auto cur_yaw = convert_tool::flo_to_yaw(flo_q);
+    auto cur_yaw = utilities::convert::flo_to_yaw(flo_q);
 
     pub_pos_msgs.position[0] = NAN;
     pub_pos_msgs.position[1] = NAN;

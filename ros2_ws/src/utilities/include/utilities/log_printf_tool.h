@@ -4,7 +4,6 @@
 #include <string>
 
 namespace log_printf_tool {
-
 inline void printf_log_pos(
     rclcpp::Logger log,
     std::array<float, 3> target_pos, 

@@ -15,9 +15,9 @@
 
 #include "common_msgs/msg/arm_offboard_status.hpp"
 
-#include "utilities/topic_name.hpp"
-#include "utilities/convert_tool.hpp"
-#include "utilities/log_printf_tool.hpp"
+#include "utilities/topic_name.h"
+#include "utilities/utilities.h"
+#include "utilities/log_printf_tool.h"
 
 #include "control_interface/mode_control.h"
 
@@ -87,8 +87,8 @@ public:
 
     //飞往目标经纬度
     bool navMoveToTarget(
-        convert_tool::GeoCoord   target_nav,
-        convert_tool::GeoCoord   start_nav,
+        utilities::convert::GeoCoord   target_nav,
+        utilities::convert::GeoCoord   start_nav,
         std::array<float, 3> cur_pos,
         px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
     );

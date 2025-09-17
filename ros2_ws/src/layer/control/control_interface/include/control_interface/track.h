@@ -15,8 +15,8 @@
 
 #include "identify/msg/yolo_detections.hpp"
 
-#include "utilities/convert_tool.hpp"
-#include "utilities/log_printf_tool.hpp"
+#include "utilities/utilities.h"
+#include "utilities/log_printf_tool.h"
 
 #include "control_interface/pid.h"
 
@@ -81,6 +81,7 @@ private:
         PidInfo ud = {0.003f, 0.00001f, 0.0f};
         PidInfo fb = {0.003f, 0.00001f, 0.0f};
         float area_th = 0.41f;
+        bool is_filter = false;
     };
 private:
     rclcpp::Logger m_log;

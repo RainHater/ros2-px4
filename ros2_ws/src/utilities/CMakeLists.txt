@@ -26,41 +26,47 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-add_library(${PROJECT_NAME} INTERFACE)
-
-# include 路径 & 依赖
-target_include_directories(${PROJECT_NAME} INTERFACE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
+set(ALL_DEPENDENCIES 
+  rclcpp
+  yaml-cpp
+  px4_ros_com
 )
 
-target_link_libraries(${PROJECT_NAME} INTERFACE 
-  rclcpp::rclcpp
+set(ALL_SRC
+  src/utilities.cpp
+)
+
+include_directories(
+  ${PROJECT_SOURCE_DIR}/include 
+)
+
+add_library(${PROJECT_NAME} ${ALL_SRC})
+
+ament_target_dependencies(${PROJECT_NAME} ${ALL_DEPENDENCIES})
+
+target_link_libraries(${PROJECT_NAME}
   yaml-cpp
 )
 
-# 安装头文件
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
 install(
   DIRECTORY include/
   DESTINATION include
 )
 
-install(DIRECTORY 
-  config
-  DESTINATION share/${PROJECT_NAME}/
-)
-
-# **关键：安装并导出 INTERFACE 库**
-install(
-  TARGETS ${PROJECT_NAME}
-  EXPORT export_${PROJECT_NAME}
-)
-
-# 让其他包能 find_package(utilities) 并链接
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
-ament_export_dependencies(
-  rclcpp
-  yaml-cpp
+ament_export_dependencies(${ALL_DEPENDENCIES})
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
 
 ament_package()

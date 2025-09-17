@@ -1,24 +1,57 @@
-#pragma once
+#include "utilities/utilities.h"
 
-#include <math.h>
-#include <px4_ros_com/frame_transforms.h>
+namespace utilities{
+namespace log_printf{
+void printf_log_pos(
+    rclcpp::Logger log,
+    std::array<float, 3> target_pos, 
+    std::array<float, 3> cur_pos
+) {
+    RCLCPP_INFO(log, 
+        "pub_pos[0]: %f, pub_pos[1]: %f, pub_pos[2]: %f, "
+        "cur_pos[0]: %f, cur_pos[1]: %f, cur_pos[2]: %f",
+        target_pos[0],
+        target_pos[1],
+        target_pos[2],
+        cur_pos[0],
+        cur_pos[1],
+        cur_pos[2]
+    );
+}
 
-namespace convert_tool {
-constexpr double EARTH_RADIUS_M = 6371000.0;
+void printf_log_cur_pos(
+    rclcpp::Logger log,
+    std::array<float, 3> cur_pos
+) {
+    RCLCPP_INFO(log, 
+        "cur_pos[0]: %f, cur_pos[1]: %f, cur_pos[2]: %f",
+        cur_pos[0],
+        cur_pos[1],
+        cur_pos[2]
+    );
+}
 
-struct GeoCoord  {
-    double  lat;     // 纬度
-    double  lon;     // 经度
-    float   alt;     // 高度
-};
+void printf_log_title_pos(
+    rclcpp::Logger log,
+    std::string title, 
+    std::array<float, 3> cur_pos
+) {
+    RCLCPP_INFO(log, 
+        "%s: pos[0]: %f, pos[1]: %f, pos[2]: %f",
+        title.c_str(), 
+        cur_pos[0],
+        cur_pos[1],
+        cur_pos[2]
+    );
+}
+}
 
-//角度转弧度
-inline double deg2rad(double deg){
+namespace convert{
+double deg2rad(double deg){
     return deg * M_PI / 180.0;
 }
 
-//GPS → ENU 简易转换函数（参考点 + 当前点 → x, y）
-inline void gps_to_local(double lat0, double lon0, 
+void gps_to_local(double lat0, double lon0, 
     double lat, double lon, 
     float &x, float &y)
 {
@@ -32,7 +65,7 @@ inline void gps_to_local(double lat0, double lon0,
     y = EARTH_RADIUS_M * dLat;     
 }
 
-inline double haversine_distance(
+double haversine_distance(
     double lat1_deg, double lon1_deg, 
     double lat2_deg, double lon2_deg)
 {
@@ -53,16 +86,17 @@ inline double haversine_distance(
     return EARTH_RADIUS_M * c;
 }
 
-inline float normalize_angle(float angle) {
+float normalize_angle(float angle) {
     while (angle > M_PI) angle -= 2.0f * M_PI;
     while (angle < -M_PI) angle += 2.0f * M_PI;
     return angle;
 }
 
-inline double flo_to_yaw(std::array<float, 4> flo_q){
+double flo_to_yaw(std::array<float, 4> flo_q){
     auto eigen_q = px4_ros_com::frame_transforms::utils::quaternion::array_to_eigen_quat(flo_q);
     auto cur_yaw = px4_ros_com::frame_transforms::utils::quaternion::quaternion_get_yaw(eigen_q);
 
     return cur_yaw;
+}
 }
 }
