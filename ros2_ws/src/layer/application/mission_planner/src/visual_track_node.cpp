@@ -219,9 +219,16 @@ void VisualTrack::taskLoop(){
                         det_targets,
                         m_pub_msgs.traj
                     );
+                }else if (track_mode == 5){
+                    m_iface.track.normalTrack_v5(
+                        is_target_valid,
+                        cur_pos,
+                        flo_q,
+                        det_targets,
+                        m_pub_msgs.traj
+                    );
                 }
             }
-            
             if (is_target_valid){
                 auto now = get_clock()->now().seconds();
                 if (m_drone_data.last_sec){
