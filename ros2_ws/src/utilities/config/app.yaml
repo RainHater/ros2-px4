@@ -19,17 +19,17 @@ track:
   yaw_kp: 0.002
   yaw_ki: 0.00001
   yaw_kd: 0.0
-  yaw_th: 1.5708
+  yaw_th: 3.1415927
   #上下 PID
   ud_kp: 0.002
   ud_ki: 0.00001
   ud_kd: 0.0
-  ud_th: 0.5
+  ud_th: 0.7
   #前后 PID
   fb_kp: 0.000003
   fb_ki: 0.00001
   fb_kd: 0.0
-  fb_th: 0.4
+  fb_th: 3.0
   #跟踪面积
   area_th: 0.41
   #是否滤波
@@ -37,8 +37,8 @@ track:
 
 #跟踪
 visual_track:
-  lift_height: 1.0
+  lift_height: 1.5
   outdoor_flag: true
-  switch_mode: true
+  switch_mode: false
   track_mode: 0
   
