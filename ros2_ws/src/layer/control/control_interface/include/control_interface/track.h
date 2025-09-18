@@ -77,9 +77,9 @@ private:
     };
     //yaml 配置文件
     struct YamlInfo{
-        PidInfo yaw = {0.003f, 0.00001f, 0.0f};
-        PidInfo ud = {0.003f, 0.00001f, 0.0f};
-        PidInfo fb = {0.003f, 0.00001f, 0.0f};
+        PidInfo yaw = {0.003f, 0.00001f, 0.0f, 1.5708f};
+        PidInfo ud = {0.003f, 0.00001f, 0.0f, 0.5f};
+        PidInfo fb = {0.003f, 0.00001f, 0.0f, 0.4f};
         float area_th = 0.41f;
         bool is_filter = false;
     };

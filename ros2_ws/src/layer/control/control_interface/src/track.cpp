@@ -16,12 +16,15 @@ Track::Track()
     m_yaml.yaw.kp = config["yaw_kp"].as<float>();
     m_yaml.yaw.ki = config["yaw_ki"].as<float>();
     m_yaml.yaw.kd = config["yaw_kd"].as<float>();
+    m_yaml.yaw.th = config["yaw_th"].as<float>();
     m_yaml.ud.kp = config["ud_kp"].as<float>();
     m_yaml.ud.ki = config["ud_ki"].as<float>();
     m_yaml.ud.kd = config["ud_kd"].as<float>();
+    m_yaml.ud.th = config["ud_th"].as<float>();
     m_yaml.fb.kp = config["fb_kp"].as<float>();
     m_yaml.fb.ki = config["fb_ki"].as<float>();
     m_yaml.fb.kd = config["fb_kd"].as<float>();
+    m_yaml.fb.th = config["fb_th"].as<float>();
     m_yaml.area_th = config["area_th"].as<float>();
     m_yaml.is_filter = config["is_filter"].as<bool>();
 
@@ -32,9 +35,42 @@ Track::Track()
         is_filter = FilterType::LowPass2;
     }
 
-    m_normal_track.yaw.initialize(m_yaml.yaw.kp, m_yaml.yaw.ki, m_yaml.yaw.kd, false, 1.5708f, 1.5708f, 0.05f, 0.02f, is_filter, is_filter); 
-    m_normal_track.ud.initialize(m_yaml.ud.kp, m_yaml.ud.ki, m_yaml.ud.kd, false, 0.5f, 0.5f, 0.05f, 0.02f, is_filter, is_filter); 
-    m_normal_track.fb.initialize(m_yaml.fb.kp, m_yaml.fb.ki, m_yaml.fb.kd, false, 0.4f, 0.4f, 0.05f, 0.02f, is_filter, is_filter);
+    m_normal_track.yaw.initialize(
+        m_yaml.yaw.kp, 
+        m_yaml.yaw.ki, 
+        m_yaml.yaw.kd, 
+        false, 
+        m_yaml.yaw.th, 
+        m_yaml.yaw.th, 
+        0.05f, 
+        0.02f, 
+        is_filter, 
+        is_filter
+    ); 
+    m_normal_track.ud.initialize(
+        m_yaml.ud.kp, 
+        m_yaml.ud.ki, 
+        m_yaml.ud.kd, 
+        false, 
+        m_yaml.ud.th, 
+        m_yaml.ud.th, 
+        0.05f, 
+        0.02f, 
+        is_filter, 
+        is_filter
+    ); 
+    m_normal_track.fb.initialize(
+        m_yaml.fb.kp, 
+        m_yaml.fb.ki, 
+        m_yaml.fb.kd, 
+        false, 
+        m_yaml.fb.th, 
+        m_yaml.fb.th, 
+        0.05f, 
+        0.02f, 
+        is_filter, 
+        is_filter
+    );
 }
 
 void Track::normalTrack(
@@ -91,7 +127,8 @@ void Track::normalTrack(
         RCLCPP_INFO(m_log, "-------------------------");
     }else {
         RCLCPP_INFO(m_log, "-----------未跟踪----------");
-        log_printf_tool::printf_log_pos(m_log, pub_pos_msgs.position, cur_pos);
+        log_printf_tool::printf_log_cur_pos(m_log, cur_pos);
+        log_printf_tool::printf_log_cur_vec(m_log, pub_pos_msgs.velocity);
         RCLCPP_INFO(m_log, "-------------------------");
     }
 }
@@ -291,7 +328,8 @@ void Track::normalTrack_v3(
         RCLCPP_INFO(m_log, "-------------------------");
     }else {
         RCLCPP_INFO(m_log, "-----------未跟踪----------");
-        log_printf_tool::printf_log_pos(m_log, pub_pos_msgs.position, cur_pos);
+        log_printf_tool::printf_log_cur_pos(m_log, cur_pos); 
+        log_printf_tool::printf_log_cur_vec(m_log, pub_pos_msgs.velocity);
         RCLCPP_INFO(m_log, "-------------------------");
     }
 }

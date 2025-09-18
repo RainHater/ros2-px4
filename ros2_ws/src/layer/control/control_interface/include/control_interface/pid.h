@@ -7,6 +7,7 @@ struct PidInfo{
     float kp;
     float ki;
     float kd;
+    float th;
 };
 
 enum class FilterType {

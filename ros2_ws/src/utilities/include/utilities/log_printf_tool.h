@@ -33,6 +33,18 @@ inline void printf_log_cur_pos(
     );
 }
 
+inline void printf_log_cur_vec(
+    rclcpp::Logger log,
+    std::array<float, 3> cur_vec
+) {
+    RCLCPP_INFO(log, 
+        "cur_vec[0]: %f, cur_vec[1]: %f, cur_vec[2]: %f",
+        cur_vec[0],
+        cur_vec[1],
+        cur_vec[2]
+    );
+}
+
 inline void printf_log_title_pos(
     rclcpp::Logger log,
     std::string title, 
