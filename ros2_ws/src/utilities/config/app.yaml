@@ -37,8 +37,15 @@ track:
 
 #跟踪
 visual_track:
+  #飞行高度
   lift_height: 1.5
+  #是否室外
   outdoor_flag: true
+  #是否切换速度模式
   switch_mode: false
-  track_mode: 0
+  #跟踪模式
+  track_mode: 4
+  #是否使用loc位置
+  is_loc_pos: false
+
   

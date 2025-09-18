@@ -55,6 +55,14 @@ public:
         std::vector<identify::msg::YoloDetection> det_targets,
         px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
     );
+    void normalTrack_v4(
+        bool is_target_valid,
+        std::array<float, 3> cur_pos,
+        std::array<float, 3> g_pos,
+        std::array<float, 4> flo_q,
+        std::vector<identify::msg::YoloDetection> det_targets,
+        px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
+    );
     //更新定点值
     void updateLastPostition(std::array<float, 3> pos);
 private:

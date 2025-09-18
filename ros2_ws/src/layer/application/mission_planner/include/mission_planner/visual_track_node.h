@@ -1,11 +1,13 @@
 #ifndef _SIMPLE_INDOOR_CONTROL_TASK_H
 #define _SIMPLE_INDOOR_CONTROL_TASK_H
 
+#include <px4_msgs/msg/detail/vehicle_local_position__struct.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_odometry.hpp>
 #include <px4_msgs/msg/vehicle_global_position.hpp>
+#include <px4_msgs/msg/vehicle_local_position.hpp>
 #include <px4_msgs/msg/manual_control_setpoint.hpp>
 
 #include "common_msgs/msg/arm_offboard_status.hpp"
@@ -35,6 +37,7 @@ protected:
     void manualControlSetpointCallback(const std::shared_ptr<px4_msgs::msg::ManualControlSetpoint> msg);
     void offboardModeCallback(const std::shared_ptr<common_msgs::msg::ArmOffboardStatus> msg);
     void globalPosCallback(const std::shared_ptr<px4_msgs::msg::VehicleGlobalPosition> msg);
+    void locPosCallback(const std::shared_ptr<px4_msgs::msg::VehicleLocalPosition> msg);
 private:
     enum FlyStep{
         IDLE,
@@ -56,6 +59,7 @@ private:
         rclcpp::Subscription<px4_msgs::msg::ManualControlSetpoint>::SharedPtr manual_ctrl_sp;
         rclcpp::Subscription<common_msgs::msg::ArmOffboardStatus>::SharedPtr offb_mode;
         rclcpp::Subscription<px4_msgs::msg::VehicleGlobalPosition>::SharedPtr global_pos;
+        rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr loc_pos;
     };
 
     struct PubMsgInfo{
@@ -71,11 +75,16 @@ private:
 
     struct DroneDataInfo{
         std::array<float, 3> cur_pos;
+        std::array<float, 3> loc_pos;
+        //计算位置
+        std::array<float, 3> cal_pos;
         std::array<float, 4> flo_q;
         //多个检测目标
         std::vector<identify::msg::YoloDetection> det_targets;
         //当前经纬度
-        utilities::convert::GeoCoord   cur_gps;
+        utilities::convert::GeoCoord cur_gps;
+        //上一次时间
+        rcl_time_point_value_t last_sec;
         //当前offboard模式
         uint16_t  cur_offb;
         //当前arm状态
@@ -90,9 +99,10 @@ private:
 
     struct YamlInfo{
         float lift_height = 1.5f;
+        int track_mode = 0;
         bool outdoor_flag = false;
         bool switch_mode = false;
-        int track_mode = 0;
+        bool is_loc_pos = false;
     };
 private:
     rclcpp::TimerBase::SharedPtr m_timer;

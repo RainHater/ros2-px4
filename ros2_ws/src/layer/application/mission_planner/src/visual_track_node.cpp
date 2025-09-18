@@ -19,9 +19,10 @@ VisualTrack::VisualTrack()
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["visual_track"];
     m_yaml.lift_height = config["lift_height"].as<float>();
+    m_yaml.track_mode = config["track_mode"].as<int>();
     m_yaml.outdoor_flag = config["outdoor_flag"].as<bool>();
     m_yaml.switch_mode = config["switch_mode"].as<bool>();
-    m_yaml.track_mode = config["track_mode"].as<int>();
+    m_yaml.is_loc_pos = config["is_loc_pos"].as<bool>();
 
     RCLCPP_INFO(get_logger(), "visual_track 节点启动...");
 }
@@ -90,12 +91,20 @@ void VisualTrack::initSub(){
         topics.topic_px4_out().VEHICLE_GLOBAL_POSITION,
         qos_best_effort,
         std::bind(&VisualTrack::globalPosCallback, this, _1)
-    ); 
+    );
+    
+    m_sub.loc_pos = create_subscription<px4_msgs::msg::VehicleLocalPosition>(
+        topics.topic_px4_out().VEHICLE_LOCAL_POSITION,
+        qos_best_effort,
+        std::bind(&VisualTrack::locPosCallback, this, _1)
+    );
 }
 
 void VisualTrack::taskLoop(){
     auto cur_arm = m_drone_data.cur_arm;
     auto cur_offb = m_drone_data.cur_offb;
+    auto cur_pos = (m_yaml.is_loc_pos)?m_drone_data.loc_pos:m_drone_data.cur_pos;
+    auto flo_q = m_drone_data.flo_q;
 
     switch(m_fly){
         case IDLE:{
@@ -111,9 +120,6 @@ void VisualTrack::taskLoop(){
             break;
         }
         case RISE:{
-            auto cur_pos = m_drone_data.cur_pos;
-            auto flo_q = m_drone_data.flo_q;
-
             bool arrive = m_iface.movement.changeHeight(
                     cur_pos, 
                     flo_q, 
@@ -140,6 +146,7 @@ void VisualTrack::taskLoop(){
                 }else {
                     m_fly = WAIT;
                 }
+                m_drone_data.cal_pos = m_pub_msgs.traj.position;
                 RCLCPP_INFO(get_logger(), "上升完成!");
             }
             break;
@@ -166,8 +173,6 @@ void VisualTrack::taskLoop(){
         case Hover:{
             auto track_mode = m_yaml.track_mode;
             auto det_targets = m_drone_data.det_targets;
-            auto cur_pos = m_drone_data.cur_pos;
-            auto flo_q = m_drone_data.flo_q;
             auto is_target_valid = m_drone_data.is_target_valid;
 
             m_iface.track.updateLastPostition(cur_pos);
@@ -205,13 +210,37 @@ void VisualTrack::taskLoop(){
                         det_targets,
                         m_pub_msgs.traj
                     );
+                }else if (track_mode == 4){
+                    m_iface.track.normalTrack_v4(
+                        is_target_valid,
+                        cur_pos,
+                        m_drone_data.cal_pos,
+                        flo_q,
+                        det_targets,
+                        m_pub_msgs.traj
+                    );
                 }
+            }
+            
+            if (is_target_valid){
+                auto now = get_clock()->now().seconds();
+                if (m_drone_data.last_sec){
+                    auto dt = now - m_drone_data.last_sec;
+                    m_drone_data.last_sec = now;
+                    m_drone_data.cal_pos[0] += m_pub_msgs.traj.velocity[0] * dt;
+                    m_drone_data.cal_pos[1] += m_pub_msgs.traj.velocity[1] * dt;
+                    m_drone_data.cal_pos[2] += m_pub_msgs.traj.velocity[2] * dt;
+
+                }else {
+                    m_drone_data.last_sec = now;
+                }
+                
+            }else {
+                m_drone_data.last_sec = 0;
             }
             break;
         }
         case LAND:{
-            auto flo_q = m_drone_data.flo_q;
-
             m_iface.movement.landMode(flo_q, m_pub_msgs.traj);
             break;
         }
@@ -265,6 +294,28 @@ void VisualTrack::globalPosCallback(
     m_drone_data.cur_gps.lat = msg->lat;
     m_drone_data.cur_gps.lon = msg->lon;
     m_drone_data.cur_gps.alt = msg->alt;
+}
+
+void VisualTrack::locPosCallback(
+    const std::shared_ptr<px4_msgs::msg::VehicleLocalPosition> msg
+){
+    if (msg->xy_valid){
+        m_drone_data.loc_pos[0] = msg->x;
+        m_drone_data.loc_pos[1] = msg->y;
+    }
+    if (msg->z_valid){
+        m_drone_data.loc_pos[2] = msg->z;
+    }
+    
+    // if (msg->xy_valid && msg->z_valid){
+    //     RCLCPP_INFO(
+    //         get_logger(), 
+    //         "loc_p[0]: %f, loc_p[1]: %f, loc_p[2]: %f",
+    //         m_drone_data.loc_pos[0],
+    //         m_drone_data.loc_pos[1],
+    //         m_drone_data.loc_pos[2]
+    //     );
+    // }
 }
 
 int main(int argc, char *argv[]) {
