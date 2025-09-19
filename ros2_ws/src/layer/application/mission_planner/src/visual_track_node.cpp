@@ -14,6 +14,7 @@ using std::placeholders::_1;
 
 VisualTrack::VisualTrack()
     : rclcpp::Node("visual_track")
+    , m_dt(10)
     , m_fly(IDLE)
 {
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
@@ -24,6 +25,17 @@ VisualTrack::VisualTrack()
     m_yaml.switch_mode = config["switch_mode"].as<bool>();
     m_yaml.is_loc_pos = config["is_loc_pos"].as<bool>();
 
+    m_drone_data.detect_last_dt = get_ms();
+
+    RCLCPP_INFO(get_logger(), "-----------跟踪配置文件----------");
+    RCLCPP_INFO(get_logger(), "起飞高度: %f", m_yaml.lift_height);
+    RCLCPP_INFO(get_logger(), "跟踪模式: %d", m_yaml.track_mode);
+    RCLCPP_INFO(get_logger(), "是否户外: %d", m_yaml.outdoor_flag);
+    RCLCPP_INFO(get_logger(), "是否切换速度模式: %d", m_yaml.switch_mode);
+    RCLCPP_INFO(get_logger(), "是否使用loc_pos: %d", m_yaml.is_loc_pos);
+    RCLCPP_INFO(get_logger(), "m_dt: %ld", m_dt);
+    RCLCPP_INFO(get_logger(), "-----------配置文件结束----------");
+
     RCLCPP_INFO(get_logger(), "visual_track 节点启动...");
 }
 
@@ -33,7 +45,7 @@ void VisualTrack::initialize(){
     initSub();
     
     m_timer = create_wall_timer(
-        std::chrono::milliseconds(100),
+        std::chrono::milliseconds(m_dt),
         std::bind(&VisualTrack::taskLoop, this)
     );
 }
@@ -174,6 +186,7 @@ void VisualTrack::taskLoop(){
             auto track_mode = m_yaml.track_mode;
             auto det_targets = m_drone_data.det_targets;
             auto is_target_valid = m_drone_data.is_target_valid;
+            auto dt = m_drone_data.detect_dt;
 
             m_iface.track.updateLastPostition(cur_pos);
             if (m_drone_data.is_detection_changed){
@@ -181,6 +194,7 @@ void VisualTrack::taskLoop(){
                 if (track_mode == 0){
                     m_iface.track.normalTrack(
                         is_target_valid,
+                        dt,
                         cur_pos,
                         flo_q,
                         det_targets,
@@ -189,6 +203,7 @@ void VisualTrack::taskLoop(){
                 }else if (track_mode == 1){
                     m_iface.track.normalTrack_v1(
                         is_target_valid,
+                        dt,
                         cur_pos,
                         flo_q,
                         det_targets,
@@ -197,6 +212,7 @@ void VisualTrack::taskLoop(){
                 }else if (track_mode == 2){
                     m_iface.track.normalTrack_v2(
                         is_target_valid,
+                        dt,
                         cur_pos,
                         flo_q,
                         det_targets,
@@ -205,6 +221,7 @@ void VisualTrack::taskLoop(){
                 }else if (track_mode == 3){
                     m_iface.track.normalTrack_v3(
                         is_target_valid,
+                        dt,
                         cur_pos,
                         flo_q,
                         det_targets,
@@ -213,6 +230,7 @@ void VisualTrack::taskLoop(){
                 }else if (track_mode == 4){
                     m_iface.track.normalTrack_v4(
                         is_target_valid,
+                        dt,
                         cur_pos,
                         m_drone_data.cal_pos,
                         flo_q,
@@ -222,6 +240,7 @@ void VisualTrack::taskLoop(){
                 }else if (track_mode == 5){
                     m_iface.track.normalTrack_v5(
                         is_target_valid,
+                        dt,
                         cur_pos,
                         flo_q,
                         det_targets,
@@ -230,20 +249,10 @@ void VisualTrack::taskLoop(){
                 }
             }
             if (is_target_valid){
-                auto now = get_clock()->now().seconds();
-                if (m_drone_data.last_sec){
-                    auto dt = now - m_drone_data.last_sec;
-                    m_drone_data.last_sec = now;
-                    m_drone_data.cal_pos[0] += m_pub_msgs.traj.velocity[0] * dt;
-                    m_drone_data.cal_pos[1] += m_pub_msgs.traj.velocity[1] * dt;
-                    m_drone_data.cal_pos[2] += m_pub_msgs.traj.velocity[2] * dt;
-
-                }else {
-                    m_drone_data.last_sec = now;
-                }
-                
-            }else {
-                m_drone_data.last_sec = 0;
+                auto now_ms = m_dt / 1000.0f;
+                m_drone_data.cal_pos[0] += m_pub_msgs.traj.velocity[0] * now_ms;
+                m_drone_data.cal_pos[1] += m_pub_msgs.traj.velocity[1] * now_ms;
+                m_drone_data.cal_pos[2] += m_pub_msgs.traj.velocity[2] * now_ms;
             }
             break;
         }
@@ -264,6 +273,10 @@ void VisualTrack::taskLoop(){
     }
 }
 
+int64_t VisualTrack::get_ms(){
+    return get_clock()->now().nanoseconds() / 1000000; 
+}
+
 void VisualTrack::vehicleOdometryCallback(
     const std::shared_ptr<px4_msgs::msg::VehicleOdometry> msg
 ){
@@ -274,10 +287,15 @@ void VisualTrack::vehicleOdometryCallback(
 
 void VisualTrack::yoloDetectionsCallback(
     const std::shared_ptr<identify::msg::YoloDetections> msg
-){
+){  
+    auto now_ms = get_ms();
+    m_drone_data.detect_dt = now_ms - m_drone_data.detect_last_dt;
+    m_drone_data.detect_last_dt = now_ms;
     m_drone_data.det_targets = msg->detections;
     m_drone_data.is_target_valid = msg->detect_flag;
     m_drone_data.is_detection_changed = true;
+
+    // RCLCPP_INFO(get_logger(), "detect_dt: %ld", m_drone_data.detect_dt);
 }
 
 void VisualTrack::manualControlSetpointCallback(

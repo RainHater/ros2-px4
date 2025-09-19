@@ -28,6 +28,7 @@ public:
     //普通跟踪
     void normalTrack(
         bool is_target_valid,
+        int64_t dt,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
         std::vector<identify::msg::YoloDetection> det_targets,
@@ -36,6 +37,7 @@ public:
     //普通跟踪v1(位置)
     void normalTrack_v1(
         bool is_target_valid,
+        int64_t dt,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
         std::vector<identify::msg::YoloDetection> det_targets,
@@ -43,6 +45,7 @@ public:
     );
     void normalTrack_v2(
         bool is_target_valid,
+        int64_t dt,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
         std::vector<identify::msg::YoloDetection> det_targets,
@@ -50,6 +53,7 @@ public:
     );
     void normalTrack_v3(
         bool is_target_valid,
+        int64_t dt,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
         std::vector<identify::msg::YoloDetection> det_targets,
@@ -57,6 +61,7 @@ public:
     );
     void normalTrack_v4(
         bool is_target_valid,
+        int64_t dt,
         std::array<float, 3> cur_pos,
         std::array<float, 3> g_pos,
         std::array<float, 4> flo_q,
@@ -65,6 +70,7 @@ public:
     );
     void normalTrack_v5(
         bool is_target_valid,
+        int64_t dt,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
         std::vector<identify::msg::YoloDetection> det_targets,

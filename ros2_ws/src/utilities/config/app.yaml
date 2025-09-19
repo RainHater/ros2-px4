@@ -44,6 +44,6 @@ visual_track:
   #是否切换速度模式
   switch_mode: false
   #跟踪模式
-  track_mode: 5
+  track_mode: 4
   #是否使用loc位置
   is_loc_pos: false

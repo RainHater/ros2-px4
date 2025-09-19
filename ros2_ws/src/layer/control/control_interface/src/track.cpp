@@ -28,6 +28,14 @@ Track::Track()
     m_yaml.area_th = config["area_th"].as<float>();
     m_yaml.is_filter = config["is_filter"].as<bool>();
 
+    RCLCPP_INFO(m_log, "-----------跟踪配置文件----------");
+    RCLCPP_INFO(m_log, "左右pid, kp: %f, ki: %f, kd: %f, th: %f", m_yaml.yaw.kp, m_yaml.yaw.ki, m_yaml.yaw.kd, m_yaml.yaw.th);
+    RCLCPP_INFO(m_log, "上下pid, kp: %f, ki: %f, kd: %f, th: %f", m_yaml.ud.kp, m_yaml.ud.ki, m_yaml.ud.kd, m_yaml.ud.th);
+    RCLCPP_INFO(m_log, "前后pid, kp: %f, ki: %f, kd: %f, th: %f", m_yaml.fb.kp, m_yaml.fb.ki, m_yaml.fb.kd, m_yaml.fb.th);
+    RCLCPP_INFO(m_log, "跟踪面积阈值: %f", m_yaml.area_th);
+    RCLCPP_INFO(m_log, "是否过滤: %d", m_yaml.is_filter);
+    RCLCPP_INFO(m_log, "-----------配置文件结束----------");
+
     m_normal_track.thre_area = m_camera.width*m_camera.height*m_yaml.area_th;
 
     FilterType is_filter = FilterType::None;
@@ -75,13 +83,13 @@ Track::Track()
 
 void Track::normalTrack(
     bool is_target_valid,
+    int64_t dt,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
     std::vector<identify::msg::YoloDetection> det_targets,
     px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
 ) {
     auto cur_yaw = utilities::convert::flo_to_yaw(flo_q);
-    auto dt  = 100.0f;
 
     float cx = 0.0f;
     float cy = 0.0f;
@@ -118,7 +126,7 @@ void Track::normalTrack(
 
     if (is_target_valid){
         RCLCPP_INFO(m_log, "-----------跟踪----------");
-        RCLCPP_INFO(m_log, "dt: %f", dt);
+        RCLCPP_INFO(m_log, "dt: %ld", dt);
         RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, pub_pos_msgs.yawspeed);
         RCLCPP_INFO(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, ud_output);
         RCLCPP_INFO(m_log, "area: %f, area_error: %f, fb_out: %f", area, area_error, fb_output);
@@ -135,6 +143,7 @@ void Track::normalTrack(
 
 void Track::normalTrack_v1(
     bool is_target_valid,
+    int64_t dt,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
     std::vector<identify::msg::YoloDetection> det_targets,
@@ -142,7 +151,6 @@ void Track::normalTrack_v1(
 ) {
     auto detect_flag = is_target_valid;
     auto cur_yaw = utilities::convert::flo_to_yaw(flo_q);
-    auto dt  = 100.0f;
 
     float cx = 0.0f;
     float cy = 0.0f;
@@ -188,7 +196,7 @@ void Track::normalTrack_v1(
         pub_pos_msgs.velocity[2] = ud_output;
 
         RCLCPP_INFO(m_log, "--跟踪-------------------");
-        RCLCPP_INFO(m_log, "dt: %f", dt);
+        RCLCPP_INFO(m_log, "dt: %ld", dt);
         RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, yaw_output);
         RCLCPP_INFO(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, ud_output);
         RCLCPP_INFO(m_log, "area: %f, area_error: %f, fb_out: %f", area, area_error, fb_output);
@@ -206,6 +214,7 @@ void Track::normalTrack_v1(
 
 void Track::normalTrack_v2(
     bool is_target_valid,
+    int64_t dt,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
     std::vector<identify::msg::YoloDetection> det_targets,
@@ -213,7 +222,7 @@ void Track::normalTrack_v2(
 ) {
     auto detect_flag = is_target_valid;
     auto cur_yaw = utilities::convert::flo_to_yaw(flo_q);
-    auto dt  = 100.0f;    
+
 
     float cx = 0.0f;
     float cy = 0.0f;
@@ -258,7 +267,7 @@ void Track::normalTrack_v2(
         pub_pos_msgs.velocity[2] = ud_output;
 
         RCLCPP_INFO(m_log, "--跟踪-------------------");
-        RCLCPP_INFO(m_log, "dt: %f", dt);
+        RCLCPP_INFO(m_log, "dt: %ld", dt);
         RCLCPP_INFO(m_log, "cur_yaw: %f", yaw);
         RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, yaw_output);
         RCLCPP_INFO(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, ud_output);
@@ -276,6 +285,7 @@ void Track::normalTrack_v2(
 
 void Track::normalTrack_v3(
     bool is_target_valid,
+    int64_t dt,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
     std::vector<identify::msg::YoloDetection> det_targets,
@@ -283,7 +293,6 @@ void Track::normalTrack_v3(
 ) {
     auto detect_flag = is_target_valid;
     auto cur_yaw = utilities::convert::flo_to_yaw(flo_q);
-    auto dt  = 100.0f;
 
     float cx = 0.0f;
     float cy = 0.0f;
@@ -319,7 +328,7 @@ void Track::normalTrack_v3(
 
     if (detect_flag){
         RCLCPP_INFO(m_log, "-----------跟踪----------");
-        RCLCPP_INFO(m_log, "dt: %f", dt);
+        RCLCPP_INFO(m_log, "dt: %ld", dt);
         RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, yaw_output);
         RCLCPP_INFO(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, ud_output);
         RCLCPP_INFO(m_log, "area: %f, area_error: %f, fb_out: %f", area, area_error, fb_output);
@@ -336,6 +345,7 @@ void Track::normalTrack_v3(
 
 void Track::normalTrack_v4(
     bool is_target_valid,
+    int64_t dt,
     std::array<float, 3> cur_pos,
     std::array<float, 3> g_pos,
     std::array<float, 4> flo_q,
@@ -344,7 +354,6 @@ void Track::normalTrack_v4(
 ) {
     auto detect_flag = is_target_valid;
     auto cur_yaw = utilities::convert::flo_to_yaw(flo_q);
-    auto dt  = 100.0f;
 
     float cx = 0.0f;
     float cy = 0.0f;
@@ -381,7 +390,7 @@ void Track::normalTrack_v4(
 
     if (detect_flag){
         RCLCPP_INFO(m_log, "--跟踪-------------------");
-        RCLCPP_INFO(m_log, "dt: %f", dt);
+        RCLCPP_INFO(m_log, "dt: %ld", dt);
         RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, yaw_output);
         RCLCPP_INFO(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, ud_output);
         RCLCPP_INFO(m_log, "area: %f, area_error: %f, fb_out: %f", area, area_error, fb_output);
@@ -398,6 +407,7 @@ void Track::normalTrack_v4(
 
 void Track::normalTrack_v5(
     bool is_target_valid,
+    int64_t dt,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
     std::vector<identify::msg::YoloDetection> det_targets,
@@ -405,7 +415,6 @@ void Track::normalTrack_v5(
 ) {
     auto detect_flag = is_target_valid;
     auto cur_yaw = utilities::convert::flo_to_yaw(flo_q);
-    auto dt  = 100.0f;
 
     float cx = 0.0f;
     float cy = 0.0f;
@@ -450,7 +459,7 @@ void Track::normalTrack_v5(
 
     if (detect_flag){
         RCLCPP_INFO(m_log, "--跟踪-------------------");
-        RCLCPP_INFO(m_log, "dt: %f", dt);
+        RCLCPP_INFO(m_log, "dt: %ld", dt);
         RCLCPP_INFO(m_log, "cx: %f, cx_error: %f, yaw_out: %f", cx, cx_error, yaw_output);
         RCLCPP_INFO(m_log, "cy: %f, cy_error: %f, ud_out: %f", cy, cy_error, ud_output);
         RCLCPP_INFO(m_log, "area: %f, area_error: %f, fb_out: %f", area, area_error, fb_output);

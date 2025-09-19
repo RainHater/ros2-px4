@@ -30,6 +30,7 @@ protected:
     void initSub();
 protected:
     void taskLoop();
+    int64_t get_ms();
 
     //消息回调函数
     void vehicleOdometryCallback(const std::shared_ptr<px4_msgs::msg::VehicleOdometry> msg);
@@ -81,10 +82,11 @@ private:
         std::array<float, 4> flo_q;
         //多个检测目标
         std::vector<identify::msg::YoloDetection> det_targets;
+        int64_t detect_last_dt;
+        //检测dt
+        int64_t detect_dt;
         //当前经纬度
         utilities::convert::GeoCoord cur_gps;
-        //上一次时间
-        rcl_time_point_value_t last_sec;
         //当前offboard模式
         uint16_t  cur_offb;
         //当前arm状态
@@ -106,6 +108,7 @@ private:
     };
 private:
     rclcpp::TimerBase::SharedPtr m_timer;
+    uint64_t m_dt;
     FlyStep m_fly;
     PubInfo m_pub;
     SubInfo m_sub;

@@ -15,7 +15,7 @@ topic_px4_in:
 
 topic_px4_out:
   VEHICLE_STATUS:           "/fmu/out/vehicle_status_v1"
-  VEHICLE_LOCAL_POSITION:   "/fmu/out/vehicle_local_position_v1"
+  VEHICLE_LOCAL_POSITION:   "/fmu/out/vehicle_local_position"
   VEHICLE_ODOMETRY:         "/fmu/out/vehicle_odometry"
   VEHICLE_GLOBAL_POSITION:  "/fmu/out/vehicle_global_position"
   BATTERY_STATUS:           "/fmu/out/battery_status"
