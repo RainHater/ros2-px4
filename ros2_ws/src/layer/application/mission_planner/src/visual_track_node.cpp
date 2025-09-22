@@ -14,7 +14,7 @@ using std::placeholders::_1;
 
 VisualTrack::VisualTrack()
     : rclcpp::Node("visual_track")
-    , m_dt((1/30.0f)*1000.0f)
+    , m_dt(10)
     , m_fly(IDLE)
 {
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
@@ -215,6 +215,15 @@ void VisualTrack::taskLoop(){
                     m_pub_msgs.traj.position[2] = cur_pos[2];
                     m_pub_msgs.traj.velocity[0] = cosf(cur_yaw) * 0.1f;
                     m_pub_msgs.traj.velocity[1] = sinf(cur_yaw) * 0.1f;
+                    m_pub_msgs.traj.velocity[2] = 0.0f;
+                    break;
+                }
+                case 3:{
+                    m_pub_msgs.traj.position[0] = NAN;
+                    m_pub_msgs.traj.position[1] = NAN;
+                    m_pub_msgs.traj.position[2] = NAN;
+                    m_pub_msgs.traj.velocity[0] = 0.0f;
+                    m_pub_msgs.traj.velocity[1] = 0.0f;
                     m_pub_msgs.traj.velocity[2] = 0.0f;
                     break;
                 }
