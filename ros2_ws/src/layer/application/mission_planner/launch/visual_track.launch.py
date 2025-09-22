@@ -1,6 +1,6 @@
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
-from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
+from launch.substitutions import PathJoinSubstitution
+from launch.actions import IncludeLaunchDescription
 from launch_ros.substitutions import FindPackageShare
 from launch import LaunchDescription
 from launch_ros.actions import Node
@@ -26,7 +26,7 @@ def generate_launch_description():
         )
     )
 
-    vision_test_node = Node(
+    visual_track_node = Node(
         package='mission_planner',
         executable='visual_track_node',
         name='visual_track_node',
@@ -36,5 +36,5 @@ def generate_launch_description():
     return LaunchDescription([
         mipi_detect,
         mission_planner,
-        vision_test_node,
+        visual_track_node,
     ])

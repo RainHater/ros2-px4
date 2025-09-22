@@ -25,7 +25,7 @@ class Track{
 public:
     Track();
 
-    //普通跟踪
+    //普通跟踪-切换速度模式跟踪
     void normalTrack(
         bool is_target_valid,
         int64_t dt,
@@ -55,20 +55,12 @@ public:
         bool is_target_valid,
         int64_t dt,
         std::array<float, 3> cur_pos,
-        std::array<float, 4> flo_q,
-        std::vector<identify::msg::YoloDetection> det_targets,
-        px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
-    );
-    void normalTrack_v4(
-        bool is_target_valid,
-        int64_t dt,
-        std::array<float, 3> cur_pos,
         std::array<float, 3> g_pos,
         std::array<float, 4> flo_q,
         std::vector<identify::msg::YoloDetection> det_targets,
         px4_msgs::msg::TrajectorySetpoint &pub_pos_msgs
     );
-    void normalTrack_v5(
+    void normalTrack_v4(
         bool is_target_valid,
         int64_t dt,
         std::array<float, 3> cur_pos,
@@ -93,7 +85,6 @@ private:
         std::array<float, 3> last_pos;
         identify::msg::YoloDetection last_detection;
         float thre_area;
-        bool last_pos_init = false;
         bool last_pos_update = false;
     };
     //yaml 配置文件

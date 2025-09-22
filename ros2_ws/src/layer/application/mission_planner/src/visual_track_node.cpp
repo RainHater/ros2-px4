@@ -223,22 +223,13 @@ void VisualTrack::taskLoop(){
                         is_target_valid,
                         dt,
                         cur_pos,
+                        m_drone_data.cal_pos,
                         flo_q,
                         det_targets,
                         m_pub_msgs.traj
                     );
                 }else if (track_mode == 4){
                     m_iface.track.normalTrack_v4(
-                        is_target_valid,
-                        dt,
-                        cur_pos,
-                        m_drone_data.cal_pos,
-                        flo_q,
-                        det_targets,
-                        m_pub_msgs.traj
-                    );
-                }else if (track_mode == 5){
-                    m_iface.track.normalTrack_v5(
                         is_target_valid,
                         dt,
                         cur_pos,
@@ -250,9 +241,9 @@ void VisualTrack::taskLoop(){
             }
             if (is_target_valid){
                 auto now_ms = m_dt / 1000.0f;
-                m_drone_data.cal_pos[0] += m_pub_msgs.traj.velocity[0] * now_ms;
-                m_drone_data.cal_pos[1] += m_pub_msgs.traj.velocity[1] * now_ms;
-                m_drone_data.cal_pos[2] += m_pub_msgs.traj.velocity[2] * now_ms;
+                m_drone_data.cal_pos[0] += (m_pub_msgs.traj.velocity[0] * now_ms);
+                m_drone_data.cal_pos[1] += (m_pub_msgs.traj.velocity[1] * now_ms);
+                m_drone_data.cal_pos[2] += (m_pub_msgs.traj.velocity[2] * now_ms);
             }
             break;
         }
@@ -262,6 +253,11 @@ void VisualTrack::taskLoop(){
         }
     }
 
+    pushMsgs();
+}
+
+void VisualTrack::pushMsgs(){
+    auto cur_arm = m_drone_data.cur_arm;
     auto timestamp = get_clock()->now().nanoseconds() / 1000;
     m_pub_msgs.offb_mode.timestamp = timestamp;
    
@@ -331,16 +327,6 @@ void VisualTrack::locPosCallback(
     if (msg->z_valid){
         m_drone_data.loc_pos[2] = msg->z;
     }
-    
-    // if (msg->xy_valid && msg->z_valid){
-    //     RCLCPP_INFO(
-    //         get_logger(), 
-    //         "loc_p[0]: %f, loc_p[1]: %f, loc_p[2]: %f",
-    //         m_drone_data.loc_pos[0],
-    //         m_drone_data.loc_pos[1],
-    //         m_drone_data.loc_pos[2]
-    //     );
-    // }
 }
 
 int main(int argc, char *argv[]) {

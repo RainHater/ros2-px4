@@ -39,4 +39,8 @@ sshpass -p "${TARGET_PASSWORD}" rsync -aAXv \
     "${TOP_DIR}/scripts/target/yaml_update.sh" \
     "${TARGET_USER}@${TARGET_IP}:${TARGET_PATH}"
 
+sshpass -p "${TARGET_PASSWORD}" rsync -aAXv \
+    "${TOP_DIR}/scripts/target/track_start.sh" \
+    "${TARGET_USER}@${TARGET_IP}:/bin/"
+
 echo "✅ 同步完成"

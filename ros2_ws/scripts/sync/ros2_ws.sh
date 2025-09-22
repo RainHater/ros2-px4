@@ -30,4 +30,8 @@ sshpass -p "sunrise" rsync -aAXv \
     "./yaml_update.sh" \
     "$TARGET_USER@$TARGET_IP:$TARGET_PATH"
 
+sshpass -p "${TARGET_PASSWORD}" rsync -aAXv \
+    "./track_start.sh" \
+    "${TARGET_USER}@${TARGET_IP}:/bin/"
+
 echo "✅ 同步完成"

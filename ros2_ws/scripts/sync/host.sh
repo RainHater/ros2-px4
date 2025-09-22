@@ -33,6 +33,7 @@ sshpass -p "sunrise" rsync -aAXv \
     "$SOURCE_PATH" \
     "scripts/sync/ros2_ws.sh" \
     "scripts/target/yaml_update.sh" \
+    "scripts/target/track_start.sh" \
     "$TARGET_USER@$TARGET_IP:$TARGET_PATH"
 
 echo "✅ 同步完成"

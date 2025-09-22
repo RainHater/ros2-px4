@@ -30,6 +30,7 @@ protected:
     void initSub();
 protected:
     void taskLoop();
+    void pushMsgs();
     int64_t get_ms();
 
     //消息回调函数
