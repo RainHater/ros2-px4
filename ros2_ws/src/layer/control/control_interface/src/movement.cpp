@@ -13,10 +13,12 @@ Movement::Movement()
     m_yaml.hor_th = config["hor_th"].as<float>();
     m_yaml.ver_th = config["ver_th"].as<float>();
     m_yaml.delta = config["delta"].as<float>();
-    m_yaml.land_correction = config["land_correction"].as<float>();
-    m_yaml.land_start_time = config["land_start_time"].as<float>();
-    m_yaml.move_time_out = config["move_time_out"].as<float>();
-    m_yaml.land_th = config["land_th"].as<float>();
+
+    RCLCPP_INFO(m_log, "-----------控制配置文件----------");
+    RCLCPP_INFO(m_log, "水平距离阈值: %f", m_yaml.hor_th);
+    RCLCPP_INFO(m_log, "垂直距离阈值: %f", m_yaml.ver_th);
+    RCLCPP_INFO(m_log, "飞行阈值: %f", m_yaml.delta);
+    RCLCPP_INFO(m_log, "-----------配置文件结束----------");
 }
 
 bool Movement::navMoveToTarget(

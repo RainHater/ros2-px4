@@ -5,14 +5,6 @@ movement:
   ver_th: 0.4
   #飞行阈值
   delta: 0.6
-  #降落高度修正
-  land_correction: 0.05
-  #降落到地面时间
-  land_start_time: 3.0
-  #移动位置超时时间
-  move_time_out: 3.0
-  #降落阈值
-  land_th: 0.2
 
 track:
   #yaw PID
@@ -39,11 +31,15 @@ track:
 visual_track:
   #飞行高度
   lift_height: 1.5
+  #跟踪模式
+  track_mode: 0
+  #测试模式
+  test_mode: 0
   #是否室外
   outdoor_flag: true
   #是否切换速度模式
   switch_mode: false
-  #跟踪模式
-  track_mode: 4
+  #是否切换检测模式
+  switch_det: false
   #是否使用loc位置
   is_loc_pos: false

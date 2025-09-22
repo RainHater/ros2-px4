@@ -141,10 +141,6 @@ private:
         float hor_th = 0.9f;
         float ver_th = 0.4f;
         float delta = 0.5f;
-        float land_correction = 0.05f;
-        float land_start_time = 3.0f;
-        float move_time_out = 3.0f;
-        float land_th = 0.2f;
     };
 private:
     rclcpp::Logger m_log;

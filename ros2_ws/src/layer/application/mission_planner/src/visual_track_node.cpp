@@ -14,25 +14,29 @@ using std::placeholders::_1;
 
 VisualTrack::VisualTrack()
     : rclcpp::Node("visual_track")
-    , m_dt(10)
+    , m_dt((1/30.0f)*1000.0f)
     , m_fly(IDLE)
 {
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["visual_track"];
     m_yaml.lift_height = config["lift_height"].as<float>();
     m_yaml.track_mode = config["track_mode"].as<int>();
+    m_yaml.test_mode = config["test_mode"].as<int>();
     m_yaml.outdoor_flag = config["outdoor_flag"].as<bool>();
     m_yaml.switch_mode = config["switch_mode"].as<bool>();
     m_yaml.is_loc_pos = config["is_loc_pos"].as<bool>();
+    m_yaml.switch_det = config["switch_det"].as<bool>();
 
     m_drone_data.detect_last_dt = get_ms();
 
     RCLCPP_INFO(get_logger(), "-----------跟踪配置文件----------");
     RCLCPP_INFO(get_logger(), "起飞高度: %f", m_yaml.lift_height);
     RCLCPP_INFO(get_logger(), "跟踪模式: %d", m_yaml.track_mode);
+    RCLCPP_INFO(get_logger(), "测试模式: %d", m_yaml.test_mode);
     RCLCPP_INFO(get_logger(), "是否户外: %d", m_yaml.outdoor_flag);
     RCLCPP_INFO(get_logger(), "是否切换速度模式: %d", m_yaml.switch_mode);
     RCLCPP_INFO(get_logger(), "是否使用loc_pos: %d", m_yaml.is_loc_pos);
+    RCLCPP_INFO(get_logger(), "是否切换检测模式: %d", m_yaml.switch_det);
     RCLCPP_INFO(get_logger(), "m_dt: %ld", m_dt);
     RCLCPP_INFO(get_logger(), "-----------配置文件结束----------");
 
@@ -152,11 +156,16 @@ void VisualTrack::taskLoop(){
                         "当前为 FRD 坐标系"
                     );
                 }
-                auto switch_mode = m_yaml.switch_mode;
-                if (switch_mode){
-                    m_fly = SWITCH_MODE;
+                if (m_yaml.switch_det){
+                    auto switch_mode = m_yaml.switch_mode;
+                    if (switch_mode){
+                        m_fly = SWITCH_MODE;
+                    }else {
+                        m_fly = WAIT;
+                    }
                 }else {
-                    m_fly = WAIT;
+                    m_fly = TEST;
+                    RCLCPP_INFO(get_logger(), "空载模式!");
                 }
                 m_drone_data.cal_pos = m_pub_msgs.traj.position;
                 RCLCPP_INFO(get_logger(), "上升完成!");
@@ -182,6 +191,36 @@ void VisualTrack::taskLoop(){
             }
             break;
         }
+        case TEST: {
+            auto test_mode = m_yaml.test_mode;
+
+            switch(test_mode){
+                case 0:{
+
+                    break;
+                }
+                case 1:{
+                    m_pub_msgs.traj.position[0] = NAN;
+                    m_pub_msgs.traj.position[1] = NAN;
+                    m_pub_msgs.traj.position[2] = NAN;
+                    m_pub_msgs.traj.velocity[0] = 0.0f;
+                    m_pub_msgs.traj.velocity[1] = 0.0f;
+                    m_pub_msgs.traj.velocity[2] = 0.0f;
+                    break;
+                }
+                case 2:{
+                    auto cur_yaw = utilities::convert::flo_to_yaw(flo_q);
+                    m_pub_msgs.traj.position[0] = NAN;
+                    m_pub_msgs.traj.position[1] = NAN;
+                    m_pub_msgs.traj.position[2] = cur_pos[2];
+                    m_pub_msgs.traj.velocity[0] = cosf(cur_yaw) * 0.1f;
+                    m_pub_msgs.traj.velocity[1] = sinf(cur_yaw) * 0.1f;
+                    m_pub_msgs.traj.velocity[2] = 0.0f;
+                    break;
+                }
+            }
+            break;
+        }
         case Hover:{
             auto track_mode = m_yaml.track_mode;
             auto det_targets = m_drone_data.det_targets;
@@ -191,52 +230,63 @@ void VisualTrack::taskLoop(){
             m_iface.track.updateLastPostition(cur_pos);
             if (m_drone_data.is_detection_changed){
                 m_drone_data.is_detection_changed = false;
-                if (track_mode == 0){
-                    m_iface.track.normalTrack(
-                        is_target_valid,
-                        dt,
-                        cur_pos,
-                        flo_q,
-                        det_targets,
-                        m_pub_msgs.traj
-                    );
-                }else if (track_mode == 1){
-                    m_iface.track.normalTrack_v1(
-                        is_target_valid,
-                        dt,
-                        cur_pos,
-                        flo_q,
-                        det_targets,
-                        m_pub_msgs.traj
-                    );
-                }else if (track_mode == 2){
-                    m_iface.track.normalTrack_v2(
-                        is_target_valid,
-                        dt,
-                        cur_pos,
-                        flo_q,
-                        det_targets,
-                        m_pub_msgs.traj
-                    );
-                }else if (track_mode == 3){
-                    m_iface.track.normalTrack_v3(
-                        is_target_valid,
-                        dt,
-                        cur_pos,
-                        m_drone_data.cal_pos,
-                        flo_q,
-                        det_targets,
-                        m_pub_msgs.traj
-                    );
-                }else if (track_mode == 4){
-                    m_iface.track.normalTrack_v4(
-                        is_target_valid,
-                        dt,
-                        cur_pos,
-                        flo_q,
-                        det_targets,
-                        m_pub_msgs.traj
-                    );
+                switch(track_mode){
+                    case 0: {
+                        m_iface.track.normalTrack(
+                            is_target_valid,
+                            dt,
+                            cur_pos,
+                            flo_q,
+                            det_targets,
+                            m_pub_msgs.traj
+                        );
+                        break;
+                    }
+                    case 1: {
+                        m_iface.track.normalTrack_v1(
+                            is_target_valid,
+                            dt,
+                            cur_pos,
+                            flo_q,
+                            det_targets,
+                            m_pub_msgs.traj
+                        );
+                        break;
+                    }
+                    case 2: {
+                        m_iface.track.normalTrack_v2(
+                            is_target_valid,
+                            dt,
+                            cur_pos,
+                            flo_q,
+                            det_targets,
+                            m_pub_msgs.traj
+                        );
+                        break;
+                    }
+                    case 3: {
+                        m_iface.track.normalTrack_v3(
+                            is_target_valid,
+                            dt,
+                            cur_pos,
+                            m_drone_data.cal_pos,
+                            flo_q,
+                            det_targets,
+                            m_pub_msgs.traj
+                        );
+                        break;
+                    }
+                    case 4:{
+                        m_iface.track.normalTrack_v4(
+                            is_target_valid,
+                            dt,
+                            cur_pos,
+                            flo_q,
+                            det_targets,
+                            m_pub_msgs.traj
+                        );
+                        break;
+                    }
                 }
             }
             if (is_target_valid){
@@ -257,16 +307,15 @@ void VisualTrack::taskLoop(){
 }
 
 void VisualTrack::pushMsgs(){
-    auto cur_arm = m_drone_data.cur_arm;
     auto timestamp = get_clock()->now().nanoseconds() / 1000;
     m_pub_msgs.offb_mode.timestamp = timestamp;
+    m_pub_msgs.traj.timestamp = timestamp;
    
     m_pub.offb_mode->publish(m_pub_msgs.offb_mode);
 
-    if (cur_arm == ARM_ENABLE){
-        m_pub_msgs.traj.timestamp = timestamp;
-        m_pub.traj->publish(m_pub_msgs.traj);
-    }
+    if (m_fly == IDLE)
+        return;
+    m_pub.traj->publish(m_pub_msgs.traj);
 }
 
 int64_t VisualTrack::get_ms(){

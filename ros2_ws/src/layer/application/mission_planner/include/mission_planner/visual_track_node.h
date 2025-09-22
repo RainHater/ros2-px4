@@ -46,6 +46,7 @@ private:
         RISE,
         SWITCH_MODE,
         WAIT,
+        TEST,
         Hover,
         LAND,
     };
@@ -103,8 +104,10 @@ private:
     struct YamlInfo{
         float lift_height = 1.5f;
         int track_mode = 0;
+        int test_mode = 0;
         bool outdoor_flag = false;
         bool switch_mode = false;
+        bool switch_det = false;
         bool is_loc_pos = false;
     };
 private:
