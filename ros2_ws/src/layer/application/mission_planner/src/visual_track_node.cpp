@@ -14,12 +14,12 @@ using std::placeholders::_1;
 
 VisualTrack::VisualTrack()
     : rclcpp::Node("visual_track")
-    , m_dt(10)
     , m_fly(IDLE)
 {
     std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
     YAML::Node config = YAML::LoadFile(yaml_path)["visual_track"];
     m_yaml.lift_height = config["lift_height"].as<float>();
+    m_yaml.dt = config["dt"].as<int>();
     m_yaml.track_mode = config["track_mode"].as<int>();
     m_yaml.test_mode = config["test_mode"].as<int>();
     m_yaml.outdoor_flag = config["outdoor_flag"].as<bool>();
@@ -31,13 +31,13 @@ VisualTrack::VisualTrack()
 
     RCLCPP_INFO(get_logger(), "-----------跟踪配置文件----------");
     RCLCPP_INFO(get_logger(), "起飞高度: %f", m_yaml.lift_height);
+    RCLCPP_INFO(get_logger(), "dt时间间隔: %d", m_yaml.dt);
     RCLCPP_INFO(get_logger(), "跟踪模式: %d", m_yaml.track_mode);
     RCLCPP_INFO(get_logger(), "测试模式: %d", m_yaml.test_mode);
     RCLCPP_INFO(get_logger(), "是否户外: %d", m_yaml.outdoor_flag);
     RCLCPP_INFO(get_logger(), "是否切换速度模式: %d", m_yaml.switch_mode);
     RCLCPP_INFO(get_logger(), "是否使用loc_pos: %d", m_yaml.is_loc_pos);
     RCLCPP_INFO(get_logger(), "是否切换检测模式: %d", m_yaml.switch_det);
-    RCLCPP_INFO(get_logger(), "m_dt: %ld", m_dt);
     RCLCPP_INFO(get_logger(), "-----------配置文件结束----------");
 
     RCLCPP_INFO(get_logger(), "visual_track 节点启动...");
@@ -49,7 +49,7 @@ void VisualTrack::initialize(){
     initSub();
     
     m_timer = create_wall_timer(
-        std::chrono::milliseconds(m_dt),
+        std::chrono::milliseconds(m_yaml.dt),
         std::bind(&VisualTrack::taskLoop, this)
     );
 }
@@ -179,7 +179,11 @@ void VisualTrack::taskLoop(){
                 m_pub_msgs.offb_mode
             );
             if (m_iface.mode_ctrl.waitBusy()){
-                m_fly = WAIT;
+                if (m_yaml.switch_det){
+                    m_fly = WAIT;
+                }else {
+                    m_fly = TEST;
+                }
                 RCLCPP_INFO(get_logger(), "切换到速度模式!");
             }
             break;
@@ -299,7 +303,7 @@ void VisualTrack::taskLoop(){
                 }
             }
             if (is_target_valid){
-                auto now_ms = m_dt / 1000.0f;
+                auto now_ms = m_yaml.dt / 1000.0f;
                 m_drone_data.cal_pos[0] += (m_pub_msgs.traj.velocity[0] * now_ms);
                 m_drone_data.cal_pos[1] += (m_pub_msgs.traj.velocity[1] * now_ms);
                 m_drone_data.cal_pos[2] += (m_pub_msgs.traj.velocity[2] * now_ms);

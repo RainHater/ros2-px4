@@ -31,6 +31,8 @@ track:
 visual_track:
   #飞行高度
   lift_height: 1.5
+  #dt时间间隔
+  dt: 10
   #跟踪模式
   track_mode: 0
   #测试模式

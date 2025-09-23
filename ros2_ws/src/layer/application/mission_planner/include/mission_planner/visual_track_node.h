@@ -103,6 +103,7 @@ private:
 
     struct YamlInfo{
         float lift_height = 1.5f;
+        int dt = 0;
         int track_mode = 0;
         int test_mode = 0;
         bool outdoor_flag = false;
@@ -112,7 +113,6 @@ private:
     };
 private:
     rclcpp::TimerBase::SharedPtr m_timer;
-    uint64_t m_dt;
     FlyStep m_fly;
     PubInfo m_pub;
     SubInfo m_sub;
