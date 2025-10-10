@@ -37,10 +37,7 @@ sshpass -p "${TARGET_PASSWORD}" rsync -aAXv \
     "${SOURCE_PATH}/mipi_detect/share/mipi_detect/config/params.yaml" \
     "${SOURCE_PATH}/mipi_detect/share/mipi_detect/config/config.json" \
     "${TOP_DIR}/scripts/target/yaml_update.sh" \
-    "${TARGET_USER}@${TARGET_IP}:${TARGET_PATH}"
-
-sshpass -p "${TARGET_PASSWORD}" rsync -aAXv \
     "${TOP_DIR}/scripts/target/track_start.sh" \
-    "${TARGET_USER}@${TARGET_IP}:/bin/"
+    "${TARGET_USER}@${TARGET_IP}:${TARGET_PATH}"
 
 echo "✅ 同步完成"
