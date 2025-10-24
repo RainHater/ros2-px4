@@ -8,7 +8,7 @@ movement:
 
 track:
   #yaw PID
-  yaw_kp: 0.002
+  yaw_kp: 0.003
   yaw_ki: 0.00001
   yaw_kd: 0.0
   yaw_th: 3.1415927
@@ -41,7 +41,5 @@ visual_track:
   outdoor_flag: true
   #是否切换速度模式
   switch_mode: false
-  #是否切换检测模式
-  switch_det: false
   #是否使用loc位置
   is_loc_pos: false

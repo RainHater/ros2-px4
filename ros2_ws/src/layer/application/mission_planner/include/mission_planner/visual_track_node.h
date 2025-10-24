@@ -28,10 +28,13 @@ public:
 protected:
     void initPub();
     void initSub();
+    void initYaml();
 protected:
     void taskLoop();
     void pushMsgs();
-    int64_t get_ms();
+    void getCurCoor();
+    int64_t getCurMs();
+    bool readVisionChange();
 
     //消息回调函数
     void vehicleOdometryCallback(const std::shared_ptr<px4_msgs::msg::VehicleOdometry> msg);
@@ -43,10 +46,9 @@ protected:
 private:
     enum FlyStep{
         IDLE,
+        UNLOCK,
         RISE,
         SWITCH_MODE,
-        WAIT,
-        TEST,
         Hover,
         LAND,
     };
@@ -80,7 +82,6 @@ private:
         std::array<float, 3> cur_pos;
         std::array<float, 3> loc_pos;
         //计算位置
-        std::array<float, 3> cal_pos;
         std::array<float, 4> flo_q;
         //多个检测目标
         std::vector<identify::msg::YoloDetection> det_targets;
@@ -108,7 +109,6 @@ private:
         int test_mode = 0;
         bool outdoor_flag = false;
         bool switch_mode = false;
-        bool switch_det = false;
         bool is_loc_pos = false;
     };
 private:

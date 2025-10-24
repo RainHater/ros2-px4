@@ -10,6 +10,4 @@ fi
 COUNT=$(find "${DIR}" -maxdepth 1 -type f | wc -l)
 echo "目录 $DIR 的文件数（不含子目录）: ${COUNT}"
 
-USE_MIPI=${1:-true}
-
-ros2 launch mission_planner visual_track.launch.py use_mipi_detect:=${USE_MIPI} 2>&1 | tee ${DIR}/track_${COUNT}.log
+ros2 launch mission_planner visual_track.launch.py 2>&1 | tee ${DIR}/track_${COUNT}.log

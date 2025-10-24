@@ -39,12 +39,13 @@ cd build
 cmake ..
 make -j16
 sudo make install
+sudo ldconfig /usr/local/lib/
 ```
 
 5. 配置ros humble工具包
 ```bash
 sudo apt install ros-humble-cv-bridge ros-humble-tf2 ros-humble-tf-transformations ros-humble-vision-opencv ros-dev-tools -y
-sudo apt install python3-colcon-common-extensions libyaml-cpp-dev -y
+sudo apt install python3-colcon-common-extensions libyaml-cpp-dev sshpass -y
 ```
 
 6. 配置python环境
@@ -52,7 +53,7 @@ sudo apt install python3-colcon-common-extensions libyaml-cpp-dev -y
 ```bash
 cd ros2_ws/
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate 
 pip install -r requirements.txt -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
 ```
 
@@ -147,5 +148,5 @@ sudo systemctl restart serial-getty@ttyS1.service
 sudo apt install --reinstall libstdc++-12-dev
 ```
 
-> _日期：2025-09-16_  
+> _日期：2025-10-16_  
 > _作者：xuguocai_  

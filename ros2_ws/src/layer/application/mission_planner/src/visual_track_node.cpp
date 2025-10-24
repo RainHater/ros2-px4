@@ -16,29 +16,7 @@ VisualTrack::VisualTrack()
     : rclcpp::Node("visual_track")
     , m_fly(IDLE)
 {
-    std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
-    YAML::Node config = YAML::LoadFile(yaml_path)["visual_track"];
-    m_yaml.lift_height = config["lift_height"].as<float>();
-    m_yaml.dt = config["dt"].as<int>();
-    m_yaml.track_mode = config["track_mode"].as<int>();
-    m_yaml.test_mode = config["test_mode"].as<int>();
-    m_yaml.outdoor_flag = config["outdoor_flag"].as<bool>();
-    m_yaml.switch_mode = config["switch_mode"].as<bool>();
-    m_yaml.is_loc_pos = config["is_loc_pos"].as<bool>();
-    m_yaml.switch_det = config["switch_det"].as<bool>();
-
-    m_drone_data.detect_last_dt = get_ms();
-
-    RCLCPP_INFO(get_logger(), "-----------跟踪配置文件----------");
-    RCLCPP_INFO(get_logger(), "起飞高度: %f", m_yaml.lift_height);
-    RCLCPP_INFO(get_logger(), "dt时间间隔: %d", m_yaml.dt);
-    RCLCPP_INFO(get_logger(), "跟踪模式: %d", m_yaml.track_mode);
-    RCLCPP_INFO(get_logger(), "测试模式: %d", m_yaml.test_mode);
-    RCLCPP_INFO(get_logger(), "是否户外: %d", m_yaml.outdoor_flag);
-    RCLCPP_INFO(get_logger(), "是否切换速度模式: %d", m_yaml.switch_mode);
-    RCLCPP_INFO(get_logger(), "是否使用loc_pos: %d", m_yaml.is_loc_pos);
-    RCLCPP_INFO(get_logger(), "是否切换检测模式: %d", m_yaml.switch_det);
-    RCLCPP_INFO(get_logger(), "-----------配置文件结束----------");
+    initYaml();
 
     RCLCPP_INFO(get_logger(), "visual_track 节点启动...");
 }
@@ -116,6 +94,30 @@ void VisualTrack::initSub(){
     );
 }
 
+void VisualTrack::initYaml(){
+    std::string yaml_path = ament_index_cpp::get_package_share_directory("utilities") + "/config/app.yaml";
+    YAML::Node config = YAML::LoadFile(yaml_path)["visual_track"];
+    m_yaml.lift_height = config["lift_height"].as<float>();
+    m_yaml.dt = config["dt"].as<int>();
+    m_yaml.track_mode = config["track_mode"].as<int>();
+    m_yaml.test_mode = config["test_mode"].as<int>();
+    m_yaml.outdoor_flag = config["outdoor_flag"].as<bool>();
+    m_yaml.switch_mode = config["switch_mode"].as<bool>();
+    m_yaml.is_loc_pos = config["is_loc_pos"].as<bool>();
+
+    m_drone_data.detect_last_dt = getCurMs();
+
+    RCLCPP_INFO(get_logger(), "-----------跟踪配置文件----------");
+    RCLCPP_INFO(get_logger(), "起飞高度: %f", m_yaml.lift_height);
+    RCLCPP_INFO(get_logger(), "dt时间间隔: %d", m_yaml.dt);
+    RCLCPP_INFO(get_logger(), "跟踪模式: %d", m_yaml.track_mode);
+    RCLCPP_INFO(get_logger(), "测试模式: %d", m_yaml.test_mode);
+    RCLCPP_INFO(get_logger(), "是否户外: %d", m_yaml.outdoor_flag);
+    RCLCPP_INFO(get_logger(), "是否切换速度模式: %d", m_yaml.switch_mode);
+    RCLCPP_INFO(get_logger(), "是否使用loc_pos: %d", m_yaml.is_loc_pos);
+    RCLCPP_INFO(get_logger(), "-----------配置文件结束----------");
+}
+
 void VisualTrack::taskLoop(){
     auto cur_arm = m_drone_data.cur_arm;
     auto cur_offb = m_drone_data.cur_offb;
@@ -124,6 +126,12 @@ void VisualTrack::taskLoop(){
 
     switch(m_fly){
         case IDLE:{
+            if (readVisionChange()){
+                m_fly = UNLOCK;
+            }
+            break;
+        }
+        case UNLOCK:{
             m_iface.mode_ctrl.unlock(
                 ARM_ENABLE, POSITION, 
                 cur_arm, cur_offb,
@@ -146,29 +154,15 @@ void VisualTrack::taskLoop(){
                     m_yaml.outdoor_flag
                 );
             if (arrive){
-                auto cur_coor = m_drone_data.cur_coor;
-                if (cur_coor == px4_msgs::msg::VehicleOdometry::POSE_FRAME_NED){
-                    RCLCPP_INFO(get_logger(),
-                        "当前为 NED 坐标系"
-                    );
-                }else if (cur_coor == px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD){
-                    RCLCPP_INFO(get_logger(),
-                        "当前为 FRD 坐标系"
-                    );
-                }
-                if (m_yaml.switch_det){
-                    auto switch_mode = m_yaml.switch_mode;
-                    if (switch_mode){
-                        m_fly = SWITCH_MODE;
-                    }else {
-                        m_fly = WAIT;
-                    }
-                }else {
-                    m_fly = TEST;
-                    RCLCPP_INFO(get_logger(), "空载模式!");
-                }
-                m_drone_data.cal_pos = m_pub_msgs.traj.position;
+                getCurCoor();
                 RCLCPP_INFO(get_logger(), "上升完成!");
+                auto switch_mode = m_yaml.switch_mode;
+                if (switch_mode){
+                    m_fly = SWITCH_MODE;
+                }else {
+                    m_fly = Hover;
+                    RCLCPP_INFO(get_logger(), "开始跟踪目标!");
+                }
             }
             break;
         }
@@ -179,58 +173,8 @@ void VisualTrack::taskLoop(){
                 m_pub_msgs.offb_mode
             );
             if (m_iface.mode_ctrl.waitBusy()){
-                if (m_yaml.switch_det){
-                    m_fly = WAIT;
-                }else {
-                    m_fly = TEST;
-                }
-                RCLCPP_INFO(get_logger(), "切换到速度模式!");
-            }
-            break;
-        }
-        case WAIT: {
-            if (m_drone_data.is_detection_changed){
                 m_fly = Hover;
-                RCLCPP_INFO(get_logger(), "数据有效!");
-            }
-            break;
-        }
-        case TEST: {
-            auto test_mode = m_yaml.test_mode;
-
-            switch(test_mode){
-                case 0:{
-
-                    break;
-                }
-                case 1:{
-                    m_pub_msgs.traj.position[0] = NAN;
-                    m_pub_msgs.traj.position[1] = NAN;
-                    m_pub_msgs.traj.position[2] = NAN;
-                    m_pub_msgs.traj.velocity[0] = 0.0f;
-                    m_pub_msgs.traj.velocity[1] = 0.0f;
-                    m_pub_msgs.traj.velocity[2] = 0.0f;
-                    break;
-                }
-                case 2:{
-                    auto cur_yaw = utilities::convert::flo_to_yaw(flo_q);
-                    m_pub_msgs.traj.position[0] = NAN;
-                    m_pub_msgs.traj.position[1] = NAN;
-                    m_pub_msgs.traj.position[2] = cur_pos[2];
-                    m_pub_msgs.traj.velocity[0] = cosf(cur_yaw) * 0.1f;
-                    m_pub_msgs.traj.velocity[1] = sinf(cur_yaw) * 0.1f;
-                    m_pub_msgs.traj.velocity[2] = 0.0f;
-                    break;
-                }
-                case 3:{
-                    m_pub_msgs.traj.position[0] = NAN;
-                    m_pub_msgs.traj.position[1] = NAN;
-                    m_pub_msgs.traj.position[2] = NAN;
-                    m_pub_msgs.traj.velocity[0] = 0.0f;
-                    m_pub_msgs.traj.velocity[1] = 0.0f;
-                    m_pub_msgs.traj.velocity[2] = 0.0f;
-                    break;
-                }
+                RCLCPP_INFO(get_logger(), "切换到速度模式, 开始跟踪目标!");
             }
             break;
         }
@@ -240,9 +184,7 @@ void VisualTrack::taskLoop(){
             auto is_target_valid = m_drone_data.is_target_valid;
             auto dt = m_drone_data.detect_dt;
 
-            m_iface.track.updateLastPostition(cur_pos);
-            if (m_drone_data.is_detection_changed){
-                m_drone_data.is_detection_changed = false;
+            if (readVisionChange()){
                 switch(track_mode){
                     case 0: {
                         m_iface.track.normalTrack(
@@ -255,58 +197,7 @@ void VisualTrack::taskLoop(){
                         );
                         break;
                     }
-                    case 1: {
-                        m_iface.track.normalTrack_v1(
-                            is_target_valid,
-                            dt,
-                            cur_pos,
-                            flo_q,
-                            det_targets,
-                            m_pub_msgs.traj
-                        );
-                        break;
-                    }
-                    case 2: {
-                        m_iface.track.normalTrack_v2(
-                            is_target_valid,
-                            dt,
-                            cur_pos,
-                            flo_q,
-                            det_targets,
-                            m_pub_msgs.traj
-                        );
-                        break;
-                    }
-                    case 3: {
-                        m_iface.track.normalTrack_v3(
-                            is_target_valid,
-                            dt,
-                            cur_pos,
-                            m_drone_data.cal_pos,
-                            flo_q,
-                            det_targets,
-                            m_pub_msgs.traj
-                        );
-                        break;
-                    }
-                    case 4:{
-                        m_iface.track.normalTrack_v4(
-                            is_target_valid,
-                            dt,
-                            cur_pos,
-                            flo_q,
-                            det_targets,
-                            m_pub_msgs.traj
-                        );
-                        break;
-                    }
                 }
-            }
-            if (is_target_valid){
-                auto now_ms = m_yaml.dt / 1000.0f;
-                m_drone_data.cal_pos[0] += (m_pub_msgs.traj.velocity[0] * now_ms);
-                m_drone_data.cal_pos[1] += (m_pub_msgs.traj.velocity[1] * now_ms);
-                m_drone_data.cal_pos[2] += (m_pub_msgs.traj.velocity[2] * now_ms);
             }
             break;
         }
@@ -315,7 +206,6 @@ void VisualTrack::taskLoop(){
             break;
         }
     }
-
     pushMsgs();
 }
 
@@ -331,8 +221,29 @@ void VisualTrack::pushMsgs(){
     m_pub.traj->publish(m_pub_msgs.traj);
 }
 
-int64_t VisualTrack::get_ms(){
+void VisualTrack::getCurCoor(){
+    auto cur_coor = m_drone_data.cur_coor;
+    if (cur_coor == px4_msgs::msg::VehicleOdometry::POSE_FRAME_NED){
+        RCLCPP_INFO(get_logger(),
+            "当前为 NED 坐标系"
+        );
+    }else if (cur_coor == px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD){
+        RCLCPP_INFO(get_logger(),
+            "当前为 FRD 坐标系"
+        );
+    }
+}
+
+int64_t VisualTrack::getCurMs(){
     return get_clock()->now().nanoseconds() / 1000000; 
+}
+
+bool VisualTrack::readVisionChange(){
+    if (m_drone_data.is_detection_changed){
+        m_drone_data.is_detection_changed = false;
+        return true;
+    }
+    return false;
 }
 
 void VisualTrack::vehicleOdometryCallback(
@@ -346,7 +257,7 @@ void VisualTrack::vehicleOdometryCallback(
 void VisualTrack::yoloDetectionsCallback(
     const std::shared_ptr<identify::msg::YoloDetections> msg
 ){  
-    auto now_ms = get_ms();
+    auto now_ms = getCurMs();
     m_drone_data.detect_dt = now_ms - m_drone_data.detect_last_dt;
     m_drone_data.detect_last_dt = now_ms;
     m_drone_data.det_targets = msg->detections;

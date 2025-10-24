@@ -8,13 +8,6 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    # 声明参数
-    use_mipi_detect_arg = DeclareLaunchArgument(
-        "use_mipi_detect",
-        default_value="true",
-        description="Whether to launch mipi_detect"
-    )
-
     # mipi_detect launch
     mipi_detect = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -43,21 +36,8 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 根据参数控制是否启动 mipi_detect
-    conditional_mipi = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            PathJoinSubstitution([
-                FindPackageShare('mipi_detect'),
-                'launch',
-                'detect.launch.py'
-            ])
-        ),
-        condition=IfCondition(LaunchConfiguration("use_mipi_detect"))
-    )
-
     return LaunchDescription([
-        use_mipi_detect_arg,   # 把参数注册进来
-        conditional_mipi,      # 受参数控制
+        mipi_detect,
         mission_planner,
         visual_track_node,
     ])
