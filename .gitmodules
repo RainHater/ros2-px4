@@ -5,6 +5,3 @@
 [submodule "ros2_ws/src/layer/perception/vision"]
 	path = ros2_ws/src/layer/perception/vision
 	url = https://github.com/zhangzijie-pro/vision_pkg.git
-[submodule "px4/PX4-Autopilot"]
-	path = px4/PX4-Autopilot
-	url = https://github.com/PX4/PX4-Autopilot.git
