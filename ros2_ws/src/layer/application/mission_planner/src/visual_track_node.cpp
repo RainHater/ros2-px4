@@ -99,22 +99,20 @@ void VisualTrack::initYaml(){
     YAML::Node config = YAML::LoadFile(yaml_path)["visual_track"];
     m_yaml.lift_height = config["lift_height"].as<float>();
     m_yaml.dt = config["dt"].as<int>();
-    m_yaml.track_mode = config["track_mode"].as<int>();
-    m_yaml.test_mode = config["test_mode"].as<int>();
     m_yaml.outdoor_flag = config["outdoor_flag"].as<bool>();
     m_yaml.switch_mode = config["switch_mode"].as<bool>();
     m_yaml.is_loc_pos = config["is_loc_pos"].as<bool>();
+    m_yaml.is_wait_vision = config["is_wait_vision"].as<bool>();
 
     m_drone_data.detect_last_dt = getCurMs();
 
     RCLCPP_INFO(get_logger(), "-----------跟踪配置文件----------");
     RCLCPP_INFO(get_logger(), "起飞高度: %f", m_yaml.lift_height);
     RCLCPP_INFO(get_logger(), "dt时间间隔: %d", m_yaml.dt);
-    RCLCPP_INFO(get_logger(), "跟踪模式: %d", m_yaml.track_mode);
-    RCLCPP_INFO(get_logger(), "测试模式: %d", m_yaml.test_mode);
     RCLCPP_INFO(get_logger(), "是否户外: %d", m_yaml.outdoor_flag);
     RCLCPP_INFO(get_logger(), "是否切换速度模式: %d", m_yaml.switch_mode);
     RCLCPP_INFO(get_logger(), "是否使用loc_pos: %d", m_yaml.is_loc_pos);
+    RCLCPP_INFO(get_logger(), "是否等待视觉识别: %d", m_yaml.is_wait_vision);
     RCLCPP_INFO(get_logger(), "-----------配置文件结束----------");
 }
 
@@ -179,25 +177,19 @@ void VisualTrack::taskLoop(){
             break;
         }
         case Hover:{
-            auto track_mode = m_yaml.track_mode;
             auto det_targets = m_drone_data.det_targets;
             auto is_target_valid = m_drone_data.is_target_valid;
             auto dt = m_drone_data.detect_dt;
 
             if (readVisionChange()){
-                switch(track_mode){
-                    case 0: {
-                        m_iface.track.normalTrack(
-                            is_target_valid,
-                            dt,
-                            cur_pos,
-                            flo_q,
-                            det_targets,
-                            m_pub_msgs.traj
-                        );
-                        break;
-                    }
-                }
+                m_iface.track.normalTrack(
+                    is_target_valid,
+                    dt,
+                    cur_pos,
+                    flo_q,
+                    det_targets,
+                    m_pub_msgs.traj
+                );
             }
             break;
         }
@@ -239,6 +231,10 @@ int64_t VisualTrack::getCurMs(){
 }
 
 bool VisualTrack::readVisionChange(){
+    if (m_yaml.is_wait_vision == false){
+        return true;
+    }
+
     if (m_drone_data.is_detection_changed){
         m_drone_data.is_detection_changed = false;
         return true;

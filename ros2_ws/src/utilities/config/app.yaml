@@ -8,10 +8,10 @@ movement:
 
 track:
   #yaw PID
-  yaw_kp: 0.003
+  yaw_kp: 0.000003
   yaw_ki: 0.00001
   yaw_kd: 0.0
-  yaw_th: 3.1415927
+  yaw_th: 0.7
   #上下 PID
   ud_kp: 0.002
   ud_ki: 0.00001
@@ -21,7 +21,7 @@ track:
   fb_kp: 0.000003
   fb_ki: 0.00001
   fb_kd: 0.0
-  fb_th: 3.0
+  fb_th: 0.7
   #跟踪面积
   area_th: 0.41
   #是否滤波
@@ -33,13 +33,11 @@ visual_track:
   lift_height: 1.5
   #dt时间间隔
   dt: 10
-  #跟踪模式
-  track_mode: 0
-  #测试模式
-  test_mode: 0
   #是否室外
   outdoor_flag: true
   #是否切换速度模式
   switch_mode: false
   #是否使用loc位置
   is_loc_pos: false
+  #是否等待视觉
+  is_wait_vision: false

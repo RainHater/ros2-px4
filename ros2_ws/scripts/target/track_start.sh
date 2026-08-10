@@ -10,4 +10,6 @@ fi
 COUNT=$(find "${DIR}" -maxdepth 1 -type f | wc -l)
 echo "目录 $DIR 的文件数（不含子目录）: ${COUNT}"
 
+sudo systemctl stop lightdm
+
 ros2 launch mission_planner visual_track.launch.py 2>&1 | tee ${DIR}/track_${COUNT}.log

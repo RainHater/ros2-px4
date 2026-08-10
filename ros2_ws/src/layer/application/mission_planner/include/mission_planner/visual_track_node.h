@@ -110,6 +110,7 @@ private:
         bool outdoor_flag = false;
         bool switch_mode = false;
         bool is_loc_pos = false;
+        bool is_wait_vision = false;
     };
 private:
     rclcpp::TimerBase::SharedPtr m_timer;
