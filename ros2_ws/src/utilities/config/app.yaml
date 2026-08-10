@@ -24,8 +24,6 @@ track:
   fb_th: 0.7
   #跟踪面积
   area_th: 0.41
-  #是否滤波
-  is_filter: false
 
 #跟踪
 visual_track:

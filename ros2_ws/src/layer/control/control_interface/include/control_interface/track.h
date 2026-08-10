@@ -37,20 +37,11 @@ public:
 protected:
     void readYaml();
 private:
-    //相机参数
-    struct CameraInfo{
-        float width;
-        float height;
-        float hfov;
-    };
     //普通跟踪计算
     struct NormalTrackInfo{
         PIDController yaw;
         PIDController ud;
         PIDController fb;
-        identify::msg::YoloDetection last_detection;
-        float thre_area;
-        bool last_pos_update = false;
     };
     //yaml 配置文件
     struct YamlInfo{
@@ -58,13 +49,11 @@ private:
         PidInfo ud = {0.003f, 0.00001f, 0.0f, 0.5f};
         PidInfo fb = {0.003f, 0.00001f, 0.0f, 0.4f};
         float area_th = 0.41f;
-        bool is_filter = false;
     };
 private:
     rclcpp::Logger m_log;
     NormalTrackInfo m_normal_track;
     YamlInfo m_yaml;
-    CameraInfo m_camera;
 };
 }
 #endif

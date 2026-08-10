@@ -9,15 +9,10 @@
 namespace track {
 Track::Track() 
     : m_log(rclcpp::get_logger("跟踪(track.cpp)"))
-    , m_camera({1920, 1080, 70})
 {   
     readYaml();
 
-    m_normal_track.thre_area = m_camera.width*m_camera.height*m_yaml.area_th;
-
-    FilterType is_filter = (m_yaml.is_filter)
-                            ?FilterType::LowPass2
-                            :FilterType::None;
+    FilterType is_filter = FilterType::None;
 
     m_normal_track.yaw.initialize(
         m_yaml.yaw.kp, 
@@ -72,20 +67,25 @@ void Track::normalTrack(
     float area = 0.0f;
     float yaw = cur_yaw;
 
+    float cx_error = 0.0f;
+    float cy_error = 0.0f;
+    float area_error = 0.0f;
+
     if (is_target_valid){
         auto detection = det_targets[0];
         cx = detection.cx;
         cy = detection.cy;
         area = abs((detection.x_max - detection.x_min) * (detection.y_max - detection.y_min));  
-    }else {
-        cx = 960.0f;
-        cy = 540.0f;
-        area = m_normal_track.thre_area;
+        
+        float thre_area = detection.image_width*detection.image_height*m_yaml.area_th;
+        cx_error = cx - detection.image_width / 2.0f;
+        cy_error = cy - detection.image_height / 2.0;
+        area_error = thre_area - area;
+    } else {
+        cx_error = 0.0f;
+        cy_error = 0.0f;
+        area_error = 0.0f;
     }
-
-    float cx_error = cx - m_camera.width / 2.0;
-    float cy_error = cy - m_camera.height / 2.0;
-    float area_error = m_normal_track.thre_area - area;
 
     float yaw_output = m_normal_track.yaw.compute(cx_error, dt);
     float ud_output = m_normal_track.ud.compute(cy_error, dt);
@@ -110,10 +110,10 @@ void Track::normalTrack(
         log_printf_tool::printf_log_cur_pos(m_log, cur_pos);
         RCLCPP_INFO(m_log, "-------------------------");
     }else {
-        RCLCPP_INFO(m_log, "-----------未跟踪----------");
-        log_printf_tool::printf_log_cur_pos(m_log, cur_pos);
-        log_printf_tool::printf_log_cur_vec(m_log, pub_pos_msgs.velocity);
-        RCLCPP_INFO(m_log, "-------------------------");
+        // RCLCPP_INFO(m_log, "-----------未跟踪----------");
+        // log_printf_tool::printf_log_cur_pos(m_log, cur_pos);
+        // log_printf_tool::printf_log_cur_vec(m_log, pub_pos_msgs.velocity);
+        // RCLCPP_INFO(m_log, "-------------------------");
     }
 }
 
@@ -133,14 +133,12 @@ void Track::readYaml(){
     m_yaml.fb.kd = config["fb_kd"].as<float>();
     m_yaml.fb.th = config["fb_th"].as<float>();
     m_yaml.area_th = config["area_th"].as<float>();
-    m_yaml.is_filter = config["is_filter"].as<bool>();
 
     RCLCPP_INFO(m_log, "-----------跟踪配置文件----------");
     RCLCPP_INFO(m_log, "左右pid, kp: %f, ki: %f, kd: %f, th: %f", m_yaml.yaw.kp, m_yaml.yaw.ki, m_yaml.yaw.kd, m_yaml.yaw.th);
     RCLCPP_INFO(m_log, "上下pid, kp: %f, ki: %f, kd: %f, th: %f", m_yaml.ud.kp, m_yaml.ud.ki, m_yaml.ud.kd, m_yaml.ud.th);
     RCLCPP_INFO(m_log, "前后pid, kp: %f, ki: %f, kd: %f, th: %f", m_yaml.fb.kp, m_yaml.fb.ki, m_yaml.fb.kd, m_yaml.fb.th);
     RCLCPP_INFO(m_log, "跟踪面积阈值: %f", m_yaml.area_th);
-    RCLCPP_INFO(m_log, "是否过滤: %d", m_yaml.is_filter);
     RCLCPP_INFO(m_log, "-----------配置文件结束----------");
 }
 }
