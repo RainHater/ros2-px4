@@ -29,6 +29,7 @@ public:
     void normalTrack(
         bool is_target_valid,
         int64_t dt,
+        std::array<bool, 3> is_enable_dir,
         std::array<float, 3> cur_pos,
         std::array<float, 4> flo_q,
         std::vector<identify::msg::YoloDetection> det_targets,

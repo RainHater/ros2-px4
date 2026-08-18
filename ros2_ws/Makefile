@@ -8,6 +8,7 @@ all: build
 
 .PHONY: build
 build:
+	echo "CPU 核心数量: ${JOBS}"
 	colcon build \
 		--base-paths $(ROOT) \
 		--parallel-workers $(JOBS) \

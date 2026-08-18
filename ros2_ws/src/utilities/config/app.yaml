@@ -8,7 +8,7 @@ movement:
 
 track:
   #yaw PID
-  yaw_kp: 0.000003
+  yaw_kp: 0.00003
   yaw_ki: 0.00001
   yaw_kd: 0.0
   yaw_th: 0.7
@@ -39,3 +39,11 @@ visual_track:
   is_loc_pos: false
   #是否等待视觉
   is_wait_vision: false
+  # 是否室内模拟
+  is_indoor_sim: false
+  # 运动方位: 左右、上下、前后
+  is_enable_dir: [true, false, true]
+  # 是否跟踪
+  is_track: false
+  # 是否等待10s切换模式
+  is_wait_10s: true

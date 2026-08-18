@@ -18,6 +18,10 @@ VisualTrack::VisualTrack()
 {
     initYaml();
 
+    if (m_yaml.is_indoor_sim){
+        m_fly = Hover;
+    }
+
     RCLCPP_INFO(get_logger(), "visual_track 节点启动...");
 }
 
@@ -103,6 +107,12 @@ void VisualTrack::initYaml(){
     m_yaml.switch_mode = config["switch_mode"].as<bool>();
     m_yaml.is_loc_pos = config["is_loc_pos"].as<bool>();
     m_yaml.is_wait_vision = config["is_wait_vision"].as<bool>();
+    m_yaml.is_indoor_sim = config["is_indoor_sim"].as<bool>();
+    m_yaml.is_enable_dir[0] = config["is_enable_dir"].as<std::vector<bool>>()[0];
+    m_yaml.is_enable_dir[1] = config["is_enable_dir"].as<std::vector<bool>>()[1];
+    m_yaml.is_enable_dir[2] = config["is_enable_dir"].as<std::vector<bool>>()[2];
+    m_yaml.is_track = config["is_track"].as<bool>();
+    m_yaml.is_wait_10s = config["is_wait_10s"].as<bool>();
 
     m_drone_data.detect_last_dt = getCurMs();
 
@@ -113,6 +123,12 @@ void VisualTrack::initYaml(){
     RCLCPP_INFO(get_logger(), "是否切换速度模式: %d", m_yaml.switch_mode);
     RCLCPP_INFO(get_logger(), "是否使用loc_pos: %d", m_yaml.is_loc_pos);
     RCLCPP_INFO(get_logger(), "是否等待视觉识别: %d", m_yaml.is_wait_vision);
+    RCLCPP_INFO(get_logger(), "是否室内模拟: %d", m_yaml.is_indoor_sim);
+    RCLCPP_INFO(get_logger(), "是否使能左右: %d", m_yaml.is_enable_dir[0]);
+    RCLCPP_INFO(get_logger(), "是否使能上下: %d", m_yaml.is_enable_dir[1]);
+    RCLCPP_INFO(get_logger(), "是否使能前后: %d", m_yaml.is_enable_dir[2]);
+    RCLCPP_INFO(get_logger(), "是否跟踪: %d", m_yaml.is_track);
+    RCLCPP_INFO(get_logger(), "是否等待10s: %d", m_yaml.is_wait_10s);
     RCLCPP_INFO(get_logger(), "-----------配置文件结束----------");
 }
 
@@ -154,14 +170,34 @@ void VisualTrack::taskLoop(){
             if (arrive){
                 getCurCoor();
                 RCLCPP_INFO(get_logger(), "上升完成!");
-                auto switch_mode = m_yaml.switch_mode;
-                if (switch_mode){
+                if (m_yaml.is_wait_10s){
+                    m_fly = WAIT_10S;
+                    m_wait_last_time = static_cast<uint64_t>(get_clock()->now().seconds() * 1000.0);
+                }else{
+                    if (m_yaml.switch_mode){
+                        m_fly = SWITCH_MODE;
+                    }else {
+                        m_fly = Hover;
+                        RCLCPP_INFO(get_logger(), "开始跟踪目标!");
+                    }
+                }
+            }
+            break;
+        }
+        case WAIT_10S:{
+            auto timestamp_ms = static_cast<uint64_t>(get_clock()->now().seconds() * 1000.0);
+            
+            if ((timestamp_ms - m_wait_last_time) >= 10000){
+                m_wait_last_time = timestamp_ms;
+
+                if (m_yaml.switch_mode){
                     m_fly = SWITCH_MODE;
                 }else {
                     m_fly = Hover;
                     RCLCPP_INFO(get_logger(), "开始跟踪目标!");
                 }
             }
+            
             break;
         }
         case SWITCH_MODE:{
@@ -177,6 +213,11 @@ void VisualTrack::taskLoop(){
             break;
         }
         case Hover:{
+            if (!m_yaml.is_track){
+                m_fly = LAND;
+                break;
+            }
+
             auto det_targets = m_drone_data.det_targets;
             auto is_target_valid = m_drone_data.is_target_valid;
             auto dt = m_drone_data.detect_dt;
@@ -185,6 +226,7 @@ void VisualTrack::taskLoop(){
                 m_iface.track.normalTrack(
                     is_target_valid,
                     dt,
+                    m_yaml.is_enable_dir,
                     cur_pos,
                     flo_q,
                     det_targets,
@@ -198,7 +240,9 @@ void VisualTrack::taskLoop(){
             break;
         }
     }
-    pushMsgs();
+    if(!m_yaml.is_indoor_sim){
+        pushMsgs();
+    }
 }
 
 void VisualTrack::pushMsgs(){

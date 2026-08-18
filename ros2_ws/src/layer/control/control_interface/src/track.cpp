@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <array>
+#include <algorithm>
 #include <yaml-cpp/yaml.h>
 #include <Eigen/Geometry>
 #include <ament_index_cpp/get_package_share_directory.hpp>
@@ -55,6 +56,7 @@ Track::Track()
 void Track::normalTrack(
     bool is_target_valid,
     int64_t dt,
+    std::array<bool, 3> is_enable_dir,
     std::array<float, 3> cur_pos,
     std::array<float, 4> flo_q,
     std::vector<identify::msg::YoloDetection> det_targets,
@@ -78,24 +80,45 @@ void Track::normalTrack(
         area = abs((detection.x_max - detection.x_min) * (detection.y_max - detection.y_min));  
         
         float thre_area = detection.image_width*detection.image_height*m_yaml.area_th;
-        cx_error = cx - detection.image_width / 2.0f;
-        cy_error = cy - detection.image_height / 2.0;
+        cx_error = cx - (detection.image_width / 2.0f);
+        cy_error = cy - (detection.image_height / 2.0f);
         area_error = thre_area - area;
+        RCLCPP_INFO(m_log, "图像大小: %d, %d", detection.image_width, detection.image_height);
     } else {
         cx_error = 0.0f;
         cy_error = 0.0f;
         area_error = 0.0f;
     }
 
-    float yaw_output = m_normal_track.yaw.compute(cx_error, dt);
-    float ud_output = m_normal_track.ud.compute(cy_error, dt);
-    float fb_output = m_normal_track.fb.compute(area_error, dt);
+    float yaw_output = 0.0f;
+    float ud_output = 0.0f;
+    float fb_output = 0.0f;
+
+    if (is_enable_dir[0]) {
+        yaw_output = m_normal_track.yaw.compute(cx_error, dt);
+    } else {
+        m_normal_track.yaw.reset();
+    }
+
+    if (is_enable_dir[1]) {
+        ud_output = m_normal_track.ud.compute(cy_error, dt);
+    } else {
+        m_normal_track.ud.reset();
+    }
+
+    if (is_enable_dir[2]) {
+        fb_output = m_normal_track.fb.compute(area_error, dt);
+    } else {
+        m_normal_track.fb.reset();
+    }
 
     pub_pos_msgs.yaw = NAN;
     pub_pos_msgs.yawspeed = yaw_output;
+
     pub_pos_msgs.position[0] = NAN;
     pub_pos_msgs.position[1] = NAN;
     pub_pos_msgs.position[2] = NAN;
+
     pub_pos_msgs.velocity[0] = cosf(yaw) * fb_output;
     pub_pos_msgs.velocity[1] = sinf(yaw) * fb_output;
     pub_pos_msgs.velocity[2] = ud_output;
@@ -108,12 +131,13 @@ void Track::normalTrack(
         RCLCPP_INFO(m_log, "area: %f, area_error: %f, fb_out: %f", area, area_error, fb_output);
         RCLCPP_INFO(m_log, "cur_yaw: %f", yaw);
         log_printf_tool::printf_log_cur_pos(m_log, cur_pos);
+        log_printf_tool::printf_log_cur_vec(m_log, pub_pos_msgs.velocity);
         RCLCPP_INFO(m_log, "-------------------------");
     }else {
-        // RCLCPP_INFO(m_log, "-----------未跟踪----------");
-        // log_printf_tool::printf_log_cur_pos(m_log, cur_pos);
-        // log_printf_tool::printf_log_cur_vec(m_log, pub_pos_msgs.velocity);
-        // RCLCPP_INFO(m_log, "-------------------------");
+        RCLCPP_INFO(m_log, "-----------未跟踪----------");
+        log_printf_tool::printf_log_cur_pos(m_log, cur_pos);
+        log_printf_tool::printf_log_cur_vec(m_log, pub_pos_msgs.velocity);
+        RCLCPP_INFO(m_log, "-------------------------");
     }
 }
 

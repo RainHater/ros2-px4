@@ -48,6 +48,7 @@ private:
         IDLE,
         UNLOCK,
         RISE,
+        WAIT_10S,
         SWITCH_MODE,
         Hover,
         LAND,
@@ -110,7 +111,11 @@ private:
         bool outdoor_flag = false;
         bool switch_mode = false;
         bool is_loc_pos = false;
-        bool is_wait_vision = false;
+        bool is_wait_vision = true;
+        bool is_indoor_sim = false;
+        std::array<bool, 3> is_enable_dir = {true, true, true};
+        bool is_track = true;
+        bool is_wait_10s = true;
     };
 private:
     rclcpp::TimerBase::SharedPtr m_timer;
@@ -123,6 +128,7 @@ private:
     InterfaceInfo m_iface;
     //飞控自身数据
     DroneDataInfo m_drone_data;
+    uint64_t m_wait_last_time = 0;
 };
 
 #endif
